@@ -14,11 +14,10 @@ All inserts use INSERT OR IGNORE so the module is safe to re-run.
 
 import logging
 import sqlite3
-from pathlib import Path
 
+from nba_api.stats.endpoints import commonallplayers
 from nba_api.stats.static import players as nba_players_static
 from nba_api.stats.static import teams as nba_teams_static
-from nba_api.stats.endpoints import commonallplayers
 
 from .utils import call_with_backoff, load_cache, save_cache, upsert_rows
 
@@ -44,7 +43,6 @@ def load_seasons(con: sqlite3.Connection, up_to_start_year: int = 2024) -> int:
             "season_id": _season_id(y),
             "start_year": y,
             "end_year": y + 1,
-            "season_type": "Regular Season",
         })
     inserted = upsert_rows(con, "dim_season", rows)
     logger.info("dim_season: %d rows upserted.", inserted)

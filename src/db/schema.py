@@ -2,7 +2,7 @@
 SQLite schema definitions.
 
 All fact tables use NULL (not 0) for stats that were not officially tracked
-in early NBA eras (e.g., blocks/steals pre-1973, 3-pointers pre-1979).
+in early NBA eras (e.g., blocks/steals pre-1973-74, 3-pointers pre-1979-80).
 Running this module is idempotent — it is safe to call on an existing db.
 """
 
@@ -14,13 +14,14 @@ DB_PATH = Path(__file__).parent.parent.parent / "nba_raw_data.db"
 DDL_STATEMENTS = [
     # ------------------------------------------------------------------ #
     # Dimension: seasons                                                   #
+    # season_type lives on fact_game, not here — a season row covers all  #
+    # game types (Regular Season, Playoffs, Play-In) for that year.        #
     # ------------------------------------------------------------------ #
     """
     CREATE TABLE IF NOT EXISTS dim_season (
         season_id   TEXT PRIMARY KEY,   -- e.g. '2023-24'
         start_year  INTEGER NOT NULL,
-        end_year    INTEGER NOT NULL,
-        season_type TEXT NOT NULL        -- 'Regular Season' | 'Playoffs' | 'Play-In' | 'Preseason'
+        end_year    INTEGER NOT NULL
     ) STRICT;
     """,
 
@@ -59,7 +60,7 @@ DDL_STATEMENTS = [
         birth_country TEXT,
         height_cm    REAL,
         weight_kg    REAL,
-        position     TEXT,               -- 'PG' | 'SG' | 'SF' | 'PF' | 'C'
+        position     TEXT CHECK (position IN ('PG','SG','SF','PF','C','G','F','G-F','F-G','F-C','C-F') OR position IS NULL),
         draft_year   INTEGER,
         draft_round  INTEGER,
         draft_number INTEGER,
@@ -81,7 +82,7 @@ DDL_STATEMENTS = [
         start_date TEXT NOT NULL,        -- ISO-8601
         end_date   TEXT,                 -- NULL = currently active
         CHECK (end_date IS NULL OR end_date > start_date)
-    );
+    ) STRICT;
     """,
 
     # ------------------------------------------------------------------ #
@@ -103,7 +104,7 @@ DDL_STATEMENTS = [
         UNIQUE (home_team_id, away_team_id, game_date),
         CHECK (home_score IS NULL OR home_score >= 0),
         CHECK (away_score IS NULL OR away_score >= 0)
-    );
+    ) STRICT;
     """,
 
     # ------------------------------------------------------------------ #
@@ -114,7 +115,7 @@ DDL_STATEMENTS = [
         game_id  TEXT NOT NULL REFERENCES fact_game(game_id),
         team_id  TEXT NOT NULL REFERENCES dim_team(team_id),
         fgm      INTEGER, fga  INTEGER,
-        fg3m     INTEGER, fg3a INTEGER,   -- NULL pre-1979 (no 3-point line)
+        fg3m     INTEGER, fg3a INTEGER,   -- NULL pre-1979-80 (no 3-point line)
         ftm      INTEGER, fta  INTEGER,
         oreb     INTEGER,                  -- NULL pre-1973-74
         dreb     INTEGER,                  -- NULL pre-1973-74
@@ -127,7 +128,7 @@ DDL_STATEMENTS = [
         pts      INTEGER,
         plus_minus INTEGER,
         PRIMARY KEY (game_id, team_id)
-    );
+    ) STRICT;
     """,
 
     # ------------------------------------------------------------------ #
@@ -139,9 +140,9 @@ DDL_STATEMENTS = [
         game_id        TEXT NOT NULL REFERENCES fact_game(game_id),
         player_id      TEXT NOT NULL REFERENCES dim_player(player_id),
         team_id        TEXT NOT NULL REFERENCES dim_team(team_id),  -- tracks traded players
-        minutes_played REAL,
+        minutes_played REAL,               -- decimal minutes (not MM:SS); convert upstream
         fgm  INTEGER, fga  INTEGER,
-        fg3m INTEGER, fg3a INTEGER,   -- NULL pre-1979
+        fg3m INTEGER, fg3a INTEGER,   -- NULL pre-1979-80
         ftm  INTEGER, fta  INTEGER,
         oreb INTEGER,                  -- NULL pre-1973-74
         dreb INTEGER,                  -- NULL pre-1973-74
@@ -155,7 +156,7 @@ DDL_STATEMENTS = [
         plus_minus INTEGER,
         starter INTEGER,               -- 0 | 1 | NULL if unknown
         PRIMARY KEY (game_id, player_id)
-    );
+    ) STRICT;
     """,
 
     # ------------------------------------------------------------------ #
@@ -164,10 +165,11 @@ DDL_STATEMENTS = [
     #   1=Make 2=Miss 3=FreeThrow 4=Rebound 5=Turnover 6=Foul            #
     #   7=Violation 8=Substitution 9=Timeout 10=JumpBall 11=Ejection     #
     #   12=StartPeriod 13=EndPeriod                                       #
+    # person*type: 0=None 1=Player 2=Team 3=Official                     #
     # ------------------------------------------------------------------ #
     """
     CREATE TABLE IF NOT EXISTS fact_play_by_play (
-        event_id            TEXT PRIMARY KEY,   -- game_id + '_' + eventnum
+        event_id            TEXT PRIMARY KEY,   -- game_id + '_' + zero-padded eventnum (6 digits)
         game_id             TEXT NOT NULL REFERENCES fact_game(game_id),
         period              INTEGER NOT NULL,
         pc_time_string      TEXT,               -- clock remaining e.g. '10:46'
@@ -177,14 +179,17 @@ DDL_STATEMENTS = [
         player1_id          TEXT REFERENCES dim_player(player_id),
         player2_id          TEXT REFERENCES dim_player(player_id),
         player3_id          TEXT REFERENCES dim_player(player_id),
+        person1type         INTEGER,
+        person2type         INTEGER,
+        person3type         INTEGER,
         team1_id            TEXT REFERENCES dim_team(team_id),
         team2_id            TEXT REFERENCES dim_team(team_id),
         home_description    TEXT,
         visitor_description TEXT,
         neutral_description TEXT,
         score               TEXT,               -- e.g. '14 - 10'
-        score_margin        INTEGER
-    );
+        score_margin        TEXT                -- '+5', '-3', 'TIE', or NULL; cast to INTEGER at query time
+    ) STRICT;
     """,
 
     # ------------------------------------------------------------------ #
@@ -199,8 +204,9 @@ DDL_STATEMENTS = [
         award_type TEXT NOT NULL,   -- 'individual' | 'weekly' | 'team_inclusion'
         trophy_name TEXT,           -- historical trophy name e.g. 'Maurice Podoloff Trophy'
         votes_received INTEGER,
-        votes_possible INTEGER
-    );
+        votes_possible INTEGER,
+        UNIQUE (player_id, season_id, award_name)
+    ) STRICT;
     """,
 
     # ------------------------------------------------------------------ #
@@ -224,7 +230,7 @@ DDL_STATEMENTS = [
         season_id  TEXT NOT NULL REFERENCES dim_season(season_id),
         salary     INTEGER NOT NULL,    -- USD
         UNIQUE (player_id, team_id, season_id)
-    );
+    ) STRICT;
     """,
 
     # ------------------------------------------------------------------ #
@@ -233,12 +239,17 @@ DDL_STATEMENTS = [
     "CREATE INDEX IF NOT EXISTS idx_pgl_player ON player_game_log(player_id);",
     "CREATE INDEX IF NOT EXISTS idx_pgl_team   ON player_game_log(team_id);",
     "CREATE INDEX IF NOT EXISTS idx_pgl_game   ON player_game_log(game_id);",
+    "CREATE INDEX IF NOT EXISTS idx_pgl_player_game ON player_game_log(player_id, game_id);",
     "CREATE INDEX IF NOT EXISTS idx_game_date  ON fact_game(game_date);",
     "CREATE INDEX IF NOT EXISTS idx_game_season ON fact_game(season_id);",
+    "CREATE INDEX IF NOT EXISTS idx_game_home  ON fact_game(home_team_id);",
+    "CREATE INDEX IF NOT EXISTS idx_game_away  ON fact_game(away_team_id);",
     "CREATE INDEX IF NOT EXISTS idx_pbp_game   ON fact_play_by_play(game_id);",
+    "CREATE INDEX IF NOT EXISTS idx_pbp_game_period ON fact_play_by_play(game_id, period);",
     "CREATE INDEX IF NOT EXISTS idx_pbp_player1 ON fact_play_by_play(player1_id);",
     "CREATE INDEX IF NOT EXISTS idx_roster_player ON fact_roster(player_id);",
-    "CREATE INDEX IF NOT EXISTS idx_pgl_player_season ON player_game_log(player_id, game_id);",
+    "CREATE INDEX IF NOT EXISTS idx_roster_player_dates ON fact_roster(player_id, start_date, end_date);",
+    "CREATE INDEX IF NOT EXISTS idx_tgl_team   ON team_game_log(team_id);",
 ]
 
 
@@ -248,6 +259,9 @@ def init_db(db_path: Path = DB_PATH) -> sqlite3.Connection:
     con = sqlite3.connect(db_path)
     con.execute("PRAGMA journal_mode=WAL;")
     con.execute("PRAGMA foreign_keys=ON;")
+    con.execute("PRAGMA synchronous=NORMAL;")
+    # One-time cleanup: remove misnamed index from earlier schema versions
+    con.execute("DROP INDEX IF EXISTS idx_pgl_player_season;")
     for ddl in DDL_STATEMENTS:
         con.execute(ddl)
     con.commit()
