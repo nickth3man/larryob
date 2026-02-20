@@ -2,9 +2,16 @@
 
 import sqlite3
 
+import pytest
+
 from src.etl.dimensions import (
+    _height_to_cm,
+    _map_common_player_info,
     _map_nba_player_static,
     _map_nba_team,
+    _normalize_position,
+    _parse_birth_date,
+    _weight_to_kg,
     load_players_static,
     load_seasons,
     load_teams,
@@ -56,7 +63,112 @@ def test_map_nba_team_fields() -> None:
     row = _map_nba_team(raw)
     assert row["team_id"] == "1610612747"
     assert row["abbreviation"] == "LAL"
-    assert row["conference"] is None
+    assert row["conference"] == "West"
+    assert row["division"] == "Pacific"
+    assert row["color_primary"] == "#552582"
+    assert row["arena_name"] == "Crypto.com Arena"
+
+
+def test_height_to_cm_valid_and_edge_cases() -> None:
+    assert _height_to_cm("6-8") == pytest.approx(203.2, rel=1e-3)
+    assert _height_to_cm(" 7-00 ") == pytest.approx(213.4, rel=1e-3)
+
+
+def test_height_to_cm_invalid_and_none() -> None:
+    assert _height_to_cm("abc") is None
+    assert _height_to_cm("6-x") is None
+    assert _height_to_cm(None) is None
+
+
+def test_weight_to_kg_from_string_and_int() -> None:
+    assert _weight_to_kg("220") == pytest.approx(99.8, rel=1e-3)
+    assert _weight_to_kg(220) == pytest.approx(99.8, rel=1e-3)
+
+
+def test_weight_to_kg_invalid_values() -> None:
+    assert _weight_to_kg("xyz") is None
+    assert _weight_to_kg(None) is None
+
+
+def test_parse_birth_date() -> None:
+    assert _parse_birth_date("1995-06-15T00:00:00") == "1995-06-15"
+    assert _parse_birth_date("1988-01-01") == "1988-01-01"
+    assert _parse_birth_date("short") is None  # len < 10
+    assert _parse_birth_date(None) is None
+
+
+def test_normalize_position_known_mappings() -> None:
+    assert _normalize_position("PG") == "PG"
+    assert _normalize_position("Guard") == "G"
+    assert _normalize_position("CENTER") == "C"
+    assert _normalize_position("G-F") == "G-F"
+
+
+def test_normalize_position_unexpected_returns_none() -> None:
+    assert _normalize_position("Two-Way Combo") is None
+    assert _normalize_position(None) is None
+
+
+def test_map_common_player_info_undrafted_and_active() -> None:
+    raw = {
+        "PERSON_ID": "201",
+        "DISPLAY_FIRST_LAST": "Test Player",
+        "TEAM_ID": "1610612747",
+        "ROSTERSTATUS": "Active",
+        "POSITION": "PG",
+        "HEIGHT": "6-8",
+        "WEIGHT": "220",
+        "BIRTHDATE": "1995-06-15T00:00:00",
+        "DRAFT_YEAR": "Undrafted",
+        "DRAFT_ROUND": "0",
+        "DRAFT_NUMBER": "0",
+    }
+    row = _map_common_player_info(raw)
+    assert row["draft_year"] is None
+    assert row["draft_round"] is None
+    assert row["draft_number"] is None
+    assert row["is_active"] == 1
+    assert row["height_cm"] == pytest.approx(203.2, rel=1e-3)
+    assert row["weight_kg"] == pytest.approx(99.8, rel=1e-3)
+    assert row["birth_date"] == "1995-06-15"
+    assert row["position"] == "PG"
+
+
+def test_map_common_player_info_inactive_and_empty_draft() -> None:
+    raw = {
+        "PERSON_ID": "202",
+        "DISPLAY_FIRST_LAST": "Other Player",
+        "TEAM_ID": "1610612747",
+        "ROSTERSTATUS": "Inactive",
+        "POSITION": "CENTER",
+        "HEIGHT": "7-00",
+        "WEIGHT": 250,
+        "BIRTHDATE": "1988-01-01",
+        "DRAFT_YEAR": "",
+        "DRAFT_ROUND": "",
+        "DRAFT_NUMBER": "",
+    }
+    row = _map_common_player_info(raw)
+    assert row["draft_year"] is None
+    assert row["draft_round"] is None
+    assert row["draft_number"] is None
+    assert row["is_active"] == 0
+    assert row["position"] == "C"
+
+
+def test_map_common_player_info_missing_keys_and_short_birth_date() -> None:
+    raw = {
+        "PERSON_ID": "203",
+        "DISPLAY_FIRST_LAST": "Partial Player",
+        "TEAM_ID": "1610612747",
+        "ROSTERSTATUS": "Active",
+        "POSITION": "Unknown",
+        "BIRTHDATE": "1995",  # too short, _parse_birth_date returns None
+    }
+    row = _map_common_player_info(raw)
+    assert isinstance(row, dict)
+    assert row.get("birth_date") is None
+    assert row["position"] is None
 
 
 def test_map_nba_player_static_active() -> None:

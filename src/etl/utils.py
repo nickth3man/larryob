@@ -5,12 +5,38 @@ Shared ETL utilities: rate-limit handling, JSON caching, logging.
 import json
 import logging
 import sqlite3
+import sys
 import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 logger = logging.getLogger(__name__)
+
+LOG_FORMAT = "%(asctime)s  %(levelname)-8s  %(name)s  %(message)s"
+LOG_DATE_FORMAT = "%H:%M:%S"
+
+
+def setup_logging(
+    level: str = "INFO",
+    log_file: Path | None = None,
+) -> None:
+    """
+    Configure the root logger once.
+    Call early (e.g. in main()) before any other logging.
+    """
+    root = logging.getLogger()
+    root.setLevel(level.upper())
+    for h in root.handlers[:]:
+        root.removeHandler(h)
+    fmt = logging.Formatter(LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
+    sh = logging.StreamHandler(sys.stdout)
+    sh.setFormatter(fmt)
+    root.addHandler(sh)
+    if log_file:
+        fh = logging.FileHandler(log_file, encoding="utf-8")
+        fh.setFormatter(fmt)
+        root.addHandler(fh)
 
 CACHE_DIR = Path(__file__).parent.parent.parent / ".cache"
 CACHE_DIR.mkdir(exist_ok=True)

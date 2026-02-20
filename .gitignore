@@ -8,3 +8,14 @@ wheels/
 
 # Virtual environments
 .venv
+
+# Environment (contains secrets; .env.example is committed)
+.env
+
+# API response cache (rebuilt on next run)
+/.cache
+
+# SQLite database and WAL journal files (local data, not source-controlled)
+*.db
+*.db-shm
+*.db-wal

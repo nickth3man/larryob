@@ -247,6 +247,194 @@ _VIEWS: list[tuple[str, str]] = [
         ORDER BY s.season_id DESC, cap_pct DESC
         """,
     ),
+
+    # ------------------------------------------------------------------ #
+    # Per-36-minute stats (normalized to 36 min)                          #
+    # ------------------------------------------------------------------ #
+    (
+        "vw_player_per36",
+        """
+        SELECT
+            p.player_id,
+            p.full_name,
+            g.season_id,
+            COUNT(*) AS gp,
+            ROUND(36.0 * SUM(l.pts)   / NULLIF(SUM(l.minutes_played), 0), 1) AS ppg36,
+            ROUND(36.0 * SUM(l.reb)   / NULLIF(SUM(l.minutes_played), 0), 1) AS rpg36,
+            ROUND(36.0 * SUM(l.ast)   / NULLIF(SUM(l.minutes_played), 0), 1) AS apg36,
+            ROUND(36.0 * SUM(l.stl)   / NULLIF(SUM(l.minutes_played), 0), 1) AS spg36,
+            ROUND(36.0 * SUM(l.blk)   / NULLIF(SUM(l.minutes_played), 0), 1) AS bpg36,
+            ROUND(36.0 * SUM(l.tov)   / NULLIF(SUM(l.minutes_played), 0), 1) AS topg36
+        FROM nba.player_game_log l
+        JOIN nba.dim_player p USING (player_id)
+        JOIN nba.fact_game g USING (game_id)
+        WHERE l.minutes_played > 0
+        GROUP BY p.player_id, p.full_name, g.season_id
+        """,
+    ),
+
+    # ------------------------------------------------------------------ #
+    # Usage rate: % of team possessions used while on court                #
+    # USG% = 100 * (FGA + 0.44*FTA + TOV) * (TmMP/5) / (MP * (TmFGA + 0.44*TmFTA + TmTOV))
+    # ------------------------------------------------------------------ #
+    (
+        "vw_player_usage",
+        """
+        WITH team_totals AS (
+            SELECT
+                l.game_id,
+                l.team_id,
+                SUM(l.minutes_played) AS tm_mp,
+                SUM(l.fga) AS tm_fga,
+                SUM(COALESCE(l.fta, 0)) AS tm_fta,
+                SUM(COALESCE(l.tov, 0)) AS tm_tov
+            FROM nba.player_game_log l
+            GROUP BY l.game_id, l.team_id
+        )
+        SELECT
+            p.player_id,
+            p.full_name,
+            g.season_id,
+            COUNT(*) AS gp,
+            ROUND(
+                100.0 * AVG(
+                    (l.fga + 0.44 * COALESCE(l.fta, 0) + COALESCE(l.tov, 0))
+                    * (tt.tm_mp / 5.0)
+                    / NULLIF(
+                        l.minutes_played
+                        * (tt.tm_fga + 0.44 * tt.tm_fta + tt.tm_tov),
+                        0
+                    )
+                ),
+            1
+            ) AS usg_pct
+        FROM nba.player_game_log l
+        JOIN nba.dim_player p USING (player_id)
+        JOIN nba.fact_game g USING (game_id)
+        JOIN team_totals tt ON tt.game_id = l.game_id AND tt.team_id = l.team_id
+        WHERE l.minutes_played > 0
+          AND (tt.tm_fga + 0.44 * tt.tm_fta + tt.tm_tov) > 0
+        GROUP BY p.player_id, p.full_name, g.season_id
+        """,
+    ),
+
+    # ------------------------------------------------------------------ #
+    # Team offensive/defensive ratings (pts per 100 poss)                 #
+    # ------------------------------------------------------------------ #
+    (
+        "vw_team_ratings",
+        """
+        WITH poss AS (
+            SELECT
+                l.game_id,
+                l.team_id,
+                g.season_id,
+                l.pts,
+                opp.pts AS opp_pts,
+                (
+                    l.fga + 0.4 * COALESCE(l.fta, 0)
+                    - 1.07 * (COALESCE(l.oreb, 0) / NULLIF(COALESCE(l.oreb, 0) + 1, 0))
+                      * (l.fga - COALESCE(l.fgm, 0))
+                    + COALESCE(l.tov, 0)
+                ) AS team_poss
+            FROM nba.team_game_log l
+            JOIN nba.team_game_log opp ON opp.game_id = l.game_id AND opp.team_id != l.team_id
+            JOIN nba.fact_game g ON g.game_id = l.game_id
+            WHERE l.oreb IS NOT NULL AND l.tov IS NOT NULL
+        ),
+        season_totals AS (
+            SELECT
+                team_id,
+                season_id,
+                SUM(pts) AS total_pts,
+                SUM(opp_pts) AS total_opp_pts,
+                SUM(team_poss) AS total_poss
+            FROM poss
+            GROUP BY team_id, season_id
+        )
+        SELECT
+            t.abbreviation,
+            t.full_name,
+            st.season_id,
+            ROUND(100.0 * st.total_pts / NULLIF(st.total_poss, 0), 1) AS off_rtg,
+            ROUND(100.0 * st.total_opp_pts / NULLIF(st.total_poss, 0), 1) AS def_rtg,
+            ROUND(100.0 * (st.total_pts - st.total_opp_pts) / NULLIF(st.total_poss, 0), 1) AS net_rtg
+        FROM season_totals st
+        JOIN nba.dim_team t ON t.team_id = st.team_id
+        """,
+    ),
+
+    # ------------------------------------------------------------------ #
+    # Clutch: 4th quarter, score within 5 points (made/missed shots)      #
+    # ------------------------------------------------------------------ #
+    (
+        "vw_player_clutch",
+        """
+        WITH clutch_events AS (
+            SELECT
+                pbp.player1_id AS player_id,
+                pbp.game_id,
+                g.season_id,
+                pbp.eventmsgtype
+            FROM nba.fact_play_by_play pbp
+            JOIN nba.fact_game g ON g.game_id = pbp.game_id
+            WHERE pbp.period = 4
+              AND pbp.player1_id IS NOT NULL
+              AND (
+                pbp.score_margin = 'TIE'
+                OR pbp.score_margin IN ('+1','+2','+3','+4','+5','-1','-2','-3','-4','-5')
+              )
+        )
+        SELECT
+            p.player_id,
+            p.full_name,
+            ce.season_id,
+            COUNT(*) AS clutch_events,
+            SUM(CASE WHEN ce.eventmsgtype = 1 THEN 1 ELSE 0 END) AS clutch_made,
+            SUM(CASE WHEN ce.eventmsgtype = 2 THEN 1 ELSE 0 END) AS clutch_missed
+        FROM clutch_events ce
+        JOIN nba.dim_player p ON p.player_id = ce.player_id
+        GROUP BY p.player_id, p.full_name, ce.season_id
+        """,
+    ),
+
+    # ------------------------------------------------------------------ #
+    # Combined advanced metrics per player per season                     #
+    # ------------------------------------------------------------------ #
+    (
+        "vw_player_season_advanced",
+        """
+        WITH base AS (
+            SELECT
+                p.player_id,
+                p.full_name,
+                g.season_id,
+                COUNT(*) AS gp,
+                SUM(l.minutes_played) AS total_mp,
+                SUM(l.fgm) AS fgm, SUM(l.fga) AS fga,
+                SUM(l.fg3m) AS fg3m, SUM(l.ftm) AS ftm, SUM(l.fta) AS fta,
+                SUM(l.pts) AS pts, SUM(l.reb) AS reb, SUM(l.ast) AS ast,
+                AVG(l.plus_minus) AS net_rtg
+            FROM nba.player_game_log l
+            JOIN nba.dim_player p USING (player_id)
+            JOIN nba.fact_game g USING (game_id)
+            GROUP BY p.player_id, p.full_name, g.season_id
+        )
+        SELECT
+            player_id,
+            full_name,
+            season_id,
+            gp,
+            ROUND((fgm + 0.5 * COALESCE(fg3m, 0)) / NULLIF(fga, 0), 3) AS efg_pct,
+            ROUND(pts / NULLIF(2.0 * (fga + 0.44 * COALESCE(fta, 0)), 0), 3) AS ts_pct,
+            ROUND(36.0 * pts / NULLIF(total_mp, 0), 1) AS ppg36,
+            ROUND(36.0 * reb / NULLIF(total_mp, 0), 1) AS rpg36,
+            ROUND(36.0 * ast / NULLIF(total_mp, 0), 1) AS apg36,
+            ROUND(net_rtg, 1) AS net_rtg
+        FROM base
+        WHERE total_mp > 0
+        """,
+    ),
 ]
 
 
@@ -288,8 +476,8 @@ def get_duck_con(
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     duck = get_duck_con()
-    print("Available views:")
+    logger.info("Available views:")
     views = duck.execute("SHOW TABLES").fetchall()
     for v in views:
-        print(" -", v[0])
+        logger.info(" - %s", v[0])
     duck.close()

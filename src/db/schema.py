@@ -6,8 +6,11 @@ in early NBA eras (e.g., blocks/steals pre-1973-74, 3-pointers pre-1979-80).
 Running this module is idempotent — it is safe to call on an existing db.
 """
 
+import logging
 import sqlite3
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 DB_PATH = Path(__file__).parent.parent.parent / "nba_raw_data.db"
 
@@ -81,7 +84,8 @@ DDL_STATEMENTS = [
         season_id  TEXT NOT NULL REFERENCES dim_season(season_id),
         start_date TEXT NOT NULL,        -- ISO-8601
         end_date   TEXT,                 -- NULL = currently active
-        CHECK (end_date IS NULL OR end_date > start_date)
+        CHECK (end_date IS NULL OR end_date > start_date),
+        UNIQUE (player_id, team_id, season_id)
     ) STRICT;
     """,
 
@@ -201,7 +205,7 @@ DDL_STATEMENTS = [
         player_id  TEXT NOT NULL REFERENCES dim_player(player_id),
         season_id  TEXT NOT NULL REFERENCES dim_season(season_id),
         award_name TEXT NOT NULL,   -- 'MVP' | 'DPOY' | 'ROY' | 'All-NBA 1st' ...
-        award_type TEXT NOT NULL,   -- 'individual' | 'weekly' | 'team_inclusion'
+        award_type TEXT NOT NULL,   -- 'individual' | 'weekly' | 'monthly' | 'team_inclusion'
         trophy_name TEXT,           -- historical trophy name e.g. 'Maurice Podoloff Trophy'
         votes_received INTEGER,
         votes_possible INTEGER,
@@ -249,6 +253,7 @@ DDL_STATEMENTS = [
     "CREATE INDEX IF NOT EXISTS idx_pbp_player1 ON fact_play_by_play(player1_id);",
     "CREATE INDEX IF NOT EXISTS idx_roster_player ON fact_roster(player_id);",
     "CREATE INDEX IF NOT EXISTS idx_roster_player_dates ON fact_roster(player_id, start_date, end_date);",
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_roster_unique ON fact_roster(player_id, team_id, season_id);",
     "CREATE INDEX IF NOT EXISTS idx_tgl_team   ON team_game_log(team_id);",
 ]
 
@@ -269,10 +274,11 @@ def init_db(db_path: Path = DB_PATH) -> sqlite3.Connection:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     con = init_db()
     tables = con.execute(
         "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"
     ).fetchall()
-    print("Initialized database at:", DB_PATH)
-    print("Tables:", [t[0] for t in tables])
+    logger.info("Initialized database at: %s", DB_PATH)
+    logger.info("Tables: %s", [t[0] for t in tables])
     con.close()

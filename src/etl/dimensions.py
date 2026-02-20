@@ -4,7 +4,6 @@ ETL: Dimension tables — dim_team, dim_player, dim_season.
 Strategy
 --------
 * dim_team  : nba_api static teams dataset (all 30 current + historical).
-              balldontlie is used as a lightweight fallback if the API is down.
 * dim_player: nba_api CommonAllPlayers endpoint — covers every player ever
               to appear in an NBA game.
 * dim_season: Generated programmatically for 1946-47 → current season.
@@ -15,7 +14,7 @@ All inserts use INSERT OR IGNORE so the module is safe to re-run.
 import logging
 import sqlite3
 
-from nba_api.stats.endpoints import commonallplayers
+from nba_api.stats.endpoints import commonallplayers, commonplayerinfo
 from nba_api.stats.static import players as nba_players_static
 from nba_api.stats.static import teams as nba_teams_static
 
@@ -53,21 +52,90 @@ def load_seasons(con: sqlite3.Connection, up_to_start_year: int = 2024) -> int:
 # Teams                                                               #
 # ------------------------------------------------------------------ #
 
+# Static metadata for all 30 NBA franchises (conference, division, colors, arena).
+# Keyed by team_id (NBA numeric ID as string).
+_TEAM_METADATA: dict[str, dict] = {
+    "1610612737": {"conference": "East", "division": "Southeast", "arena_name": "State Farm Arena",
+                   "color_primary": "#E03A3E", "color_secondary": "#C1D32F", "founded_year": 1949},
+    "1610612738": {"conference": "East", "division": "Atlantic", "arena_name": "TD Garden",
+                   "color_primary": "#007A33", "color_secondary": "#BA9653", "founded_year": 1946},
+    "1610612739": {"conference": "East", "division": "Central", "arena_name": "Rocket Mortgage FieldHouse",
+                   "color_primary": "#860038", "color_secondary": "#FDBB30", "founded_year": 1970},
+    "1610612740": {"conference": "West", "division": "Southwest", "arena_name": "Smoothie King Center",
+                   "color_primary": "#0C2C56", "color_secondary": "#B4975A", "founded_year": 2002},
+    "1610612741": {"conference": "East", "division": "Central", "arena_name": "United Center",
+                   "color_primary": "#CE1141", "color_secondary": "#000000", "founded_year": 1966},
+    "1610612742": {"conference": "West", "division": "Southwest", "arena_name": "American Airlines Center",
+                   "color_primary": "#002B5C", "color_secondary": "#00471B", "founded_year": 1980},
+    "1610612743": {"conference": "West", "division": "Northwest", "arena_name": "Ball Arena",
+                   "color_primary": "#0E2240", "color_secondary": "#FEC524", "founded_year": 1976},
+    "1610612744": {"conference": "West", "division": "Pacific", "arena_name": "Chase Center",
+                   "color_primary": "#1D428A", "color_secondary": "#FFC52F", "founded_year": 1946},
+    "1610612745": {"conference": "West", "division": "Southwest", "arena_name": "Toyota Center",
+                   "color_primary": "#CE1141", "color_secondary": "#C4CED4", "founded_year": 1967},
+    "1610612746": {"conference": "West", "division": "Pacific", "arena_name": "Crypto.com Arena",
+                   "color_primary": "#C60C30", "color_secondary": "#EF3B24", "founded_year": 1970},
+    "1610612747": {"conference": "West", "division": "Pacific", "arena_name": "Crypto.com Arena",
+                   "color_primary": "#552582", "color_secondary": "#FDB927", "founded_year": 1948},
+    "1610612748": {"conference": "East", "division": "Southeast", "arena_name": "Kaseya Center",
+                   "color_primary": "#98002E", "color_secondary": "#000000", "founded_year": 1988},
+    "1610612749": {"conference": "East", "division": "Central", "arena_name": "Fiserv Forum",
+                   "color_primary": "#00471B", "color_secondary": "#EEE1C6", "founded_year": 1968},
+    "1610612750": {"conference": "West", "division": "Northwest", "arena_name": "Target Center",
+                   "color_primary": "#0C2340", "color_secondary": "#9EA2A2", "founded_year": 1989},
+    "1610612751": {"conference": "East", "division": "Atlantic", "arena_name": "Barclays Center",
+                   "color_primary": "#000000", "color_secondary": "#FFFFFF", "founded_year": 1976},
+    "1610612752": {"conference": "East", "division": "Atlantic", "arena_name": "Madison Square Garden",
+                   "color_primary": "#006BB6", "color_secondary": "#F58426", "founded_year": 1946},
+    "1610612753": {"conference": "East", "division": "Southeast", "arena_name": "Kia Center",
+                   "color_primary": "#0077C0", "color_secondary": "#000000", "founded_year": 1989},
+    "1610612754": {"conference": "East", "division": "Central", "arena_name": "Gainbridge Fieldhouse",
+                   "color_primary": "#002D62", "color_secondary": "#FDBB30", "founded_year": 1976},
+    "1610612755": {"conference": "East", "division": "Atlantic", "arena_name": "Wells Fargo Center",
+                   "color_primary": "#006BB6", "color_secondary": "#ED174C", "founded_year": 1949},
+    "1610612756": {"conference": "West", "division": "Pacific", "arena_name": "Footprint Center",
+                   "color_primary": "#1D1160", "color_secondary": "#E56020", "founded_year": 1968},
+    "1610612757": {"conference": "West", "division": "Northwest", "arena_name": "Moda Center",
+                   "color_primary": "#E03A3E", "color_secondary": "#000000", "founded_year": 1970},
+    "1610612758": {"conference": "West", "division": "Pacific", "arena_name": "Golden 1 Center",
+                   "color_primary": "#5A2D81", "color_secondary": "#888888", "founded_year": 1948},
+    "1610612759": {"conference": "West", "division": "Southwest", "arena_name": "Frost Bank Center",
+                   "color_primary": "#000000", "color_secondary": "#C4CED4", "founded_year": 1976},
+    "1610612760": {"conference": "West", "division": "Northwest", "arena_name": "Paycom Center",
+                   "color_primary": "#007AC1", "color_secondary": "#EF3B24", "founded_year": 2008},
+    "1610612761": {"conference": "East", "division": "Atlantic", "arena_name": "Scotiabank Arena",
+                   "color_primary": "#CE1141", "color_secondary": "#000000", "founded_year": 1995},
+    "1610612762": {"conference": "West", "division": "Northwest", "arena_name": "Delta Center",
+                   "color_primary": "#002B5C", "color_secondary": "#00471B", "founded_year": 1974},
+    "1610612763": {"conference": "West", "division": "Southwest", "arena_name": "FedExForum",
+                   "color_primary": "#12173F", "color_secondary": "#6ECEB2", "founded_year": 1995},
+    "1610612764": {"conference": "East", "division": "Southeast", "arena_name": "Capital One Arena",
+                   "color_primary": "#002B5C", "color_secondary": "#E31837", "founded_year": 1961},
+    "1610612765": {"conference": "East", "division": "Central", "arena_name": "Little Caesars Arena",
+                   "color_primary": "#C8102E", "color_secondary": "#1D42BA", "founded_year": 1948},
+    "1610612766": {"conference": "East", "division": "Southeast", "arena_name": "Spectrum Center",
+                   "color_primary": "#1D1160", "color_secondary": "#00788C", "founded_year": 1988},
+}
+
+
 def _map_nba_team(t: dict) -> dict:
     """Map nba_api static team dict → dim_team row."""
-    return {
-        "team_id": str(t["id"]),
+    team_id = str(t["id"])
+    base = {
+        "team_id": team_id,
         "abbreviation": t["abbreviation"],
         "full_name": t["full_name"],
         "city": t["city"],
         "nickname": t["nickname"],
-        "conference": None,
-        "division": None,
-        "color_primary": None,
-        "color_secondary": None,
-        "arena_name": None,
-        "founded_year": None,
     }
+    meta = _TEAM_METADATA.get(team_id, {})
+    base["conference"] = meta.get("conference")
+    base["division"] = meta.get("division")
+    base["color_primary"] = meta.get("color_primary")
+    base["color_secondary"] = meta.get("color_secondary")
+    base["arena_name"] = meta.get("arena_name")
+    base["founded_year"] = meta.get("founded_year")
+    return base
 
 
 def load_teams(con: sqlite3.Connection) -> int:
@@ -117,6 +185,7 @@ def _map_common_all_player(row: dict) -> dict:
     """
     Map a row from CommonAllPlayers endpoint → dim_player row.
     Column names come from the nba_api DataFrame columns (lowercased).
+    CommonAllPlayers does not return bio fields; use load_players_bio_enrichment for those.
     """
     full = row.get("display_first_last") or row.get("player_slug", "")
     parts = full.split(" ", 1)
@@ -135,6 +204,102 @@ def _map_common_all_player(row: dict) -> dict:
         "draft_round": None,
         "draft_number": None,
         "is_active": 1 if str(row.get("rosterstatus", "0")) == "1" else 0,
+    }
+
+
+def _height_to_cm(height_str: str | None) -> float | None:
+    """Convert NBA height string '6-8' (feet-inches) to cm."""
+    if not height_str or not isinstance(height_str, str):
+        return None
+    parts = height_str.strip().split("-")
+    if len(parts) != 2:
+        return None
+    try:
+        feet, inches = int(parts[0]), int(parts[1])
+        total_inches = feet * 12 + inches
+        return round(total_inches * 2.54, 1)
+    except (ValueError, IndexError):
+        return None
+
+
+def _weight_to_kg(weight_str: str | int | None) -> float | None:
+    """Convert weight in lbs to kg."""
+    if weight_str is None:
+        return None
+    try:
+        lbs = float(weight_str) if isinstance(weight_str, str) else weight_str
+        return round(lbs * 0.453592, 1)
+    except (ValueError, TypeError):
+        return None
+
+
+def _parse_birth_date(date_str: str | None) -> str | None:
+    """Extract YYYY-MM-DD from date string like '1989-12-09T00:00:00'."""
+    if not date_str or not isinstance(date_str, str):
+        return None
+    return date_str[:10] if len(date_str) >= 10 else None
+
+
+def _normalize_position(pos: str | None) -> str | None:
+    """Map API position strings to schema values."""
+    if not pos or not isinstance(pos, str):
+        return None
+    p = pos.strip().upper()
+    schema_positions = ("PG", "SG", "SF", "PF", "C", "G", "F", "G-F", "F-G", "F-C", "C-F")
+    if p in schema_positions:
+        return p
+    if p in ("GUARD",):
+        return "G"
+    if p in ("FORWARD",):
+        return "F"
+    if p in ("CENTER",):
+        return "C"
+    return None
+
+
+def _map_common_player_info(row: dict) -> dict:
+    """Map CommonPlayerInfo row → dim_player row (with bio fields)."""
+    row = {k.lower(): v for k, v in row.items()}
+    full = row.get("display_first_last") or ""
+    parts = full.split(" ", 1)
+    birth = _parse_birth_date(row.get("birthdate"))
+    height = _height_to_cm(row.get("height"))
+    weight = _weight_to_kg(row.get("weight"))
+    draft_year = row.get("draft_year")
+    if draft_year is not None and str(draft_year).strip().lower() in ("", "undrafted"):
+        draft_year = None
+    try:
+        draft_year = int(draft_year) if draft_year is not None else None
+    except (ValueError, TypeError):
+        draft_year = None
+    draft_round = row.get("draft_round")
+    try:
+        draft_round = int(draft_round) if draft_round not in (None, "") else None
+    except (ValueError, TypeError):
+        draft_round = None
+    draft_number = row.get("draft_number")
+    try:
+        draft_number = int(draft_number) if draft_number not in (None, "") else None
+    except (ValueError, TypeError):
+        draft_number = None
+    if draft_year is None:
+        draft_round = None
+        draft_number = None
+    return {
+        "player_id": str(row.get("person_id", "")),
+        "first_name": parts[0] if parts else "",
+        "last_name": parts[1] if len(parts) > 1 else "",
+        "full_name": full,
+        "birth_date": birth,
+        "birth_city": None,
+        "birth_country": row.get("country") or None,
+        "height_cm": height,
+        "weight_kg": weight,
+        "position": _normalize_position(row.get("position")),
+        "draft_year": draft_year,
+        "draft_round": draft_round,
+        "draft_number": draft_number,
+        "is_active": 1 if str(row.get("rosterstatus", "0")).lower() == "active" else 0,
     }
 
 
@@ -185,11 +350,65 @@ def load_players_full(con: sqlite3.Connection, season_id: str = "2024-25") -> in
     return inserted
 
 
+def load_players_bio_enrichment(
+    con: sqlite3.Connection,
+    player_ids: list[str] | None = None,
+    active_only: bool = True,
+) -> int:
+    """
+    Enrich dim_player with bio data (height, weight, birth_date, draft info, etc.)
+    via CommonPlayerInfo. One API call per player; use active_only=True to limit.
+    """
+    import time
+
+    if player_ids is None:
+        if active_only:
+            cur = con.execute("SELECT player_id FROM dim_player WHERE is_active = 1")
+        else:
+            cur = con.execute("SELECT player_id FROM dim_player")
+        player_ids = [r[0] for r in cur.fetchall()]
+
+    rows: list[dict] = []
+    for i, pid in enumerate(player_ids):
+        cache_key = f"common_player_info_{pid}"
+        cached = load_cache(cache_key)
+        if cached:
+            rows.append(_map_common_player_info(cached))
+            continue
+        try:
+            def _fetch():
+                ep = commonplayerinfo.CommonPlayerInfo(player_id=pid)
+                df = ep.get_data_frames()[0]
+                if df.empty:
+                    return None
+                return df.iloc[0].to_dict()
+
+            record = call_with_backoff(_fetch, label=f"CommonPlayerInfo({pid})")
+            if record:
+                save_cache(cache_key, record)
+                rows.append(_map_common_player_info(record))
+        except Exception as exc:
+            logger.warning("CommonPlayerInfo(%s) failed: %s", pid, exc)
+        if (i + 1) % 50 == 0:
+            logger.info("Bio enrichment: %d/%d players processed.", i + 1, len(player_ids))
+        time.sleep(2.5)
+
+    if rows:
+        inserted = upsert_rows(con, "dim_player", rows, conflict="REPLACE")
+        logger.info("dim_player bio enrichment: %d rows updated.", inserted)
+        return inserted
+    return 0
+
+
 # ------------------------------------------------------------------ #
 # Convenience: run all dimension loaders                             #
 # ------------------------------------------------------------------ #
 
-def run_all(con: sqlite3.Connection, full_players: bool = False) -> None:
+def run_all(
+    con: sqlite3.Connection,
+    full_players: bool = False,
+    enrich_bio: bool = False,
+) -> None:
     """
     Seed all dimension tables.
 
@@ -198,12 +417,17 @@ def run_all(con: sqlite3.Connection, full_players: bool = False) -> None:
     full_players : bool
         If True, also hit the CommonAllPlayers endpoint for richer metadata.
         Set False during tests / quick runs to avoid live HTTP calls.
+    enrich_bio : bool
+        If True, enrich dim_player with bio data (height, weight, birth_date, draft)
+        via CommonPlayerInfo. Only active players by default. Many API calls.
     """
     load_seasons(con)
     load_teams(con)
     load_players_static(con)
     if full_players:
         load_players_full(con)
+    if enrich_bio:
+        load_players_bio_enrichment(con, active_only=True)
 
 
 if __name__ == "__main__":
