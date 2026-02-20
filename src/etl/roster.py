@@ -20,12 +20,6 @@ from .utils import call_with_backoff, load_cache, save_cache, upsert_rows
 logger = logging.getLogger(__name__)
 
 
-def _season_id_from_api(api_season: str | int) -> str:
-    """Convert API season '2023' or 2023 to '2023-24'."""
-    y = int(api_season)
-    return f"{y}-{str(y + 1)[-2:]}"
-
-
 def _season_start_date(season_id: str) -> str:
     """Approximate season start date (October 1)."""
     start_year = int(season_id.split("-")[0])
@@ -36,6 +30,9 @@ def load_team_roster(
     con: sqlite3.Connection,
     team_id: str,
     season_id: str,
+    *,
+    valid_players: set[str] | None = None,
+    valid_teams: set[str] | None = None,
 ) -> int:
     """
     Load fact_roster for one team in one season.
@@ -67,10 +64,12 @@ def load_team_roster(
 
             start_date = _season_start_date(season_id)
             # Filter to players/teams that exist in dim tables (FK constraint)
-            cur = con.execute("SELECT player_id FROM dim_player")
-            valid_players = {r[0] for r in cur.fetchall()}
-            cur = con.execute("SELECT team_id FROM dim_team")
-            valid_teams = {r[0] for r in cur.fetchall()}
+            if valid_players is None:
+                cur = con.execute("SELECT player_id FROM dim_player")
+                valid_players = {r[0] for r in cur.fetchall()}
+            if valid_teams is None:
+                cur = con.execute("SELECT team_id FROM dim_team")
+                valid_teams = {r[0] for r in cur.fetchall()}
             rows = []
             for r in records:
                 pid = str(r.get("PLAYER_ID", ""))
@@ -105,9 +104,17 @@ def load_season_rosters(
     """
     cur = con.execute("SELECT team_id FROM dim_team")
     team_ids = [r[0] for r in cur.fetchall()]
+    cur = con.execute("SELECT player_id FROM dim_player")
+    valid_players = {r[0] for r in cur.fetchall()}
+    cur = con.execute("SELECT team_id FROM dim_team")
+    valid_teams = {r[0] for r in cur.fetchall()}
     total = 0
     for i, tid in enumerate(team_ids):
-        total += load_team_roster(con, tid, season_id)
+        total += load_team_roster(
+            con, tid, season_id,
+            valid_players=valid_players,
+            valid_teams=valid_teams,
+        )
         if (i + 1) % 5 == 0:
             logger.info("Roster: %d/%d teams processed for %s.", i + 1, len(team_ids), season_id)
         time.sleep(inter_call_sleep)

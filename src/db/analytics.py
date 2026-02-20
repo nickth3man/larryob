@@ -331,7 +331,7 @@ _VIEWS: list[tuple[str, str]] = [
                 g.season_id,
                 l.pts,
                 opp.pts AS opp_pts,
-                0.5 * (
+                (
                     l.fga + 0.4 * COALESCE(l.fta, 0)
                     - 1.07 * (COALESCE(l.oreb, 0) / NULLIF(COALESCE(l.oreb, 0) + 1, 0))
                       * (l.fga - COALESCE(l.fgm, 0))

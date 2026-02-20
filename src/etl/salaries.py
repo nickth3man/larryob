@@ -113,7 +113,8 @@ def load_salary_cap(con: sqlite3.Connection) -> int:
     """Seed dim_salary_cap from hardcoded historical values."""
     # Ensure dim_season has the seasons we need (FK constraint)
     from .dimensions import load_seasons
-    load_seasons(con, up_to_start_year=2025)
+    max_start_year = max(int(sid.split("-")[0]) for sid in _SALARY_CAP_BY_SEASON)
+    load_seasons(con, up_to_start_year=max_start_year)
     rows = [
         {"season_id": sid, "cap_amount": cap}
         for sid, cap in _SALARY_CAP_BY_SEASON.items()
@@ -148,7 +149,10 @@ def _get_html(url: str, max_retries: int = 3) -> str | None:
         try:
             resp = requests.get(url, headers=_HEADERS, timeout=20)
             if resp.status_code == 429:
-                retry_after = int(resp.headers.get("Retry-After", delay))
+                try:
+                    retry_after = int(resp.headers.get("Retry-After", delay))
+                except (ValueError, TypeError):
+                    retry_after = int(delay)
                 logger.info("BBref rate-limited (%s); waiting %ds…", url, retry_after)
                 time.sleep(retry_after)
                 delay *= 2
@@ -191,7 +195,8 @@ def _fetch_team_season_salaries(bref_abbr: str, end_year: int) -> list[dict]:
             continue
         try:
             tables = pd.read_html(io.StringIO(block), flavor="lxml")
-        except Exception:
+        except Exception as exc:
+            logger.debug("BBref HTML table parse failed (block): %s", exc)
             continue
         if not tables:
             continue
@@ -312,9 +317,14 @@ def load_player_salaries(
             logger.debug("Team %s not found in dim_team; skipping.", nba_abbr)
             continue
 
+        cache_key_season = f"bref_season_sal_{bref_abbr}_{end_year}"
+        cache_key_contracts = f"bref_contracts_{bref_abbr}"
+        was_cached = False
+
         if end_year < current_year:
             # Historical (season fully complete): team season page has a commented salary table
             logger.debug("BBref team season salary: %s %d", bref_abbr, end_year)
+            was_cached = load_cache(cache_key_season) is not None
             entries = [
                 {"name": e["name"], "season_id": season_id, "salary": e["salary"]}
                 for e in _fetch_team_season_salaries(bref_abbr, end_year)
@@ -322,12 +332,14 @@ def load_player_salaries(
         else:
             # Current or future season: team contract page
             logger.debug("BBref team contracts: %s", bref_abbr)
+            was_cached = load_cache(cache_key_contracts) is not None
             entries = [
                 e for e in _fetch_team_current_contracts(bref_abbr)
                 if e["season_id"] == season_id
             ]
 
-        time.sleep(_REQUEST_DELAY)
+        if not was_cached:
+            time.sleep(_REQUEST_DELAY)
 
         for entry in entries:
             norm = _normalize_name(entry["name"])

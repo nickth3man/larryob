@@ -60,9 +60,9 @@ def main() -> None:
         help="Load fact_player_award from PlayerAwards endpoint",
     )
     parser.add_argument(
-                    "--salaries", action="store_true",
-                    help="Load dim_salary_cap (hardcoded) and scrape fact_salary from Basketball-Reference",
-                )
+        "--salaries", action="store_true",
+        help="Load dim_salary_cap (hardcoded) and scrape fact_salary from Basketball-Reference",
+    )
     parser.add_argument(
         "--rosters", action="store_true",
         help="Load fact_roster from CommonTeamRoster",
@@ -85,11 +85,11 @@ def main() -> None:
     )
     args = parser.parse_args()
 
-    log_file = getattr(args, "log_file", None)
+    log_file = args.log_file
     if log_file:
         log_file = Path(log_file)
     setup_logging(
-        level=getattr(args, "log_level", "INFO"),
+        level=args.log_level,
         log_file=log_file,
     )
 
@@ -100,7 +100,7 @@ def main() -> None:
     run_dimensions(
         con,
         full_players=not args.dims_only,
-        enrich_bio=getattr(args, "enrich_bio", False),
+        enrich_bio=args.enrich_bio,
     )
 
     if args.awards:

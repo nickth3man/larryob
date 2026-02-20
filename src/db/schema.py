@@ -84,7 +84,8 @@ DDL_STATEMENTS = [
         season_id  TEXT NOT NULL REFERENCES dim_season(season_id),
         start_date TEXT NOT NULL,        -- ISO-8601
         end_date   TEXT,                 -- NULL = currently active
-        CHECK (end_date IS NULL OR end_date > start_date)
+        CHECK (end_date IS NULL OR end_date > start_date),
+        UNIQUE (player_id, team_id, season_id)
     ) STRICT;
     """,
 
@@ -204,7 +205,7 @@ DDL_STATEMENTS = [
         player_id  TEXT NOT NULL REFERENCES dim_player(player_id),
         season_id  TEXT NOT NULL REFERENCES dim_season(season_id),
         award_name TEXT NOT NULL,   -- 'MVP' | 'DPOY' | 'ROY' | 'All-NBA 1st' ...
-        award_type TEXT NOT NULL,   -- 'individual' | 'weekly' | 'team_inclusion'
+        award_type TEXT NOT NULL,   -- 'individual' | 'weekly' | 'monthly' | 'team_inclusion'
         trophy_name TEXT,           -- historical trophy name e.g. 'Maurice Podoloff Trophy'
         votes_received INTEGER,
         votes_possible INTEGER,
@@ -252,6 +253,7 @@ DDL_STATEMENTS = [
     "CREATE INDEX IF NOT EXISTS idx_pbp_player1 ON fact_play_by_play(player1_id);",
     "CREATE INDEX IF NOT EXISTS idx_roster_player ON fact_roster(player_id);",
     "CREATE INDEX IF NOT EXISTS idx_roster_player_dates ON fact_roster(player_id, start_date, end_date);",
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_roster_unique ON fact_roster(player_id, team_id, season_id);",
     "CREATE INDEX IF NOT EXISTS idx_tgl_team   ON team_game_log(team_id);",
 ]
 

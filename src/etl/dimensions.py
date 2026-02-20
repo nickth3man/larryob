@@ -282,6 +282,9 @@ def _map_common_player_info(row: dict) -> dict:
         draft_number = int(draft_number) if draft_number not in (None, "") else None
     except (ValueError, TypeError):
         draft_number = None
+    if draft_year is None:
+        draft_round = None
+        draft_number = None
     return {
         "player_id": str(row.get("person_id", "")),
         "first_name": parts[0] if parts else "",
@@ -359,8 +362,10 @@ def load_players_bio_enrichment(
     import time
 
     if player_ids is None:
-        where = "WHERE is_active = 1" if active_only else ""
-        cur = con.execute(f"SELECT player_id FROM dim_player {where}")
+        if active_only:
+            cur = con.execute("SELECT player_id FROM dim_player WHERE is_active = 1")
+        else:
+            cur = con.execute("SELECT player_id FROM dim_player")
         player_ids = [r[0] for r in cur.fetchall()]
 
     rows: list[dict] = []
@@ -421,8 +426,8 @@ def run_all(
     load_players_static(con)
     if full_players:
         load_players_full(con)
-        if enrich_bio:
-            load_players_bio_enrichment(con, active_only=True)
+    if enrich_bio:
+        load_players_bio_enrichment(con, active_only=True)
 
 
 if __name__ == "__main__":

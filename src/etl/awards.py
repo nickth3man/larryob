@@ -46,7 +46,9 @@ def _map_award_type(api_type: str | None) -> str:
     if not api_type:
         return "individual"
     t = str(api_type).strip().lower()
-    if "week" in t or "month" in t:
+    if "month" in t:
+        return "monthly"
+    if "week" in t:
         return "weekly"
     if "team" in t or "inclusion" in t:
         return "team_inclusion"
@@ -81,7 +83,7 @@ def _player_awards_to_rows(records: list[dict]) -> list[dict]:
 def load_player_awards(
     con: sqlite3.Connection,
     player_ids: list[str],
-    inter_call_sleep: float = 2.5,
+    inter_call_sleep: float = 0.0,
 ) -> int:
     """
     Load awards for the given player IDs into fact_player_award.
@@ -103,14 +105,13 @@ def load_player_awards(
                 return df.to_dict(orient="records")
 
             records = call_with_backoff(_fetch, label=f"PlayerAwards({pid})")
+            save_cache(cache_key, records if records is not None else [])
             if records:
-                save_cache(cache_key, records)
                 all_rows.extend(_player_awards_to_rows(records))
         except Exception as exc:
             logger.warning("PlayerAwards(%s) failed: %s", pid, exc)
         if (i + 1) % 50 == 0:
             logger.info("Awards: %d/%d players processed.", i + 1, len(player_ids))
-        time.sleep(inter_call_sleep)
 
     if not all_rows:
         return 0
@@ -127,8 +128,10 @@ def load_all_awards(
     Load awards for all players in dim_player.
     Use active_only=True to limit to active players (fewer API calls).
     """
-    where = "WHERE is_active = 1" if active_only else ""
-    cur = con.execute(f"SELECT player_id FROM dim_player {where}")
+    if active_only:
+        cur = con.execute("SELECT player_id FROM dim_player WHERE is_active = 1")
+    else:
+        cur = con.execute("SELECT player_id FROM dim_player")
     player_ids = [r[0] for r in cur.fetchall()]
     if not player_ids:
         logger.warning("No players found in dim_player.")
