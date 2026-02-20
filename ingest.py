@@ -21,17 +21,21 @@ Usage
 
 import argparse
 import logging
+from pathlib import Path
+
+from dotenv import load_dotenv
 
 from src.db.schema import init_db
+
+load_dotenv()
+from src.etl.awards import load_all_awards
+from src.etl.utils import setup_logging
 from src.etl.dimensions import run_all as run_dimensions
 from src.etl.game_logs import load_multiple_seasons
 from src.etl.play_by_play import load_season_pbp
+from src.etl.roster import load_rosters_for_seasons
+from src.etl.salaries import load_salaries_for_seasons
 
-logging.basicConfig(
-    level=logging.INFO,
-    format="%(asctime)s  %(levelname)-8s  %(name)s  %(message)s",
-    datefmt="%H:%M:%S",
-)
 logger = logging.getLogger("ingest")
 
 DEFAULT_SEASONS = ["2023-24", "2024-25"]
@@ -48,6 +52,22 @@ def main() -> None:
         help="Only seed dimension tables (fast, no box-score calls)",
     )
     parser.add_argument(
+        "--enrich-bio", action="store_true",
+        help="Enrich dim_player with bio data via CommonPlayerInfo (many API calls)",
+    )
+    parser.add_argument(
+        "--awards", action="store_true",
+        help="Load fact_player_award from PlayerAwards endpoint",
+    )
+    parser.add_argument(
+                    "--salaries", action="store_true",
+                    help="Load dim_salary_cap (hardcoded) and scrape fact_salary from Basketball-Reference",
+                )
+    parser.add_argument(
+        "--rosters", action="store_true",
+        help="Load fact_roster from CommonTeamRoster",
+    )
+    parser.add_argument(
         "--include-playoffs", action="store_true",
         help="Also ingest Playoffs game logs",
     )
@@ -55,13 +75,45 @@ def main() -> None:
         "--pbp-limit", type=int, default=0,
         help="Number of games to load PBP for (0 = skip PBP)",
     )
+    parser.add_argument(
+        "--log-level", default="INFO",
+        help="Logging level (DEBUG, INFO, WARNING, ERROR)",
+    )
+    parser.add_argument(
+        "--log-file", type=str, default=None,
+        help="Optional path to log file",
+    )
     args = parser.parse_args()
+
+    log_file = getattr(args, "log_file", None)
+    if log_file:
+        log_file = Path(log_file)
+    setup_logging(
+        level=getattr(args, "log_level", "INFO"),
+        log_file=log_file,
+    )
 
     logger.info("Initialising database schema…")
     con = init_db()
 
     logger.info("Loading dimension tables…")
-    run_dimensions(con, full_players=not args.dims_only)
+    run_dimensions(
+        con,
+        full_players=not args.dims_only,
+        enrich_bio=getattr(args, "enrich_bio", False),
+    )
+
+    if args.awards:
+        logger.info("Loading player awards…")
+        load_all_awards(con, active_only=True)
+
+    if args.salaries:
+        logger.info("Loading salary cap and player salaries…")
+        load_salaries_for_seasons(con, args.seasons)
+
+    if args.rosters:
+        logger.info("Loading rosters…")
+        load_rosters_for_seasons(con, args.seasons)
 
     if args.dims_only:
         logger.info("--dims-only set; skipping box scores.")

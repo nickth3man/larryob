@@ -6,8 +6,11 @@ in early NBA eras (e.g., blocks/steals pre-1973-74, 3-pointers pre-1979-80).
 Running this module is idempotent — it is safe to call on an existing db.
 """
 
+import logging
 import sqlite3
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 DB_PATH = Path(__file__).parent.parent.parent / "nba_raw_data.db"
 
@@ -269,10 +272,11 @@ def init_db(db_path: Path = DB_PATH) -> sqlite3.Connection:
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     con = init_db()
     tables = con.execute(
         "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"
     ).fetchall()
-    print("Initialized database at:", DB_PATH)
-    print("Tables:", [t[0] for t in tables])
+    logger.info("Initialized database at: %s", DB_PATH)
+    logger.info("Tables: %s", [t[0] for t in tables])
     con.close()

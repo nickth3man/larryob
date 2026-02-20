@@ -56,7 +56,10 @@ def test_map_nba_team_fields() -> None:
     row = _map_nba_team(raw)
     assert row["team_id"] == "1610612747"
     assert row["abbreviation"] == "LAL"
-    assert row["conference"] is None
+    assert row["conference"] == "West"
+    assert row["division"] == "Pacific"
+    assert row["color_primary"] == "#552582"
+    assert row["arena_name"] == "Crypto.com Arena"
 
 
 def test_map_nba_player_static_active() -> None:
