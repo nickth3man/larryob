@@ -2,6 +2,9 @@
 
 import sqlite3
 from pathlib import Path
+from unittest.mock import patch
+
+import pytest
 
 
 def _table_columns(con: sqlite3.Connection, table: str) -> list[str]:
@@ -135,3 +138,37 @@ def test_dim_team_columns(sqlite_con: sqlite3.Connection) -> None:
                 "conference", "division", "color_primary", "arena_name", "founded_year"]
     for col in required:
         assert col in cols, f"Missing column '{col}' in dim_team"
+
+
+def test_init_db_raises_for_non_duplicate_alter_errors(tmp_path: Path) -> None:
+    from src.db import schema as schema_mod
+
+    db_file = tmp_path / "test_init_error.db"
+    leaked_con = sqlite3.connect(db_file)
+    try:
+        with patch.object(schema_mod.sqlite3, "connect", return_value=leaked_con):
+            with patch.object(schema_mod, "ALTER_STATEMENTS", ["ALTER TABLE dim_team BROKEN SQL"]):
+                with pytest.raises(sqlite3.OperationalError):
+                    schema_mod.init_db(db_file)
+    finally:
+        leaked_con.close()
+
+
+def test_rollback_db_executes_statements_and_returns_connection(tmp_path: Path) -> None:
+    from src.db.schema import rollback_db
+
+    db_file = tmp_path / "test_rollback.db"
+    con = rollback_db(db_file)
+    try:
+        assert isinstance(con, sqlite3.Connection)
+    finally:
+        con.close()
+
+
+def test_rollback_db_ignores_operational_errors(tmp_path: Path) -> None:
+    from src.db import schema as schema_mod
+
+    db_file = tmp_path / "test_rollback_error.db"
+    with patch.object(schema_mod, "ROLLBACK_STATEMENTS", ["DROP TABLE definitely_missing_table"]):
+        con = schema_mod.rollback_db(db_file)
+    con.close()

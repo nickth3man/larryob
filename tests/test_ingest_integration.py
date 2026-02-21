@@ -70,13 +70,14 @@ def test_ingest_full_pipeline_mocked(tmp_path, monkeypatch):
     # Clean up singleton connections from any duckdb imports that might have happened
     try:
         import src.db.analytics as analytics
-        if analytics._cached_con is not None:
+        cached_con = getattr(analytics._local, "cached_con", None)
+        if cached_con is not None:
             try:
-                analytics._cached_con.close()
+                cached_con.close()
             except Exception:
                 pass
-            analytics._cached_con = None
-            analytics._cached_sqlite_path = None
-            analytics._cached_duck_db_path = None
+            setattr(analytics._local, "cached_con", None)
+            setattr(analytics._local, "cached_sqlite_path", None)
+            setattr(analytics._local, "cached_duck_db_path", None)
     except Exception:
         pass

@@ -20,6 +20,7 @@ dev = [
     "ty>=0.0.18",
     "pytest-cov>=7.0.0",
     "types-requests",
+    "mutmut>=3.4.0",
 ]
 
 [tool.ruff]

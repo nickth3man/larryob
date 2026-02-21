@@ -6,6 +6,7 @@ the production `nba_raw_data.db`.
 """
 
 import sqlite3
+from collections.abc import Iterator
 from pathlib import Path
 
 import duckdb
@@ -36,7 +37,7 @@ def sqlite_con():
 
 
 @pytest.fixture
-def sqlite_con_with_data(sqlite_con: sqlite3.Connection) -> sqlite3.Connection:
+def sqlite_con_with_data(sqlite_con: sqlite3.Connection) -> Iterator[sqlite3.Connection]:
     """SQLite db pre-seeded with minimal reference rows for FK compliance."""
     con = sqlite_con
     con.execute(

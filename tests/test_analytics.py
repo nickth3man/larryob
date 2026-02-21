@@ -189,7 +189,102 @@ def test_get_duck_con_singleton(tmp_path, monkeypatch) -> None:
     duck3.close()
 
 
+class _FakeDuckCon:
+    def __init__(self, *, fail_select: bool = False, fail_close: bool = False) -> None:
+        self.fail_select = fail_select
+        self.fail_close = fail_close
+
+    def execute(self, sql: str):
+        if self.fail_select and sql == "SELECT 1":
+            raise RuntimeError("stale connection")
+        return self
+
+    def close(self) -> None:
+        if self.fail_close:
+            raise RuntimeError("close failed")
+
+
+def test_get_duck_con_initializes_threadlocal_cache_when_attributes_missing(
+    tmp_path,
+    monkeypatch,
+) -> None:
+    import src.db.analytics as analytics
+    from src.db.analytics import get_duck_con
+    from src.db.schema import ALTER_STATEMENTS, DDL_STATEMENTS
+
+    sqlite_file = tmp_path / "test_threadlocal_init.db"
+    con = sqlite3.connect(sqlite_file)
+    for ddl in DDL_STATEMENTS:
+        con.execute(ddl)
+    for alter in ALTER_STATEMENTS:
+        try:
+            con.execute(alter)
+        except sqlite3.OperationalError:
+            pass
+    con.close()
+
+    for attr in ("cached_con", "cached_sqlite_path", "cached_duck_db_path"):
+        if hasattr(analytics._local, attr):
+            delattr(analytics._local, attr)
+
+    fake = _FakeDuckCon()
+    monkeypatch.setattr(analytics.duckdb, "connect", lambda _: fake)
+
+    result = get_duck_con(sqlite_path=sqlite_file, duck_db_path=":memory:")
+
+    assert result is fake
+    assert getattr(analytics._local, "cached_con", None) is fake
+    analytics._local.cached_con = None
+    analytics._local.cached_sqlite_path = None
+    analytics._local.cached_duck_db_path = None
+
+
+def test_get_duck_con_rebuilds_after_stale_cached_connection(tmp_path, monkeypatch) -> None:
+    import src.db.analytics as analytics
+    from src.db.analytics import get_duck_con
+
+    sqlite_file = tmp_path / "stale_cached.db"
+    sqlite_file.touch()
+
+    stale = _FakeDuckCon(fail_select=True)
+    fresh = _FakeDuckCon()
+
+    analytics._local.cached_con = stale
+    analytics._local.cached_sqlite_path = str(sqlite_file)
+    analytics._local.cached_duck_db_path = ":memory:"
+    monkeypatch.setattr(analytics.duckdb, "connect", lambda _: fresh)
+
+    result = get_duck_con(sqlite_path=sqlite_file, duck_db_path=":memory:")
+
+    assert result is fresh
+    analytics._local.cached_con = None
+    analytics._local.cached_sqlite_path = None
+    analytics._local.cached_duck_db_path = None
+
+
+def test_get_duck_con_ignores_cached_close_failures(tmp_path, monkeypatch) -> None:
+    import src.db.analytics as analytics
+    from src.db.analytics import get_duck_con
+
+    sqlite_file = tmp_path / "close_failure.db"
+    sqlite_file.touch()
+
+    old = _FakeDuckCon(fail_close=True)
+    fresh = _FakeDuckCon()
+
+    analytics._local.cached_con = old
+    analytics._local.cached_sqlite_path = "different.db"
+    analytics._local.cached_duck_db_path = ":memory:"
+    monkeypatch.setattr(analytics.duckdb, "connect", lambda _: fresh)
+
+    result = get_duck_con(sqlite_path=sqlite_file, duck_db_path=":memory:")
+
+    assert result is fresh
+    analytics._local.cached_con = None
+    analytics._local.cached_sqlite_path = None
+    analytics._local.cached_duck_db_path = None
+
+
 def _view_sql(view_name: str, con: duckdb.DuckDBPyConnection) -> str:
     """Retrieve the underlying SQL of a view for wrapping in a subquery."""
-
-    mapping = dict(_VIEWS)
+    return dict(_VIEWS)[view_name]
