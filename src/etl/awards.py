@@ -13,7 +13,8 @@ import sqlite3
 
 from nba_api.stats.endpoints import playerawards
 
-from .utils import call_with_backoff, load_cache, save_cache, upsert_rows
+from .api_client import APICaller
+from .utils import load_cache, save_cache, upsert_rows
 
 logger = logging.getLogger(__name__)
 
@@ -82,12 +83,15 @@ def _player_awards_to_rows(records: list[dict]) -> list[dict]:
 def load_player_awards(
     con: sqlite3.Connection,
     player_ids: list[str],
-    inter_call_sleep: float = 0.0,
+    api_caller: APICaller | None = None,
 ) -> int:
     """
     Load awards for the given player IDs into fact_player_award.
     Returns total rows inserted.
     """
+    if api_caller is None:
+        api_caller = APICaller()
+
     all_rows: list[dict] = []
     for i, pid in enumerate(player_ids):
         cache_key = f"awards_{pid}"
@@ -103,7 +107,7 @@ def load_player_awards(
                     return []
                 return df.to_dict(orient="records")
 
-            records = call_with_backoff(_fetch, label=f"PlayerAwards({pid})")
+            records = api_caller.call_with_backoff(_fetch, label=f"PlayerAwards({pid})")
             save_cache(cache_key, records if records is not None else [])
             if records:
                 all_rows.extend(_player_awards_to_rows(records))

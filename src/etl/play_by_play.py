@@ -28,9 +28,10 @@ from datetime import UTC
 import pandas as pd
 from nba_api.stats.endpoints import playbyplayv2
 
+from .api_client import APICaller
+from .metrics import ETLTimer, record_etl_rows
 from .utils import (
     already_loaded,
-    call_with_backoff,
     load_cache,
     log_load_summary,
     record_run,
@@ -86,17 +87,25 @@ _PBP_COLS = [
 # Fetch                                                               #
 # ------------------------------------------------------------------ #
 
-def _fetch_pbp(game_id: str) -> pd.DataFrame:
+def _fetch_pbp(game_id: str, api_caller: APICaller | None = None) -> pd.DataFrame:
     cache_key = f"pbp_{game_id}"
     cached = load_cache(cache_key)
     if cached:
         return pd.DataFrame(cached)
 
+    if api_caller is None:
+        api_caller = APICaller()
+
     def _call():
         ep = playbyplayv2.PlayByPlayV2(game_id=game_id)
         return ep.get_data_frames()[0]
 
-    df = call_with_backoff(_call, base_sleep=1.5, label=f"PlayByPlayV2({game_id})")
+    # PBP endpoints allow faster calls (1.5s vs default 3s)
+    df = api_caller.call_with_backoff_custom_delay(
+        _call,
+        base_sleep=1.5,
+        label=f"PlayByPlayV2({game_id})",
+    )
     save_cache(cache_key, df.to_dict(orient="records"))
     return df
 
@@ -139,9 +148,9 @@ def _transform_pbp(df: pd.DataFrame) -> list[dict]:
 # Load                                                                #
 # ------------------------------------------------------------------ #
 
-def load_game(con: sqlite3.Connection, game_id: str) -> int:
+def load_game(con: sqlite3.Connection, game_id: str, api_caller: APICaller | None = None) -> int:
     """Fetch and load play-by-play for a single *game_id*."""
-    df = _fetch_pbp(game_id)
+    df = _fetch_pbp(game_id, api_caller)
     if df.empty:
         logger.warning("No PBP data for game %s.", game_id)
         return 0
@@ -156,20 +165,22 @@ def load_game(con: sqlite3.Connection, game_id: str) -> int:
 def load_games(
     con: sqlite3.Connection,
     game_ids: Iterable[str],
-    inter_call_sleep: float = 1.5,
+    api_caller: APICaller | None = None,
 ) -> int:
     """
     Fetch play-by-play for multiple games with rate-limit sleep between calls.
     Games already cached on disk skip the HTTP call entirely.
     """
-    import time
+    if api_caller is None:
+        api_caller = APICaller()
+
     total = 0
     for gid in game_ids:
         try:
-            total += load_game(con, gid)
+            total += load_game(con, gid, api_caller)
         except Exception as exc:
             logger.error("PBP failed for game %s: %s", gid, exc)
-        time.sleep(inter_call_sleep)
+        api_caller.sleep_between_calls()
     return total
 
 
@@ -177,6 +188,7 @@ def load_season_pbp(
     con: sqlite3.Connection,
     season: str,
     limit: int | None = None,
+    api_caller: APICaller | None = None,
 ) -> int:
     """
     Load play-by-play for all games in *season* that are already in fact_game.
@@ -203,10 +215,12 @@ def load_season_pbp(
         game_ids = game_ids[:limit]
     logger.info("Loading PBP for %d games in season %s.", len(game_ids), season)
 
-    total = load_games(con, game_ids)
+    with ETLTimer("fact_play_by_play", season):
+        total = load_games(con, game_ids, api_caller)
 
     status = "partial" if limit else "ok"
     record_run(con, "fact_play_by_play", season, loader_id, total, status, started_at)
+    record_etl_rows("fact_play_by_play", season, total)
     log_load_summary(con, "fact_play_by_play", season)
 
     return total

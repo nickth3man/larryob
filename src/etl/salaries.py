@@ -20,95 +20,25 @@ from typing import cast
 import pandas as pd
 import requests
 
+from .config import get_all_salary_caps, nba_abbr_to_bref
 from .helpers import _norm_name
 from .utils import already_loaded, load_cache, record_run, save_cache, upsert_rows
 from .validate import validate_rows
 
 logger = logging.getLogger(__name__)
 
-# NBA team abbreviation → Basketball-Reference abbreviation
-_ABBR_TO_BREF: dict[str, str] = {
-    "ATL": "ATL",
-    "BKN": "BRK",
-    "BOS": "BOS",
-    "CHA": "CHO",
-    "CHI": "CHI",
-    "CLE": "CLE",
-    "DAL": "DAL",
-    "DEN": "DEN",
-    "DET": "DET",
-    "GSW": "GSW",
-    "HOU": "HOU",
-    "IND": "IND",
-    "LAC": "LAC",
-    "LAL": "LAL",
-    "MEM": "MEM",
-    "MIA": "MIA",
-    "MIL": "MIL",
-    "MIN": "MIN",
-    "NOP": "NOP",
-    "NYK": "NYK",
-    "OKC": "OKC",
-    "ORL": "ORL",
-    "PHI": "PHI",
-    "PHX": "PHO",
-    "POR": "POR",
-    "SAC": "SAC",
-    "SAS": "SAS",
-    "TOR": "TOR",
-    "UTA": "UTA",
-    "WAS": "WAS",
-}
+# Use centralized config for salary cap data
+_SALARY_CAP_BY_SEASON = get_all_salary_caps()
+
+# Helper function for abbreviation conversion (uses centralized config)
+def _abbr_to_bref(abbr: str) -> str:
+    """Convert NBA abbreviation to Basketball-Reference abbreviation."""
+    result = nba_abbr_to_bref(abbr)
+    return result if result is not None else abbr
 
 _BREF_BASE = "https://www.basketball-reference.com"
 _HEADERS = {"User-Agent": "Mozilla/5.0 (personal research project, non-commercial)"}
 _REQUEST_DELAY = 4.0  # seconds between requests (be polite)
-
-# Historical NBA salary cap by season (USD). Source: Basketball-Reference, RealGM, CBA FAQ.
-_SALARY_CAP_BY_SEASON: dict[str, int] = {
-    "1984-85": 3_600_000,
-    "1985-86": 4_233_000,
-    "1986-87": 4_945_000,
-    "1987-88": 6_164_000,
-    "1988-89": 7_232_000,
-    "1989-90": 9_802_000,
-    "1990-91": 11_871_000,
-    "1991-92": 12_500_000,
-    "1992-93": 14_000_000,
-    "1993-94": 15_175_000,
-    "1994-95": 15_964_000,
-    "1995-96": 23_000_000,
-    "1996-97": 24_363_000,
-    "1997-98": 26_900_000,
-    "1998-99": 30_000_000,
-    "1999-00": 34_000_000,
-    "2000-01": 35_500_000,
-    "2001-02": 42_500_000,
-    "2002-03": 40_271_000,
-    "2003-04": 43_840_000,
-    "2004-05": 43_870_000,
-    "2005-06": 49_500_000,
-    "2006-07": 53_135_000,
-    "2007-08": 55_630_000,
-    "2008-09": 58_680_000,
-    "2009-10": 57_700_000,
-    "2010-11": 58_044_000,
-    "2011-12": 58_044_000,
-    "2012-13": 58_044_000,
-    "2013-14": 58_679_000,
-    "2014-15": 63_065_000,
-    "2015-16": 70_000_000,
-    "2016-17": 94_143_000,
-    "2017-18": 99_093_000,
-    "2018-19": 101_869_000,
-    "2019-20": 109_140_000,
-    "2020-21": 109_140_000,
-    "2021-22": 112_414_000,
-    "2022-23": 123_655_000,
-    "2023-24": 136_021_000,
-    "2024-25": 140_588_000,
-    "2025-26": 154_647_000,
-}
 
 
 def load_salary_cap(con: sqlite3.Connection) -> int:
@@ -318,7 +248,9 @@ def load_player_salaries(
     rows_to_insert: list[dict] = []
     unmatched_names: set[str] = set()
 
-    for nba_abbr, bref_abbr in _ABBR_TO_BREF.items():
+    # Get all NBA abbreviations from dim_team
+    for nba_abbr in team_abbr_to_id.keys():
+        bref_abbr = _abbr_to_bref(nba_abbr)
         team_id = team_abbr_to_id.get(nba_abbr)
         if not team_id:
             logger.debug("Team %s not found in dim_team; skipping.", nba_abbr)

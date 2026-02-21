@@ -11,11 +11,12 @@ Strategy
 
 import logging
 import sqlite3
-import time
 
 from nba_api.stats.endpoints import commonteamroster
 
-from .utils import call_with_backoff, load_cache, save_cache, upsert_rows
+from .api_client import APICaller
+from .metrics import record_etl_rows
+from .utils import load_cache, save_cache, upsert_rows
 
 logger = logging.getLogger(__name__)
 
@@ -33,11 +34,15 @@ def load_team_roster(
     *,
     valid_players: set[str] | None = None,
     valid_teams: set[str] | None = None,
+    api_caller: APICaller | None = None,
 ) -> int:
     """
     Load fact_roster for one team in one season.
     Returns number of rows inserted.
     """
+    if api_caller is None:
+        api_caller = APICaller()
+
     cache_key = f"roster_{team_id}_{season_id}"
     cached = load_cache(cache_key)
     if cached is not None:
@@ -58,7 +63,7 @@ def load_team_roster(
                     return []
                 return df.to_dict(orient="records")
 
-            records = call_with_backoff(_fetch, label=f"CommonTeamRoster({team_id},{season_id})")
+            records = api_caller.call_with_backoff(_fetch, label=f"CommonTeamRoster({team_id},{season_id})")
             if not records:
                 return 0
 
@@ -96,12 +101,15 @@ def load_team_roster(
 def load_season_rosters(
     con: sqlite3.Connection,
     season_id: str,
-    inter_call_sleep: float = 2.5,
+    api_caller: APICaller | None = None,
 ) -> int:
     """
     Load fact_roster for all teams in dim_team for the given season.
     Returns total rows inserted.
     """
+    if api_caller is None:
+        api_caller = APICaller()
+
     cur = con.execute("SELECT team_id FROM dim_team")
     team_ids = [r[0] for r in cur.fetchall()]
     cur = con.execute("SELECT player_id FROM dim_player")
@@ -114,11 +122,13 @@ def load_season_rosters(
             con, tid, season_id,
             valid_players=valid_players,
             valid_teams=valid_teams,
+            api_caller=api_caller,
         )
         if (i + 1) % 5 == 0:
             logger.info("Roster: %d/%d teams processed for %s.", i + 1, len(team_ids), season_id)
-        time.sleep(inter_call_sleep)
+        api_caller.sleep_between_calls()
     logger.info("fact_roster: %d total rows for %s.", total, season_id)
+    record_etl_rows("fact_roster", season_id, total)
     return total
 
 

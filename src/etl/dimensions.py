@@ -19,9 +19,11 @@ from nba_api.stats.endpoints import commonallplayers, commonplayerinfo
 from nba_api.stats.static import players as nba_players_static
 from nba_api.stats.static import teams as nba_teams_static
 
+from .api_client import APICaller
+from .config import get_team_metadata
+from .metrics import record_etl_rows
 from .utils import (
     already_loaded,
-    call_with_backoff,
     load_cache,
     record_run,
     save_cache,
@@ -359,12 +361,19 @@ def load_players_static(con: sqlite3.Connection) -> int:
         raise
 
 
-def load_players_full(con: sqlite3.Connection, season_id: str = "2024-25") -> int:
+def load_players_full(
+    con: sqlite3.Connection,
+    season_id: str = "2024-25",
+    api_caller: APICaller | None = None,
+) -> int:
     """
     Deeper player load via CommonAllPlayers endpoint for a given season.
     Fetches richer metadata and fills gaps left by the static dataset.
     Falls back to cached data if the API call fails.
     """
+    if api_caller is None:
+        api_caller = APICaller()
+
     loader_id = f"dimensions.load_players_full.{season_id}"
     if already_loaded(con, "dim_player", None, loader_id):
         logger.info("Skipping dim_player full (already loaded)")
@@ -388,7 +397,7 @@ def load_players_full(con: sqlite3.Connection, season_id: str = "2024-25") -> in
             )
             return ep.get_data_frames()[0].to_dict(orient="records")
 
-        records = call_with_backoff(_fetch, label=f"CommonAllPlayers({season_id})")
+        records = api_caller.call_with_backoff(_fetch, label=f"CommonAllPlayers({season_id})")
         save_cache(cache_key, records)
 
     # Normalise column names to lower-case
@@ -412,11 +421,14 @@ def load_players_bio_enrichment(
     con: sqlite3.Connection,
     player_ids: list[str] | None = None,
     active_only: bool = True,
+    api_caller: APICaller | None = None,
 ) -> int:
     """
     Enrich dim_player with bio data (height, weight, birth_date, draft info, etc.)
     via CommonPlayerInfo. One API call per player; use active_only=True to limit.
     """
+    if api_caller is None:
+        api_caller = APICaller()
     loader_id = f"dimensions.load_players_bio_enrichment.active_{active_only}"
     selected_from_db = player_ids is None
     if selected_from_db and already_loaded(con, "dim_player", None, loader_id):
@@ -451,7 +463,7 @@ def load_players_bio_enrichment(
                     return None
                 return df.iloc[0].to_dict()
 
-            record = call_with_backoff(_fetch, label=f"CommonPlayerInfo({pid})")
+            record = api_caller.call_with_backoff(_fetch, label=f"CommonPlayerInfo({pid})")
             if record:
                 save_cache(cache_key, record)
                 rows.append(_map_common_player_info(record))
@@ -459,7 +471,7 @@ def load_players_bio_enrichment(
             logger.warning("CommonPlayerInfo(%s) failed: %s", pid, exc)
         if (i + 1) % 50 == 0:
             logger.info("Bio enrichment: %d/%d players processed.", i + 1, len(player_ids))
-        time.sleep(2.5)
+        api_caller.sleep_between_calls()
 
     if rows:
         try:

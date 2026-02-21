@@ -12,8 +12,8 @@ Strategy
 Rate-limit notes
 ----------------
 * nba_api hits stats.nba.com which bans aggressive scrapers.
-* call_with_backoff() wraps every API call with exponential back-off.
-* A base_sleep of 3 s between calls is the community-recommended minimum.
+* APICaller wraps every API call with exponential back-off and configurable delays.
+* Delays are configurable via APIConfig or environment variables.
 """
 
 import logging
@@ -23,9 +23,10 @@ from datetime import UTC
 import pandas as pd
 from nba_api.stats.endpoints import playergamelogs
 
+from .api_client import APICaller
+from .metrics import ETLTimer, record_etl_rows
 from .utils import (
     already_loaded,
-    call_with_backoff,
     load_cache,
     log_load_summary,
     record_run,
@@ -91,7 +92,11 @@ _TEAM_SUM_COLS = [
 # Fetch raw data                                                      #
 # ------------------------------------------------------------------ #
 
-def _fetch_player_game_logs(season: str, season_type: str = "Regular Season") -> pd.DataFrame:
+def _fetch_player_game_logs(
+    season: str,
+    season_type: str = "Regular Season",
+    api_caller: APICaller | None = None,
+) -> pd.DataFrame:
     """
     Pull all player game logs for *season* (e.g. '2023-24').
     Returns a raw DataFrame with original nba_api column names.
@@ -102,6 +107,9 @@ def _fetch_player_game_logs(season: str, season_type: str = "Regular Season") ->
         logger.info("player_game_logs: loaded from cache for %s.", season)
         return pd.DataFrame(cached)
 
+    if api_caller is None:
+        api_caller = APICaller()
+
     def _call():
         ep = playergamelogs.PlayerGameLogs(
             season_nullable=season,
@@ -110,7 +118,7 @@ def _fetch_player_game_logs(season: str, season_type: str = "Regular Season") ->
         )
         return ep.get_data_frames()[0]
 
-    df = call_with_backoff(_call, label=f"PlayerGameLogs({season})")
+    df = api_caller.call_with_backoff(_call, label=f"PlayerGameLogs({season})")
     save_cache(cache_key, df.to_dict(orient="records"))
     logger.info("player_game_logs: fetched %d rows for %s.", len(df), season)
     return df
@@ -205,6 +213,7 @@ def load_season(
     con: sqlite3.Connection,
     season: str,
     season_type: str = "Regular Season",
+    api_caller: APICaller | None = None,
 ) -> dict[str, int]:
     """
     Fetch and load all game-log data for *season* (e.g. '2023-24').
@@ -218,7 +227,9 @@ def load_season(
     from datetime import datetime
     started_at = datetime.now(UTC).isoformat()
 
-    df = _fetch_player_game_logs(season, season_type)
+    with ETLTimer("player_game_log", season):
+        df = _fetch_player_game_logs(season, season_type, api_caller)
+
     if df.empty:
         logger.warning("No data returned for %s %s.", season, season_type)
         record_run(con, "fact_game", season, loader_id, 0, "empty", started_at)
@@ -248,6 +259,11 @@ def load_season(
     record_run(con, "player_game_log", season, loader_id, n_players, "ok", started_at)
     record_run(con, "team_game_log", season, loader_id, n_teams, "ok", started_at)
 
+    # Record metrics
+    record_etl_rows("fact_game", season, n_games)
+    record_etl_rows("player_game_log", season, n_players)
+    record_etl_rows("team_game_log", season, n_teams)
+
     log_load_summary(con, "fact_game", season)
     log_load_summary(con, "player_game_log", season)
     log_load_summary(con, "team_game_log", season)
@@ -259,23 +275,25 @@ def load_multiple_seasons(
     con: sqlite3.Connection,
     seasons: list[str],
     season_types: list[str] | None = None,
-    inter_call_sleep: float = 3.0,
+    api_caller: APICaller | None = None,
 ) -> None:
     """
     Convenience wrapper to load several seasons sequentially with sleep
     between calls to stay under nba_api rate limits.
     """
-    import time
+    if api_caller is None:
+        api_caller = APICaller()
+
     if season_types is None:
         season_types = ["Regular Season", "Playoffs"]
 
     for season in seasons:
         for s_type in season_types:
             try:
-                load_season(con, season, s_type)
+                load_season(con, season, s_type, api_caller)
             except Exception as exc:
                 logger.error("Failed %s %s: %s", season, s_type, exc)
-            time.sleep(inter_call_sleep)
+            api_caller.sleep_between_calls()
 
 
 if __name__ == "__main__":  # pragma: no cover
