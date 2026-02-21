@@ -148,6 +148,38 @@ def test_views_are_queryable(duck_con_with_sqlite) -> None:
         duck_con_with_sqlite.execute(f"SELECT 1 FROM ({_view_sql(name, duck_con_with_sqlite)}) LIMIT 0")
 
 
+def test_get_duck_con_singleton(tmp_path) -> None:
+    """Ensure get_duck_con returns the cached connection when called twice."""
+    from src.db.analytics import get_duck_con
+    import src.db.analytics as analytics
+    import sqlite3
+    
+    # reset singleton for test
+    analytics._cached_con = None
+    
+    sqlite_file = tmp_path / "test_singleton.db"
+    con1 = sqlite3.connect(sqlite_file)
+    from src.db.schema import DDL_STATEMENTS, ALTER_STATEMENTS
+    for ddl in DDL_STATEMENTS:
+        con1.execute(ddl)
+    for alter in ALTER_STATEMENTS:
+        try:
+            con1.execute(alter)
+        except sqlite3.OperationalError:
+            pass
+    con1.close()
+    
+    duck1 = get_duck_con(sqlite_path=sqlite_file)
+    duck2 = get_duck_con(sqlite_path=sqlite_file)
+    
+    assert duck1 is duck2
+    
+    duck3 = get_duck_con(sqlite_path=sqlite_file, force_refresh=True)
+    assert duck1 is not duck3
+    
+    analytics._cached_con = None
+
+
 def _view_sql(view_name: str, con: duckdb.DuckDBPyConnection) -> str:
     """Retrieve the underlying SQL of a view for wrapping in a subquery."""
     from src.db.analytics import _VIEWS

@@ -18,7 +18,10 @@ from nba_api.stats.endpoints import commonallplayers, commonplayerinfo
 from nba_api.stats.static import players as nba_players_static
 from nba_api.stats.static import teams as nba_teams_static
 
-from .utils import call_with_backoff, load_cache, save_cache, upsert_rows
+from .utils import (
+    call_with_backoff, load_cache, save_cache, upsert_rows,
+    already_loaded, record_run
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +39,14 @@ def _season_id(start_year: int) -> str:
 
 def load_seasons(con: sqlite3.Connection, up_to_start_year: int = 2024) -> int:
     """Seed dim_season from the inaugural 1946-47 season through *up_to_start_year*."""
+    loader_id = "dimensions.load_seasons"
+    if already_loaded(con, "dim_season", None, loader_id):
+        logger.info("Skipping dim_season (already loaded)")
+        return 0
+
+    from datetime import datetime, timezone
+    started_at = datetime.now(timezone.utc).isoformat()
+
     rows = []
     for y in range(NBA_FIRST_SEASON_START, up_to_start_year + 1):
         rows.append({
@@ -45,6 +56,8 @@ def load_seasons(con: sqlite3.Connection, up_to_start_year: int = 2024) -> int:
         })
     inserted = upsert_rows(con, "dim_season", rows)
     logger.info("dim_season: %d rows upserted.", inserted)
+    
+    record_run(con, "dim_season", None, loader_id, inserted, "ok", started_at)
     return inserted
 
 

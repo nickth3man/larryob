@@ -467,6 +467,23 @@ DDL_STATEMENTS = [
     "CREATE INDEX IF NOT EXISTS idx_pas_season      ON fact_player_advanced_season(season_id);",
     "CREATE INDEX IF NOT EXISTS idx_pshoot_player   ON fact_player_shooting_season(bref_player_id);",
     "CREATE INDEX IF NOT EXISTS idx_ppbp_player     ON fact_player_pbp_season(bref_player_id);",
+    
+    # ------------------------------------------------------------------ #
+    # Internal: ETL Run Log                                               #
+    # ------------------------------------------------------------------ #
+    """
+    CREATE TABLE IF NOT EXISTS etl_run_log (
+        id          INTEGER PRIMARY KEY,
+        table_name  TEXT NOT NULL,
+        season_id   TEXT,
+        loader      TEXT NOT NULL,       -- e.g. 'game_logs.load_season'
+        started_at  TEXT NOT NULL,       -- ISO-8601 UTC
+        finished_at TEXT,
+        row_count   INTEGER,
+        status      TEXT NOT NULL        -- 'ok' | 'error'
+    ) STRICT;
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_runlog_table_season ON etl_run_log(table_name, season_id);",
 ]
 
 

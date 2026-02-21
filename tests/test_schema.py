@@ -19,7 +19,7 @@ def test_all_tables_created(sqlite_con: sqlite3.Connection) -> None:
         "fact_game", "fact_roster",
         "player_game_log", "team_game_log",
         "fact_play_by_play", "fact_player_award",
-        "dim_salary_cap", "fact_salary",
+        "dim_salary_cap", "fact_salary", "etl_run_log",
     }
     assert expected.issubset(tables), f"Missing tables: {expected - tables}"
 

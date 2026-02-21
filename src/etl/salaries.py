@@ -20,7 +20,11 @@ from typing import cast
 import pandas as pd
 import requests
 
-from .utils import load_cache, save_cache, upsert_rows
+from .utils import (
+    load_cache, save_cache, upsert_rows,
+    already_loaded, record_run, transaction
+)
+from .validate import validate_rows
 
 logger = logging.getLogger(__name__)
 
@@ -290,8 +294,15 @@ def load_player_salaries(
     int
         Number of rows inserted/replaced.
     """
-    import datetime
-    current_year = datetime.date.today().year
+    loader_id = "salaries.load_player_salaries"
+    if already_loaded(con, "fact_salary", season_id, loader_id):
+        logger.info("Skipping player salaries for %s (already loaded)", season_id)
+        return 0
+
+    from datetime import datetime, timezone
+    started_at = datetime.now(timezone.utc).isoformat()
+    import datetime as dt
+    current_year = dt.date.today().year
     end_year = int(season_id.split("-")[0]) + 1  # '2023-24' → 2024
 
     # Ensure dim_season covers this season (FK guard)
@@ -367,10 +378,14 @@ def load_player_salaries(
             "fact_salary (%s): no rows to insert.",
             season_id,
         )
+        record_run(con, "fact_salary", season_id, loader_id, 0, "ok", started_at)
         return 0
 
+    rows_to_insert = validate_rows("fact_salary", rows_to_insert)
     inserted = upsert_rows(con, "fact_salary", rows_to_insert, conflict="REPLACE")
     logger.info("fact_salary (%s): %d rows upserted.", season_id, inserted)
+    
+    record_run(con, "fact_salary", season_id, loader_id, inserted, "ok", started_at)
     return inserted
 
 

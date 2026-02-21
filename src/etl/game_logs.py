@@ -22,7 +22,11 @@ import sqlite3
 import pandas as pd
 from nba_api.stats.endpoints import playergamelogs
 
-from .utils import call_with_backoff, load_cache, save_cache, upsert_rows
+from .utils import (
+    call_with_backoff, load_cache, save_cache, upsert_rows,
+    already_loaded, record_run, log_load_summary, transaction
+)
+from .validate import validate_rows
 
 logger = logging.getLogger(__name__)
 
@@ -199,6 +203,14 @@ def load_season(
     Fetch and load all game-log data for *season* (e.g. '2023-24').
     Returns a dict with counts of rows inserted per table.
     """
+    loader_id = f"game_logs.load_season.{season_type}"
+    if already_loaded(con, "player_game_log", season, loader_id):
+        logger.info("Skipping game logs for %s %s (already loaded)", season, season_type)
+        return {}
+
+    from datetime import datetime, timezone
+    started_at = datetime.now(timezone.utc).isoformat()
+
     df = _fetch_player_game_logs(season, season_type)
     if df.empty:
         logger.warning("No data returned for %s %s.", season, season_type)
@@ -208,14 +220,26 @@ def load_season(
     player_rows = _build_player_rows(df)
     team_rows = _build_team_rows(df)
 
-    n_games = upsert_rows(con, "fact_game", game_rows)
-    n_players = upsert_rows(con, "player_game_log", player_rows)
-    n_teams = upsert_rows(con, "team_game_log", team_rows)
+    game_rows = validate_rows("fact_game", game_rows)
+    player_rows = validate_rows("player_game_log", player_rows)
+    team_rows = validate_rows("team_game_log", team_rows)
+
+    with transaction(con):
+        n_games = upsert_rows(con, "fact_game", game_rows, autocommit=False)
+        n_players = upsert_rows(con, "player_game_log", player_rows, autocommit=False)
+        n_teams = upsert_rows(con, "team_game_log", team_rows, autocommit=False)
 
     logger.info(
         "Season %s %s → games: %d, player_logs: %d, team_logs: %d",
         season, season_type, n_games, n_players, n_teams,
     )
+    
+    log_load_summary(con, "fact_game", season)
+    log_load_summary(con, "player_game_log", season)
+    log_load_summary(con, "team_game_log", season)
+
+    record_run(con, "player_game_log", season, loader_id, n_players, "ok", started_at)
+
     return {"fact_game": n_games, "player_game_log": n_players, "team_game_log": n_teams}
 
 

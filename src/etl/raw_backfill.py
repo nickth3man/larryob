@@ -32,7 +32,8 @@ from typing import Any
 
 import pandas as pd  # type: ignore[import-untyped]
 
-from src.etl.utils import upsert_rows
+from src.etl.utils import upsert_rows, transaction, log_load_summary
+from src.etl.validate import validate_rows
 
 logger = logging.getLogger(__name__)
 
@@ -400,10 +401,11 @@ def load_games(con: sqlite3.Connection, raw_dir: Path = RAW_DIR) -> None:
             "attendance":   attendance,
         })
 
-    inserted = upsert_rows(con, "fact_game", rows)
+    inserted = upsert_rows(con, "fact_game", validate_rows("fact_game", rows))
     logger.info(
         "fact_game (Games.csv): %d inserted/ignored, %d skipped", inserted, skipped
     )
+    log_load_summary(con, "fact_game")
 
 
 # --------------------------------------------------------------------------- #
@@ -553,14 +555,16 @@ def load_player_game_logs(
                 "starter": None,
             })
 
-        inserted = upsert_rows(con, "player_game_log", rows)
+        inserted = upsert_rows(con, "player_game_log", validate_rows("player_game_log", rows), autocommit=False)
         total += inserted
         logger.debug("player_game_log chunk: +%d rows", inserted)
 
+    con.commit()
     logger.info(
         "player_game_log (PlayerStatistics.csv): %d inserted/ignored, %d skipped",
         total, skipped,
     )
+    log_load_summary(con, "player_game_log")
 
 
 # --------------------------------------------------------------------------- #
@@ -614,11 +618,12 @@ def load_team_game_logs(
             "plus_minus": _int(row.get("plusMinusPoints")),
         })
 
-    inserted = upsert_rows(con, "team_game_log", rows)
+    inserted = upsert_rows(con, "team_game_log", validate_rows("team_game_log", rows))
     logger.info(
         "team_game_log (TeamStatistics.csv): %d inserted/ignored, %d skipped",
         inserted, skipped,
     )
+    log_load_summary(con, "team_game_log")
 
 
 # --------------------------------------------------------------------------- #
@@ -861,10 +866,11 @@ def load_player_season_stats(
             "pts":   _int(row.get("pts")),
         })
 
-    inserted = upsert_rows(con, "fact_player_season_stats", rows)
+    inserted = upsert_rows(con, "fact_player_season_stats", validate_rows("fact_player_season_stats", rows))
     logger.info(
         "fact_player_season_stats: %d inserted/ignored, %d skipped", inserted, skipped
     )
+    log_load_summary(con, "fact_player_season_stats")
 
 
 # --------------------------------------------------------------------------- #
@@ -934,10 +940,11 @@ def load_player_advanced(
             "vorp":   _flt(row.get("vorp")),
         })
 
-    inserted = upsert_rows(con, "fact_player_advanced_season", rows)
+    inserted = upsert_rows(con, "fact_player_advanced_season", validate_rows("fact_player_advanced_season", rows))
     logger.info(
         "fact_player_advanced_season: %d inserted/ignored, %d skipped", inserted, skipped
     )
+    log_load_summary(con, "fact_player_advanced_season")
 
 
 # --------------------------------------------------------------------------- #
@@ -997,10 +1004,11 @@ def load_player_shooting(
             "corner3_pct":     _flt(row.get("corner_3_point_percent")),
         })
 
-    inserted = upsert_rows(con, "fact_player_shooting_season", rows)
+    inserted = upsert_rows(con, "fact_player_shooting_season", validate_rows("fact_player_shooting_season", rows))
     logger.info(
         "fact_player_shooting_season: %d inserted/ignored, %d skipped", inserted, skipped
     )
+    log_load_summary(con, "fact_player_shooting_season")
 
 
 # --------------------------------------------------------------------------- #
@@ -1067,6 +1075,7 @@ def load_player_pbp_season(
     logger.info(
         "fact_player_pbp_season: %d inserted/ignored, %d skipped", inserted, skipped
     )
+    log_load_summary(con, "fact_player_pbp_season")
 
 
 # --------------------------------------------------------------------------- #

@@ -637,9 +637,13 @@ _VIEWS: list[tuple[str, str]] = [
 ]
 
 
+_cached_con: duckdb.DuckDBPyConnection | None = None
+
 def get_duck_con(
     sqlite_path: Path = SQLITE_DB,
     duck_db_path: str = ":memory:",
+    *,
+    force_refresh: bool = False,
 ) -> duckdb.DuckDBPyConnection:
     """
     Return an open DuckDB connection with the SQLite database attached
@@ -652,7 +656,13 @@ def get_duck_con(
     duck_db_path : str
         ':memory:' for ephemeral analytics, or a file path to persist
         DuckDB's own native columnar store alongside SQLite.
+    force_refresh : bool
+        If True, recreates the connection and all views even if cached.
     """
+    global _cached_con
+    if _cached_con is not None and not force_refresh:
+        return _cached_con
+
     con = duckdb.connect(duck_db_path)
 
     # Install & load the sqlite extension (bundled with DuckDB ≥ 0.8)
@@ -669,6 +679,7 @@ def get_duck_con(
         logger.debug("View created: %s", name)
 
     logger.info("DuckDB analytics layer ready (%d views).", len(_VIEWS))
+    _cached_con = con
     return con
 
 
