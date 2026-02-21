@@ -20,7 +20,5 @@ wheels/
 *.db-shm
 *.db-wal
 /raw
-
-# Coverage output
 .coverage
 coverage.json
