@@ -18,13 +18,20 @@ Rate-limit notes
 
 import logging
 import sqlite3
+from datetime import UTC
 
 import pandas as pd
 from nba_api.stats.endpoints import playergamelogs
 
 from .utils import (
-    call_with_backoff, load_cache, save_cache, upsert_rows,
-    already_loaded, record_run, log_load_summary, transaction
+    already_loaded,
+    call_with_backoff,
+    load_cache,
+    log_load_summary,
+    record_run,
+    save_cache,
+    transaction,
+    upsert_rows,
 )
 from .validate import validate_rows
 
@@ -208,12 +215,15 @@ def load_season(
         logger.info("Skipping game logs for %s %s (already loaded)", season, season_type)
         return {}
 
-    from datetime import datetime, timezone
-    started_at = datetime.now(timezone.utc).isoformat()
+    from datetime import datetime
+    started_at = datetime.now(UTC).isoformat()
 
     df = _fetch_player_game_logs(season, season_type)
     if df.empty:
         logger.warning("No data returned for %s %s.", season, season_type)
+        record_run(con, "fact_game", season, loader_id, 0, "empty", started_at)
+        record_run(con, "player_game_log", season, loader_id, 0, "empty", started_at)
+        record_run(con, "team_game_log", season, loader_id, 0, "empty", started_at)
         return {}
 
     game_rows = _build_game_rows(df, season, season_type)
@@ -233,12 +243,14 @@ def load_season(
         "Season %s %s → games: %d, player_logs: %d, team_logs: %d",
         season, season_type, n_games, n_players, n_teams,
     )
-    
+
+    record_run(con, "fact_game", season, loader_id, n_games, "ok", started_at)
+    record_run(con, "player_game_log", season, loader_id, n_players, "ok", started_at)
+    record_run(con, "team_game_log", season, loader_id, n_teams, "ok", started_at)
+
     log_load_summary(con, "fact_game", season)
     log_load_summary(con, "player_game_log", season)
     log_load_summary(con, "team_game_log", season)
-
-    record_run(con, "player_game_log", season, loader_id, n_players, "ok", started_at)
 
     return {"fact_game": n_games, "player_game_log": n_players, "team_game_log": n_teams}
 
@@ -266,7 +278,7 @@ def load_multiple_seasons(
             time.sleep(inter_call_sleep)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     from src.db.schema import init_db
     logging.basicConfig(level=logging.INFO)
     con = init_db()

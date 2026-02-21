@@ -148,16 +148,18 @@ def test_views_are_queryable(duck_con_with_sqlite) -> None:
         duck_con_with_sqlite.execute(f"SELECT 1 FROM ({_view_sql(name, duck_con_with_sqlite)}) LIMIT 0")
 
 
-def test_get_duck_con_singleton(tmp_path) -> None:
+def test_get_duck_con_singleton(tmp_path, monkeypatch) -> None:
     """Ensure get_duck_con returns the cached connection when called twice."""
     from src.db.analytics import get_duck_con
     import src.db.analytics as analytics
-    import sqlite3
     
     # reset singleton for test
-    analytics._cached_con = None
+    monkeypatch.setattr(analytics, "_cached_con", None)
+    monkeypatch.setattr(analytics, "_cached_sqlite_path", None)
+    monkeypatch.setattr(analytics, "_cached_duck_db_path", None)
     
     sqlite_file = tmp_path / "test_singleton.db"
+    import sqlite3
     con1 = sqlite3.connect(sqlite_file)
     from src.db.schema import DDL_STATEMENTS, ALTER_STATEMENTS
     for ddl in DDL_STATEMENTS:
@@ -177,7 +179,8 @@ def test_get_duck_con_singleton(tmp_path) -> None:
     duck3 = get_duck_con(sqlite_path=sqlite_file, force_refresh=True)
     assert duck1 is not duck3
     
-    analytics._cached_con = None
+    duck1.close()
+    duck3.close()
 
 
 def _view_sql(view_name: str, con: duckdb.DuckDBPyConnection) -> str:

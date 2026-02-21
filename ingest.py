@@ -35,7 +35,7 @@ from src.db.schema import init_db
 
 load_dotenv()
 from src.etl.awards import load_all_awards
-from src.etl.raw_backfill import run_raw_backfill
+from src.etl.raw_backfill import run_raw_backfill, RAW_DIR
 from src.etl.utils import setup_logging
 from src.etl.dimensions import run_all as run_dimensions
 from src.etl.game_logs import load_multiple_seasons
@@ -118,8 +118,7 @@ def main() -> None:
         enrich_bio=args.enrich_bio,
     )
 
-    if args.raw_backfill:
-        from src.etl.raw_backfill import RAW_DIR
+    if args.raw_backfill and not args.dims_only:
         raw_dir = Path(args.raw_dir) if args.raw_dir else RAW_DIR
         logger.info("Running raw/ backfill from %s…", raw_dir)
         run_raw_backfill(con, raw_dir)

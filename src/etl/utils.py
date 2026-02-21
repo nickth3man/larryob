@@ -8,6 +8,8 @@ import sqlite3
 import sys
 import time
 from collections.abc import Callable
+from contextlib import contextmanager
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -96,9 +98,6 @@ def load_cache(key: str, ttl_days: float | None = None) -> Any | None:
                     if age_seconds > ttl_days * 86400:
                         return None
                 return data["data"]
-            # Fallback for old cache format (v1)
-            if CACHE_VERSION == 1:
-                return data
             return None
         except json.JSONDecodeError:
             return None
@@ -118,6 +117,8 @@ def save_cache(key: str, data: Any) -> None:
 # Generic bulk-insert helper for SQLite                                       #
 # --------------------------------------------------------------------------- #
 
+_VALID_CONFLICT = frozenset({"IGNORE", "REPLACE", "ABORT", "ROLLBACK", "FAIL"})
+
 def upsert_rows(
     con: sqlite3.Connection,
     table: str,
@@ -131,22 +132,32 @@ def upsert_rows(
     """
     if not rows:
         return 0
+    if conflict and conflict.upper() not in _VALID_CONFLICT:
+        raise ValueError(f"Invalid conflict clause: {conflict!r}")
+    
     columns = list(rows[0].keys())
     placeholders = ", ".join("?" * len(columns))
     col_list = ", ".join(columns)
-    sql = f"INSERT OR {conflict} INTO {table} ({col_list}) VALUES ({placeholders})"
+    or_clause = f" OR {conflict}" if conflict else ""
+    sql = f"INSERT{or_clause} INTO {table} ({col_list}) VALUES ({placeholders})"
     data = [tuple(r[c] for c in columns) for r in rows]
-    cur = con.executemany(sql, data)
-    if autocommit:
-        con.commit()
-    return cur.rowcount
+    
+    try:
+        cur = con.executemany(sql, data)
+        if autocommit:
+            con.commit()
+        return cur.rowcount
+    except sqlite3.OperationalError as e:
+        if "no such table" in str(e).lower():
+            return 0
+        logger.debug("OperationalError in upsert_rows: %s", e)
+        return 0
 
 
 # --------------------------------------------------------------------------- #
 # ETL Run Log & Auditing Helpers                                              #
 # --------------------------------------------------------------------------- #
 
-from datetime import datetime, timezone
 
 def already_loaded(
     con: sqlite3.Connection,
@@ -163,11 +174,14 @@ def already_loaded(
             params.append(season_id)
         else:
             sql += " AND season_id IS NULL"
-        
+
         cur = con.execute(sql, params)
         return cur.fetchone() is not None
-    except sqlite3.OperationalError:
+    except sqlite3.OperationalError as e:
         # Table might not exist yet during first-time bootstrap
+        if "no such table" in str(e).lower():
+            return False
+        logger.debug("OperationalError in already_loaded: %s", e)
         return False
 
 def record_run(
@@ -181,7 +195,7 @@ def record_run(
 ) -> None:
     """Log an ETL run in the etl_run_log table."""
     try:
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         start = started_at or now
         con.execute(
             """
@@ -192,8 +206,11 @@ def record_run(
             (table, season_id, loader, start, now, row_count, status)
         )
         con.commit()
-    except sqlite3.OperationalError:
-        pass
+    except sqlite3.OperationalError as e:
+        if "no such table" in str(e).lower():
+            pass
+        else:
+            logger.debug("OperationalError in record_run: %s", e)
 
 
 def log_load_summary(
@@ -204,23 +221,32 @@ def log_load_summary(
 ) -> int:
     """Log actual row count for table (optionally filtered by season_id)."""
     sql = f"SELECT COUNT(*) FROM {table}"
-    params = []
+    params: list = []
     if season_id:
-        sql += " WHERE season_id = ?"
-        params.append(season_id)
-    
+        cols = {row[1] for row in con.execute(f"PRAGMA table_info({table})").fetchall()}
+        if "season_id" in cols:
+            sql += " WHERE season_id = ?"
+            params.append(season_id)
+        elif "game_id" in cols:
+            sql = (
+                f"SELECT COUNT(*) FROM {table} t"
+                f" JOIN fact_game g ON g.game_id = t.game_id"
+                f" WHERE g.season_id = ?"
+            )
+            params.append(season_id)
+
     count = con.execute(sql, params).fetchone()[0]
-    
+
     msg = f"Table {table}"
     if season_id:
         msg += f" (season {season_id})"
     msg += f" loaded {count:,} rows"
-    
+
     if count < min_rows:
         logger.warning("%s (Expected minimum %d rows!)", msg, min_rows)
     else:
         logger.info(msg)
-    
+
     return count
 
 
@@ -228,7 +254,6 @@ def log_load_summary(
 # Transaction Context Manager                                                 #
 # --------------------------------------------------------------------------- #
 
-from contextlib import contextmanager
 
 @contextmanager
 def transaction(con: sqlite3.Connection):
@@ -237,8 +262,6 @@ def transaction(con: sqlite3.Connection):
     Yields the connection. Commits on success, rolls back on exception.
     """
     try:
-        # SQLite python module manages transactions automatically, but we can explicitly begin
-        con.execute("BEGIN;")
         yield con
         con.commit()
     except Exception:

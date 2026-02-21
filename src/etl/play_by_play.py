@@ -23,13 +23,20 @@ EVENTMSGTYPE reference
 import logging
 import sqlite3
 from collections.abc import Iterable
+from datetime import UTC
 
 import pandas as pd
 from nba_api.stats.endpoints import playbyplayv2
 
 from .utils import (
-    call_with_backoff, load_cache, save_cache, upsert_rows,
-    already_loaded, record_run, log_load_summary, transaction
+    already_loaded,
+    call_with_backoff,
+    load_cache,
+    log_load_summary,
+    record_run,
+    save_cache,
+    transaction,
+    upsert_rows,
 )
 from .validate import validate_rows
 
@@ -179,13 +186,13 @@ def load_season_pbp(
     limit : int | None
         If set, only process the first *limit* games (useful for testing).
     """
-    loader_id = f"play_by_play.load_season.{limit}" if limit else "play_by_play.load_season"
+    loader_id = "play_by_play.load_season"
     if already_loaded(con, "fact_play_by_play", season, loader_id):
         logger.info("Skipping play by play for %s (already loaded)", season)
         return 0
 
-    from datetime import datetime, timezone
-    started_at = datetime.now(timezone.utc).isoformat()
+    from datetime import datetime
+    started_at = datetime.now(UTC).isoformat()
 
     cursor = con.execute(
         "SELECT game_id FROM fact_game WHERE season_id = ? ORDER BY game_date",
@@ -195,16 +202,17 @@ def load_season_pbp(
     if limit:
         game_ids = game_ids[:limit]
     logger.info("Loading PBP for %d games in season %s.", len(game_ids), season)
-    
+
     total = load_games(con, game_ids)
-    
+
+    status = "partial" if limit else "ok"
+    record_run(con, "fact_play_by_play", season, loader_id, total, status, started_at)
     log_load_summary(con, "fact_play_by_play", season)
-    record_run(con, "fact_play_by_play", season, loader_id, total, "ok", started_at)
-    
+
     return total
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     from src.db.schema import init_db
     logging.basicConfig(level=logging.INFO)
     con = init_db()

@@ -3,9 +3,9 @@ Centralized business-rule validation for ETL output rows.
 """
 
 import logging
-import sqlite3
 import re
-from typing import Any, Callable
+import sqlite3
+from collections.abc import Callable
 
 logger = logging.getLogger(__name__)
 
@@ -26,12 +26,12 @@ def _gte_zero(col: str) -> Callable[[dict], bool]:
         return v >= 0
     return fn
 
-def _pct_bounds(col: str) -> Callable[[dict], bool]:
+def _pct_bounds(col: str, upper: float = 1.0) -> Callable[[dict], bool]:
     def fn(row: dict) -> bool:
         v = row.get(col)
         if v is None:
             return True
-        return 0.0 <= v <= 1.0
+        return 0.0 <= v <= upper
     return fn
 
 def _sum_equals(cols: list[str], target_col: str) -> Callable[[dict], bool]:
@@ -44,12 +44,16 @@ def _sum_equals(cols: list[str], target_col: str) -> Callable[[dict], bool]:
     return fn
 
 def _date_format(col: str) -> Callable[[dict], bool]:
-    pattern = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+    from datetime import datetime
     def fn(row: dict) -> bool:
         v = row.get(col)
         if v is None:
             return True
-        return bool(pattern.match(str(v)))
+        try:
+            datetime.strptime(str(v), "%Y-%m-%d")
+            return True
+        except ValueError:
+            return False
     return fn
 
 
@@ -75,7 +79,7 @@ RULES: dict[str, list[tuple[str, Callable[[dict], bool], str]]] = {
         ("game_date", _date_format("game_date"), "invalid date format"),
     ],
     "fact_salary": [
-        ("salary", _gte_zero("salary"), "salary <= 0"), # actually using >=0 to be safe with missing data/0
+        ("salary", _gte_zero("salary"), "salary < 0"), # actually using >=0 to be safe with missing data/0
     ],
     "fact_player_season_stats": [
         ("fgm_fga", _lte("fg", "fga"), "fg > fga"),
@@ -84,7 +88,7 @@ RULES: dict[str, list[tuple[str, Callable[[dict], bool], str]]] = {
         ("pts", _gte_zero("pts"), "pts < 0"),
     ],
     "fact_player_advanced_season": [
-        ("ts_pct", _pct_bounds("ts_pct"), "ts_pct out of bounds [0,1]"),
+        ("ts_pct", _pct_bounds("ts_pct", upper=1.5), "ts_pct out of bounds [0,1.5]"),
         ("orb_pct", _pct_bounds("orb_pct"), "orb_pct out of bounds [0,1]"),
         ("drb_pct", _pct_bounds("drb_pct"), "drb_pct out of bounds [0,1]"),
         ("usg_pct", _pct_bounds("usg_pct"), "usg_pct out of bounds [0,1]"),
@@ -106,17 +110,18 @@ def validate_rows(table: str, rows: list[dict]) -> list[dict]:
     valid_rows = []
     for row in rows:
         is_valid = True
-        
+
         # Standard rules
         for field_name, predicate, msg in rules:
             if not predicate(row):
+                ident = {k: row[k] for k in ["game_id", "player_id", "team_id", "season_id", "bref_player_id"] if k in row}
                 logger.warning(
-                    "Validation failed for table '%s', rule '%s': %s (row=%r)",
-                    table, field_name, msg, row
+                    "Validation failed for table '%s', rule '%s': %s (ident=%r)",
+                    table, field_name, msg, ident
                 )
                 is_valid = False
                 break
-        
+
         # Custom rule for fact_player_shooting_season
         if is_valid and table == "fact_player_shooting_season":
             zones = [
@@ -124,11 +129,12 @@ def validate_rows(table: str, rows: list[dict]) -> list[dict]:
                 row.get("pct_fga_16_3p"), row.get("pct_fga_3p")
             ]
             if not any(z is None for z in zones):
-                zone_sum = sum(z for z in zones if z is not None)
+                zone_sum = sum(zones)
                 if abs(zone_sum - 1.0) > 0.05:
+                    ident = {k: row[k] for k in ["game_id", "player_id", "team_id", "season_id", "bref_player_id"] if k in row}
                     logger.warning(
-                        "Validation failed for table '%s', rule 'zone_sum': sum is %.3f, expected ~1.0 (row=%r)",
-                        table, zone_sum, row
+                        "Validation failed for table '%s', rule 'zone_sum': sum is %.3f, expected ~1.0 (ident=%r)",
+                        table, zone_sum, ident
                     )
                     is_valid = False
 
@@ -144,11 +150,11 @@ def check_game_stat_consistency(con: sqlite3.Connection, game_id: str) -> list[s
     Checks: SUM(player pts) == team pts, SUM(player reb) == team reb, etc.
     """
     warnings = []
-    
+
     # Compare team_game_log aggregates vs player_game_log aggregates
     sql = """
     WITH p_agg AS (
-        SELECT 
+        SELECT
             team_id,
             SUM(pts) as p_pts,
             SUM(reb) as p_reb,
@@ -157,7 +163,7 @@ def check_game_stat_consistency(con: sqlite3.Connection, game_id: str) -> list[s
         WHERE game_id = ?
         GROUP BY team_id
     )
-    SELECT 
+    SELECT
         t.team_id,
         t.pts as t_pts, p.p_pts,
         t.reb as t_reb, p.p_reb,
@@ -166,32 +172,32 @@ def check_game_stat_consistency(con: sqlite3.Connection, game_id: str) -> list[s
     LEFT JOIN p_agg p ON t.team_id = p.team_id
     WHERE t.game_id = ?
     """
-    
+
     rows = con.execute(sql, (game_id, game_id)).fetchall()
     for r in rows:
         team_id, t_pts, p_pts, t_reb, p_reb, t_ast, p_ast = r
-        
+
         if p_pts is not None and t_pts != p_pts:
             warnings.append(f"PTS mismatch for team {team_id} in game {game_id}: Team={t_pts}, Players={p_pts}")
         if p_reb is not None and t_reb != p_reb:
             warnings.append(f"REB mismatch for team {team_id} in game {game_id}: Team={t_reb}, Players={p_reb}")
         if p_ast is not None and t_ast != p_ast:
             warnings.append(f"AST mismatch for team {team_id} in game {game_id}: Team={t_ast}, Players={p_ast}")
-            
+
     return warnings
 
 
 def run_consistency_checks(con: sqlite3.Connection, season_id: str) -> None:
     """Run check_game_stat_consistency for all games in season_id, log warnings."""
     games = con.execute("SELECT game_id FROM fact_game WHERE season_id = ?", (season_id,)).fetchall()
-    
+
     total_warnings = 0
     for (game_id,) in games:
         warnings = check_game_stat_consistency(con, game_id)
         for w in warnings:
             logger.warning(w)
             total_warnings += 1
-            
+
     if total_warnings == 0:
         logger.info("Consistency check passed for season %s (%d games)", season_id, len(games))
     else:

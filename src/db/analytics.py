@@ -173,14 +173,15 @@ _VIEWS: list[tuple[str, str]] = [
                     + 0.4 * COALESCE(SUM(l.fta), 0)
                     - 1.07 * (
                         COALESCE(SUM(l.oreb), 0)
-                        / NULLIF(COALESCE(SUM(l.oreb), 0) + 1, 0)
+                        / NULLIF(COALESCE(SUM(l.oreb), 0) + COALESCE(SUM(opp.dreb), 0), 0)
                     ) * (SUM(l.fga) - COALESCE(SUM(l.fgm), 0))
                     + COALESCE(SUM(l.tov), 0)
                 ),
             1) AS poss_estimate
         FROM nba.team_game_log l
+        JOIN nba.team_game_log opp ON opp.game_id = l.game_id AND opp.team_id != l.team_id
         JOIN nba.dim_team t ON t.team_id = l.team_id
-        JOIN nba.fact_game g USING (game_id)
+        JOIN nba.fact_game g ON g.game_id = l.game_id
         WHERE l.oreb IS NOT NULL AND l.tov IS NOT NULL
         GROUP BY t.abbreviation, t.full_name, g.season_id
         """,
@@ -333,7 +334,7 @@ _VIEWS: list[tuple[str, str]] = [
                 opp.pts AS opp_pts,
                 (
                     l.fga + 0.4 * COALESCE(l.fta, 0)
-                    - 1.07 * (COALESCE(l.oreb, 0) / NULLIF(COALESCE(l.oreb, 0) + 1, 0))
+                    - 1.07 * (COALESCE(l.oreb, 0) / NULLIF(COALESCE(l.oreb, 0) + COALESCE(opp.dreb, 0), 0))
                       * (l.fga - COALESCE(l.fgm, 0))
                     + COALESCE(l.tov, 0)
                 ) AS team_poss
@@ -638,6 +639,8 @@ _VIEWS: list[tuple[str, str]] = [
 
 
 _cached_con: duckdb.DuckDBPyConnection | None = None
+_cached_sqlite_path: str | None = None
+_cached_duck_db_path: str | None = None
 
 def get_duck_con(
     sqlite_path: Path = SQLITE_DB,
@@ -659,9 +662,21 @@ def get_duck_con(
     force_refresh : bool
         If True, recreates the connection and all views even if cached.
     """
-    global _cached_con
-    if _cached_con is not None and not force_refresh:
-        return _cached_con
+    global _cached_con, _cached_sqlite_path, _cached_duck_db_path
+    
+    cache_match = (_cached_sqlite_path == str(sqlite_path) and _cached_duck_db_path == duck_db_path)
+    if _cached_con is not None and not force_refresh and cache_match:
+        try:
+            _cached_con.execute("SELECT 1")
+            return _cached_con
+        except Exception:
+            _cached_con = None
+
+    if _cached_con is not None:
+        try:
+            _cached_con.close()
+        except Exception:
+            pass
 
     con = duckdb.connect(duck_db_path)
 
@@ -680,10 +695,12 @@ def get_duck_con(
 
     logger.info("DuckDB analytics layer ready (%d views).", len(_VIEWS))
     _cached_con = con
+    _cached_sqlite_path = str(sqlite_path)
+    _cached_duck_db_path = duck_db_path
     return con
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     logging.basicConfig(level=logging.INFO)
     duck = get_duck_con()
     logger.info("Available views:")
@@ -691,3 +708,6 @@ if __name__ == "__main__":
     for v in views:
         logger.info(" - %s", v[0])
     duck.close()
+    _cached_con = None
+    _cached_sqlite_path = None
+    _cached_duck_db_path = None

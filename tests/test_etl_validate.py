@@ -1,7 +1,11 @@
 import sqlite3
 import pytest
 from pathlib import Path
-from src.etl.validate import validate_rows, check_game_stat_consistency
+from src.etl.validate import (
+    check_game_stat_consistency,
+    run_consistency_checks,
+    validate_rows,
+)
 from src.etl.utils import CACHE_VERSION, load_cache, save_cache
 import time
 
@@ -49,7 +53,7 @@ def test_validate_rows_shooting_zones():
     
     valid = validate_rows("fact_player_shooting_season", rows)
     assert len(valid) == 2
-    assert set(r["bref_player_id"] for r in valid) == {"A", "C"}
+    assert {r["bref_player_id"] for r in valid} == {"A", "C"}
 
 
 def test_check_game_stat_consistency(sqlite_con_with_data: sqlite3.Connection):
@@ -57,13 +61,19 @@ def test_check_game_stat_consistency(sqlite_con_with_data: sqlite3.Connection):
     
     # Insert team game log with 100 pts
     upsert_rows(sqlite_con_with_data, "team_game_log", [{
-        "game_id": "0022300001", "team_id": "1610612747", "pts": 100, "reb": 40, "ast": 20
+        "game_id": "0022300001", "team_id": "1610612747", "pts": 100, "reb": 40, "ast": 20,
+        "fgm": 0, "fga": 0, "fg3m": 0, "fg3a": 0, "ftm": 0, "fta": 0, "oreb": 0, "dreb": 0, 
+        "stl": 0, "blk": 0, "tov": 0, "pf": 0, "plus_minus": 0
     }])
     
     # Insert player game logs summing to 90 pts (mismatch)
     upsert_rows(sqlite_con_with_data, "player_game_log", [
-        {"game_id": "0022300001", "player_id": "2544", "team_id": "1610612747", "pts": 50, "reb": 20, "ast": 10},
-        {"game_id": "0022300001", "player_id": "203999", "team_id": "1610612747", "pts": 40, "reb": 20, "ast": 10},
+        {"game_id": "0022300001", "player_id": "2544", "team_id": "1610612747", "pts": 50, "reb": 20, "ast": 10,
+         "minutes_played": 20, "fgm": 0, "fga": 0, "fg3m": 0, "fg3a": 0, "ftm": 0, "fta": 0, "oreb": 0, "dreb": 0, 
+         "stl": 0, "blk": 0, "tov": 0, "pf": 0, "plus_minus": 0, "starter": 1},
+        {"game_id": "0022300001", "player_id": "203999", "team_id": "1610612747", "pts": 40, "reb": 20, "ast": 10,
+         "minutes_played": 20, "fgm": 0, "fga": 0, "fg3m": 0, "fg3a": 0, "ftm": 0, "fta": 0, "oreb": 0, "dreb": 0, 
+         "stl": 0, "blk": 0, "tov": 0, "pf": 0, "plus_minus": 0, "starter": 0},
     ])
     sqlite_con_with_data.commit()
     
@@ -106,3 +116,101 @@ def test_cache_versioning_and_ttl(tmp_path, monkeypatch):
     p.write_text(json.dumps(payload))
     
     assert load_cache(key) is None
+
+
+# ------------------------------------------------------------------ #
+# validate_rows: additional rule coverage                            #
+# ------------------------------------------------------------------ #
+
+def test_validate_rows_unknown_table_returns_all_rows():
+    rows = [{"x": 1}, {"x": 2}]
+    result = validate_rows("unknown_table_xyz", rows)
+    assert result == rows
+
+
+def test_validate_rows_team_game_log_filters_fg3m_violation():
+    rows = [
+        {"game_id": "1", "team_id": "A", "fg3m": 20, "fg3a": 10, "pts": 100},
+    ]
+    valid = validate_rows("team_game_log", rows)
+    assert len(valid) == 0
+
+
+def test_validate_rows_team_game_log_passes_all_none_fields():
+    rows = [{"game_id": "1", "team_id": "A", "fg3m": None, "fg3a": None, "pts": None}]
+    valid = validate_rows("team_game_log", rows)
+    assert len(valid) == 1
+
+
+def test_validate_rows_fact_salary_rejects_negative_salary():
+    rows = [
+        {"player_id": "A", "team_id": "B", "season_id": "2023-24", "salary": -1},
+    ]
+    valid = validate_rows("fact_salary", rows)
+    assert len(valid) == 0
+
+
+def test_validate_rows_fact_salary_accepts_zero_salary():
+    rows = [{"player_id": "A", "team_id": "B", "season_id": "2023-24", "salary": 0}]
+    valid = validate_rows("fact_salary", rows)
+    assert len(valid) == 1
+
+
+def test_validate_rows_fact_player_season_stats_fg_violation():
+    rows = [{"bref_player_id": "A", "fg": 20, "fga": 10, "pts": 50}]
+    valid = validate_rows("fact_player_season_stats", rows)
+    assert len(valid) == 0
+
+
+def test_validate_rows_fact_player_advanced_season_ts_pct_out_of_range():
+    rows = [{"bref_player_id": "A", "ts_pct": 1.6}]
+    valid = validate_rows("fact_player_advanced_season", rows)
+    assert len(valid) == 0
+
+
+def test_validate_rows_fact_player_advanced_season_valid():
+    rows = [{"bref_player_id": "A", "ts_pct": 0.55, "orb_pct": 0.1,
+             "drb_pct": 0.2, "usg_pct": 0.25}]
+    valid = validate_rows("fact_player_advanced_season", rows)
+    assert len(valid) == 1
+
+
+# ------------------------------------------------------------------ #
+# check_game_stat_consistency: all stats match                       #
+# ------------------------------------------------------------------ #
+
+def test_check_game_stat_consistency_returns_no_warnings_when_stats_match(
+    sqlite_con_with_data: sqlite3.Connection,
+) -> None:
+    from src.etl.utils import upsert_rows
+    upsert_rows(sqlite_con_with_data, "team_game_log", [{
+        "game_id": "0022300001", "team_id": "1610612747",
+        "pts": 90, "reb": 30, "ast": 20,
+    }])
+    upsert_rows(sqlite_con_with_data, "player_game_log", [
+        {"game_id": "0022300001", "player_id": "2544", "team_id": "1610612747",
+         "pts": 50, "reb": 15, "ast": 10},
+        {"game_id": "0022300001", "player_id": "203999", "team_id": "1610612747",
+         "pts": 40, "reb": 15, "ast": 10},
+    ])
+    sqlite_con_with_data.commit()
+    warnings = check_game_stat_consistency(sqlite_con_with_data, "0022300001")
+    assert warnings == []
+
+
+# ------------------------------------------------------------------ #
+# run_consistency_checks                                              #
+# ------------------------------------------------------------------ #
+
+def test_run_consistency_checks_processes_all_games(
+    sqlite_con_with_data: sqlite3.Connection,
+) -> None:
+    """run_consistency_checks should complete without raising."""
+    run_consistency_checks(sqlite_con_with_data, "2023-24")
+
+
+def test_run_consistency_checks_with_no_games_in_season(
+    sqlite_con: sqlite3.Connection,
+) -> None:
+    """A season with no fact_game rows should not raise."""
+    run_consistency_checks(sqlite_con, "1900-01")

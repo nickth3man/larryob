@@ -30,9 +30,20 @@ import unicodedata
 from pathlib import Path
 from typing import Any
 
-import pandas as pd  # type: ignore[import-untyped]
+import pandas as pd
 
-from src.etl.utils import upsert_rows, transaction, log_load_summary
+from src.etl.helpers import (
+    _flt,
+    _int,
+    _isna,
+    _norm_name,
+    int_season_to_id,
+    pad_game_id,
+    season_id_from_date,
+    season_id_from_game_id,
+    season_type_from_game_id,
+)
+from src.etl.utils import log_load_summary, upsert_rows
 from src.etl.validate import validate_rows
 
 logger = logging.getLogger(__name__)
@@ -45,86 +56,27 @@ def _isna(v: Any) -> bool:
     if v is None:
         return True
     try:
-        return bool(_isna(v))  # type: ignore[arg-type]
+        return bool(pd.isna(v))
     except (TypeError, ValueError):
         return False
+
+
+def _int(v: Any) -> int | None:
+    try:
+        return int(v) if not _isna(v) else None
+    except (TypeError, ValueError):
+        return None
+
+
+def _flt(v: Any) -> float | None:
+    try:
+        return float(v) if not _isna(v) else None
+    except (TypeError, ValueError):
+        return None
 
 # --------------------------------------------------------------------------- #
 # Season / game-ID helpers                                                     #
 # --------------------------------------------------------------------------- #
-
-def int_season_to_id(s: int | float) -> str:
-    """
-    Convert a Basketball-Reference ending-year integer to our season_id format.
-
-    Examples
-    --------
-    2026  → '2025-26'
-    2000  → '1999-00'
-    1950  → '1949-50'
-    1947  → '1946-47'
-    """
-    s = int(s)
-    start = s - 1
-    end_suffix = str(s)[2:]
-    return f"{start}-{end_suffix}"
-
-
-def pad_game_id(game_id: int | str) -> str:
-    """Zero-pad a raw NBA game ID integer to the 10-char TEXT format."""
-    return str(int(game_id)).zfill(10)
-
-
-def season_type_from_game_id(padded: str) -> str:
-    """
-    Derive season_type from the 2-digit type code embedded in a padded game ID.
-
-    NBA encoding: digits [2:4] of the zero-padded 10-char ID.
-    """
-    code = padded[2:4]
-    return {
-        "11": "Preseason",
-        "22": "Regular Season",
-        "52": "Play-In",
-        "42": "Playoffs",
-    }.get(code, "Regular Season")
-
-
-def season_id_from_game_id(padded: str) -> str:
-    """
-    Derive season_id from a padded 10-char NBA game ID.
-
-    The NBA embeds the season start year in digits [3:5] (0-indexed) of the
-    10-character zero-padded game ID.  For example:
-        '0022500686'  →  padded[3:5] = '25'  →  start_year = 2025  →  '2025-26'
-        '0022301001'  →  padded[3:5] = '23'  →  start_year = 2023  →  '2023-24'
-    """
-    start_year = 2000 + int(padded[3:5])
-    end_suffix = str(start_year + 1)[2:]
-    return f"{start_year}-{end_suffix}"
-
-
-def season_id_from_date(date_str: str) -> str:
-    """
-    Derive season_id from an ISO-8601 date string.
-
-    NBA seasons run roughly October–June.
-    July–September belong to the following season's start.
-    """
-    date_str = str(date_str)[:10]  # keep 'YYYY-MM-DD'
-    year = int(date_str[:4])
-    month = int(date_str[5:7])
-    start_year = year if month >= 7 else year - 1
-    end_suffix = str(start_year + 1)[2:]
-    return f"{start_year}-{end_suffix}"
-
-
-def _norm_name(name: str) -> str:
-    """Lowercase, strip accents and extra whitespace for fuzzy name matching."""
-    nfkd = unicodedata.normalize("NFKD", str(name))
-    ascii_str = nfkd.encode("ascii", "ignore").decode("ascii")
-    return " ".join(ascii_str.lower().split())
-
 
 # --------------------------------------------------------------------------- #
 # 1. dim_team_history                                                          #
@@ -310,15 +262,15 @@ def _enrich_from_career_info(
             matched = [
                 p for p, bd in candidates if bd and str(bd)[:10] == bref_bd
             ]
-            pid = matched[0][0] if matched else candidates[0][0]
+            pid = matched[0] if matched else candidates[0][0]
 
         height_cm = (
-            float(row["ht_in_in"]) * 2.54  # type: ignore[arg-type]
+            float(row["ht_in_in"]) * 2.54
             if not _isna(row.get("ht_in_in"))
             else None
         )
         weight_kg = (
-            float(row["wt"]) * 0.453592  # type: ignore[arg-type]
+            float(row["wt"]) * 0.453592
             if not _isna(row.get("wt"))
             else None
         )
@@ -334,7 +286,7 @@ def _enrich_from_career_info(
             UPDATE dim_player SET
                 bref_id   = COALESCE(bref_id,   ?),
                 college   = COALESCE(college,   ?),
-                hof       = COALESCE(hof,       ?),
+                hof       = ?,
                 height_cm = COALESCE(height_cm, ?),
                 weight_kg = COALESCE(weight_kg, ?)
             WHERE player_id = ?
@@ -429,8 +381,8 @@ def load_schedule(con: sqlite3.Connection, raw_dir: Path = RAW_DIR) -> None:
         df = pd.read_csv(path)
         # Normalise column names — the two files have slightly different casing.
         df.columns = [c.lower() for c in df.columns]
-        home_col = "hometeamid" if "hometeamid" in df.columns else "hometeamid"
-        away_col = "awayteamid" if "awayteamid" in df.columns else "awayteamid"
+        home_col = "hometeamid"
+        away_col = "awayteamid"
 
         rows: list[dict] = []
         for row in df.to_dict("records"):
@@ -471,7 +423,7 @@ def load_schedule(con: sqlite3.Connection, raw_dir: Path = RAW_DIR) -> None:
                 "attendance":   None,
             })
 
-        inserted = upsert_rows(con, "fact_game", rows)
+        inserted = upsert_rows(con, "fact_game", validate_rows("fact_game", rows))
         total_inserted += inserted
         logger.info("%s: %d rows inserted/ignored", path.name, inserted)
 
@@ -524,12 +476,6 @@ def load_player_game_logs(
             if team_id is None:
                 skipped += 1
                 continue
-
-            def _int(v: Any) -> int | None:
-                return int(v) if not _isna(v) else None
-
-            def _flt(v: Any) -> float | None:
-                return float(v) if not _isna(v) else None
 
             rows.append({
                 "game_id":        game_id,
@@ -586,9 +532,6 @@ def load_team_game_logs(
     rows: list[dict] = []
     skipped = 0
 
-    def _int(v: Any) -> int | None:
-        return int(v) if not _isna(v) else None
-
     for row in df.to_dict("records"):
         game_id = pad_game_id(row["gameId"])
         team_id = str(int(row["teamId"]))
@@ -641,18 +584,6 @@ def load_team_season(con: sqlite3.Connection, raw_dir: Path = RAW_DIR) -> None:
 
     rows: list[dict] = []
     skipped = 0
-
-    def _flt(v: Any) -> float | None:
-        try:
-            return float(v) if not _isna(v) else None
-        except (TypeError, ValueError):
-            return None
-
-    def _int(v: Any) -> int | None:
-        try:
-            return int(v) if not _isna(v) else None
-        except (TypeError, ValueError):
-            return None
 
     for row in df.to_dict("records"):
         season_id = int_season_to_id(row["season"])
@@ -746,12 +677,6 @@ def load_league_season(con: sqlite3.Connection, raw_dir: Path = RAW_DIR) -> None
         if season_id not in valid_seasons:
             continue
 
-        def _flt(v: Any) -> float | None:
-            try:
-                return round(float(v), 2) if not _isna(v) else None  # type: ignore[arg-type]
-            except (TypeError, ValueError):
-                return None
-
         rows.append({
             "season_id": season_id,
             "num_teams": int(row["num_teams"]),
@@ -827,12 +752,6 @@ def load_player_season_stats(
     rows: list[dict] = []
     skipped = 0
 
-    def _int(v: Any) -> int | None:
-        try:
-            return int(v) if not _isna(v) else None
-        except (TypeError, ValueError):
-            return None
-
     for row in df.to_dict("records"):
         season_id = int_season_to_id(row["season"])
         if season_id not in valid_seasons:
@@ -890,18 +809,6 @@ def load_player_advanced(
 
     rows: list[dict] = []
     skipped = 0
-
-    def _flt(v: Any) -> float | None:
-        try:
-            return float(v) if not _isna(v) else None
-        except (TypeError, ValueError):
-            return None
-
-    def _int(v: Any) -> int | None:
-        try:
-            return int(v) if not _isna(v) else None
-        except (TypeError, ValueError):
-            return None
 
     for row in df.to_dict("records"):
         season_id = int_season_to_id(row["season"])
@@ -965,12 +872,6 @@ def load_player_shooting(
     rows: list[dict] = []
     skipped = 0
 
-    def _flt(v: Any) -> float | None:
-        try:
-            return float(v) if not _isna(v) else None
-        except (TypeError, ValueError):
-            return None
-
     for row in df.to_dict("records"):
         season_id = int_season_to_id(row["season"])
         if season_id not in valid_seasons:
@@ -1029,18 +930,6 @@ def load_player_pbp_season(
     rows: list[dict] = []
     skipped = 0
 
-    def _flt(v: Any) -> float | None:
-        try:
-            return float(v) if not _isna(v) else None
-        except (TypeError, ValueError):
-            return None
-
-    def _int(v: Any) -> int | None:
-        try:
-            return int(v) if not _isna(v) else None
-        except (TypeError, ValueError):
-            return None
-
     for row in df.to_dict("records"):
         season_id = int_season_to_id(row["season"])
         if season_id not in valid_seasons:
@@ -1071,7 +960,7 @@ def load_player_pbp_season(
             "fga_blocked":    _int(row.get("fga_blocked")),
         })
 
-    inserted = upsert_rows(con, "fact_player_pbp_season", rows)
+    inserted = upsert_rows(con, "fact_player_pbp_season", validate_rows("fact_player_pbp_season", rows))
     logger.info(
         "fact_player_pbp_season: %d inserted/ignored, %d skipped", inserted, skipped
     )
@@ -1106,7 +995,7 @@ def _bref_to_player_id(
     rows = con.execute(
         "SELECT bref_id, player_id FROM dim_player WHERE bref_id IS NOT NULL"
     ).fetchall()
-    return {bref: pid for bref, pid in rows}
+    return dict(rows)
 
 
 def load_awards(con: sqlite3.Connection, raw_dir: Path = RAW_DIR) -> None:
@@ -1247,20 +1136,28 @@ def run_raw_backfill(
     """
     logger.info("=== Raw backfill starting (raw_dir=%s) ===", raw_dir)
 
-    load_team_history(con, raw_dir)
-    enrich_dim_team(con, raw_dir)
-    enrich_dim_player(con, raw_dir)
-    load_games(con, raw_dir)
-    load_schedule(con, raw_dir)
-    load_player_game_logs(con, raw_dir)
-    load_team_game_logs(con, raw_dir)
-    load_team_season(con, raw_dir)
-    load_league_season(con, raw_dir)
-    load_draft(con, raw_dir)
-    load_player_season_stats(con, raw_dir)
-    load_player_advanced(con, raw_dir)
-    load_player_shooting(con, raw_dir)
-    load_player_pbp_season(con, raw_dir)
-    load_awards(con, raw_dir)
+    loaders = [
+        ("team_history", load_team_history),
+        ("dim_team_enrich", enrich_dim_team),
+        ("dim_player_enrich", enrich_dim_player),
+        ("games", load_games),
+        ("schedule", load_schedule),
+        ("player_game_logs", load_player_game_logs),
+        ("team_game_logs", load_team_game_logs),
+        ("team_season", load_team_season),
+        ("league_season", load_league_season),
+        ("draft", load_draft),
+        ("player_season_stats", load_player_season_stats),
+        ("player_advanced", load_player_advanced),
+        ("player_shooting", load_player_shooting),
+        ("player_pbp_season", load_player_pbp_season),
+        ("awards", load_awards),
+    ]
+
+    for name, loader in loaders:
+        try:
+            loader(con, raw_dir)
+        except Exception:
+            logger.exception("Loader %s failed during raw backfill:", name)
 
     logger.info("=== Raw backfill complete ===")

@@ -29,6 +29,14 @@ ALTER_STATEMENTS = [
     "CREATE UNIQUE INDEX IF NOT EXISTS idx_player_bref ON dim_player(bref_id)",
 ]
 
+ROLLBACK_STATEMENTS = [
+    "DROP INDEX IF EXISTS idx_player_bref",
+    "ALTER TABLE dim_player DROP COLUMN bref_id",
+    "ALTER TABLE dim_player DROP COLUMN college",
+    "ALTER TABLE dim_player DROP COLUMN hof",
+    "ALTER TABLE dim_team DROP COLUMN bref_abbrev",
+]
+
 DDL_STATEMENTS = [
     # ------------------------------------------------------------------ #
     # Dimension: seasons                                                   #
@@ -467,7 +475,7 @@ DDL_STATEMENTS = [
     "CREATE INDEX IF NOT EXISTS idx_pas_season      ON fact_player_advanced_season(season_id);",
     "CREATE INDEX IF NOT EXISTS idx_pshoot_player   ON fact_player_shooting_season(bref_player_id);",
     "CREATE INDEX IF NOT EXISTS idx_ppbp_player     ON fact_player_pbp_season(bref_player_id);",
-    
+
     # ------------------------------------------------------------------ #
     # Internal: ETL Run Log                                               #
     # ------------------------------------------------------------------ #
@@ -503,13 +511,28 @@ def init_db(db_path: Path = DB_PATH) -> sqlite3.Connection:
     for alter in ALTER_STATEMENTS:
         try:
             con.execute(alter)
-        except sqlite3.OperationalError:
-            pass
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" in str(e).lower():
+                logger.debug("ALTER skipped (already applied?): %s", alter)
+            else:
+                raise
     con.commit()
     return con
 
 
-if __name__ == "__main__":
+def rollback_db(db_path: Path = DB_PATH) -> sqlite3.Connection:
+    """Execute rollback statements in reverse order."""
+    con = sqlite3.connect(db_path)
+    for sql in ROLLBACK_STATEMENTS:
+        try:
+            con.execute(sql)
+        except sqlite3.OperationalError as e:
+            logger.debug("Rollback statement failed: %s", e)
+    con.commit()
+    return con
+
+
+if __name__ == "__main__":  # pragma: no cover
     logging.basicConfig(level=logging.INFO)
     con = init_db()
     tables = con.execute(

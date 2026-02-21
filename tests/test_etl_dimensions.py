@@ -1,20 +1,27 @@
 """Tests: ETL dimension loaders (no network calls)."""
 
 import sqlite3
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from src.etl.dimensions import (
     _height_to_cm,
+    _map_common_all_player,
     _map_common_player_info,
     _map_nba_player_static,
     _map_nba_team,
     _normalize_position,
     _parse_birth_date,
+    _season_id,
     _weight_to_kg,
+    load_players_bio_enrichment,
+    load_players_full,
     load_players_static,
     load_seasons,
     load_teams,
+    run_all,
 )
 
 
@@ -184,3 +191,156 @@ def test_map_nba_player_static_inactive() -> None:
     raw = {"id": 76375, "full_name": "Kareem Abdul-Jabbar", "is_active": False}
     row = _map_nba_player_static(raw)
     assert row["is_active"] == 0
+
+
+# ------------------------------------------------------------------ #
+# _season_id helper                                                   #
+# ------------------------------------------------------------------ #
+
+def test_season_id_1946() -> None:
+    assert _season_id(1946) == "1946-47"
+
+
+def test_season_id_2023() -> None:
+    assert _season_id(2023) == "2023-24"
+
+
+def test_season_id_1999() -> None:
+    assert _season_id(1999) == "1999-00"
+
+
+# ------------------------------------------------------------------ #
+# _map_common_all_player                                              #
+# ------------------------------------------------------------------ #
+
+def test_map_common_all_player_active_status() -> None:
+    row = {
+        "person_id": "2544",
+        "display_first_last": "LeBron James",
+        "rosterstatus": "1",
+    }
+    result = _map_common_all_player(row)
+    assert result["player_id"] == "2544"
+    assert result["first_name"] == "LeBron"
+    assert result["last_name"] == "James"
+    assert result["is_active"] == 1
+
+
+def test_map_common_all_player_inactive_status() -> None:
+    row = {
+        "person_id": "76375",
+        "display_first_last": "Kareem Abdul-Jabbar",
+        "rosterstatus": "0",
+    }
+    result = _map_common_all_player(row)
+    assert result["is_active"] == 0
+
+
+def test_map_common_all_player_uses_player_slug_fallback() -> None:
+    row = {
+        "person_id": "999",
+        "player_slug": "test-player",
+        "rosterstatus": "0",
+    }
+    result = _map_common_all_player(row)
+    assert result["full_name"] == "test-player"
+
+
+# ------------------------------------------------------------------ #
+# load_seasons: skips when already loaded                            #
+# ------------------------------------------------------------------ #
+
+def test_load_seasons_skips_when_etl_run_log_has_entry(
+    sqlite_con: sqlite3.Connection,
+) -> None:
+    from src.etl.utils import record_run
+    load_seasons(sqlite_con, up_to_start_year=1950)
+    count_before = sqlite_con.execute("SELECT COUNT(*) FROM dim_season").fetchone()[0]
+    result = load_seasons(sqlite_con, up_to_start_year=1950)
+    count_after = sqlite_con.execute("SELECT COUNT(*) FROM dim_season").fetchone()[0]
+    assert result == 0
+    assert count_after == count_before
+
+
+# ------------------------------------------------------------------ #
+# load_players_full (mock API)                                        #
+# ------------------------------------------------------------------ #
+
+def test_load_players_full_from_cache(
+    monkeypatch,
+    sqlite_con: sqlite3.Connection,
+    tmp_path: Path,
+) -> None:
+    import src.etl.utils as utils_mod
+    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    load_seasons(sqlite_con, up_to_start_year=2024)
+
+    from src.etl.utils import save_cache
+    records = [
+        {"person_id": "2544", "display_first_last": "LeBron James",
+         "rosterstatus": "1", "player_slug": "lebron-james"},
+    ]
+    save_cache("common_all_players_2024-25", records)
+
+    inserted = load_players_full(sqlite_con, season_id="2024-25")
+    assert inserted >= 1
+
+
+# ------------------------------------------------------------------ #
+# load_players_bio_enrichment (mock API)                              #
+# ------------------------------------------------------------------ #
+
+def test_load_players_bio_enrichment_from_cache(
+    monkeypatch,
+    sqlite_con_with_data: sqlite3.Connection,
+    tmp_path: Path,
+) -> None:
+    import src.etl.utils as utils_mod
+    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+
+    from src.etl.utils import save_cache
+    record = {
+        "PERSON_ID": "2544",
+        "DISPLAY_FIRST_LAST": "LeBron James",
+        "TEAM_ID": "1610612747",
+        "ROSTERSTATUS": "Active",
+        "POSITION": "SF",
+        "HEIGHT": "6-9",
+        "WEIGHT": "250",
+        "BIRTHDATE": "1984-12-30T00:00:00",
+        "DRAFT_YEAR": "2003",
+        "DRAFT_ROUND": "1",
+        "DRAFT_NUMBER": "1",
+    }
+    save_cache("common_player_info_2544", record)
+
+    result = load_players_bio_enrichment(sqlite_con_with_data, player_ids=["2544"])
+    assert result >= 1
+
+
+def test_load_players_bio_enrichment_api_exception_skips_player(
+    monkeypatch,
+    sqlite_con_with_data: sqlite3.Connection,
+    tmp_path: Path,
+) -> None:
+    import src.etl.utils as utils_mod
+    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+
+    with patch("src.etl.dimensions.commonplayerinfo.CommonPlayerInfo",
+               side_effect=RuntimeError("API down")):
+        with patch("time.sleep"):
+            result = load_players_bio_enrichment(sqlite_con_with_data, player_ids=["2544"])
+    assert result == 0
+
+
+# ------------------------------------------------------------------ #
+# run_all                                                             #
+# ------------------------------------------------------------------ #
+
+def test_run_all_without_full_players_does_not_call_api(
+    sqlite_con: sqlite3.Connection,
+) -> None:
+    """run_all with full_players=False and enrich_bio=False loads only from static data."""
+    run_all(sqlite_con, full_players=False, enrich_bio=False)
+    team_count = sqlite_con.execute("SELECT COUNT(*) FROM dim_team").fetchone()[0]
+    assert team_count >= 30

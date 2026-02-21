@@ -1,10 +1,13 @@
 """Tests: ETL play-by-play transformation."""
 
 import sqlite3
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
+import pytest
 
-from src.etl.play_by_play import _transform_pbp
+from src.etl.play_by_play import _fetch_pbp, _transform_pbp, load_game, load_games, load_season_pbp
 from src.etl.utils import upsert_rows
 
 
@@ -85,3 +88,122 @@ def test_pbp_deduplication(sqlite_con_with_data: sqlite3.Connection) -> None:
         "SELECT COUNT(*) FROM fact_play_by_play"
     ).fetchone()[0]
     assert count == len(safe_rows), "Duplicate PBP events were inserted"
+
+
+# ------------------------------------------------------------------ #
+# _fetch_pbp: cache path                                             #
+# ------------------------------------------------------------------ #
+
+def test_fetch_pbp_loads_from_cache(monkeypatch, tmp_path: Path) -> None:
+    import src.etl.utils as utils_mod
+    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+
+    from src.etl.utils import save_cache
+    records = _make_pbp_df().to_dict(orient="records")
+    save_cache("pbp_0022300001", records)
+
+    df = _fetch_pbp("0022300001")
+    assert len(df) == 4
+
+
+# ------------------------------------------------------------------ #
+# load_game                                                           #
+# ------------------------------------------------------------------ #
+
+def test_load_game_from_cache_inserts_events(
+    monkeypatch,
+    sqlite_con_with_data: sqlite3.Connection,
+    tmp_path: Path,
+) -> None:
+    import src.etl.utils as utils_mod
+    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+
+    df = _make_pbp_df()
+    # Keep only rows with player1_ids that exist in the fixture (2544, 203999)
+    df = df[df["PLAYER1_ID"].isin(["2544", "203999"])]
+    from src.etl.utils import save_cache
+    save_cache("pbp_0022300001", df.to_dict(orient="records"))
+
+    n = load_game(sqlite_con_with_data, "0022300001")
+    assert n >= 1
+
+
+def test_load_game_returns_zero_for_empty_api_response(
+    monkeypatch,
+    sqlite_con_with_data: sqlite3.Connection,
+    tmp_path: Path,
+) -> None:
+    import src.etl.utils as utils_mod
+    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+
+    mock_ep = MagicMock()
+    mock_ep.get_data_frames.return_value = [pd.DataFrame()]
+    with patch("src.etl.play_by_play.playbyplayv2.PlayByPlayV2", return_value=mock_ep):
+        with patch("src.etl.utils.time.sleep"):
+            n = load_game(sqlite_con_with_data, "0022300001")
+    assert n == 0
+
+
+# ------------------------------------------------------------------ #
+# load_games                                                          #
+# ------------------------------------------------------------------ #
+
+def test_load_games_handles_exception_per_game(
+    monkeypatch,
+    sqlite_con_with_data: sqlite3.Connection,
+    tmp_path: Path,
+) -> None:
+    import src.etl.utils as utils_mod
+    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+
+    with patch("src.etl.play_by_play.load_game", side_effect=RuntimeError("API error")):
+        with patch("time.sleep"):
+            total = load_games(sqlite_con_with_data, ["0022300001"])
+    assert total == 0
+
+
+def test_load_games_sums_counts_across_games(
+    monkeypatch,
+    sqlite_con_with_data: sqlite3.Connection,
+    tmp_path: Path,
+) -> None:
+    import src.etl.utils as utils_mod
+    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+
+    with patch("src.etl.play_by_play.load_game", return_value=5):
+        with patch("time.sleep"):
+            total = load_games(sqlite_con_with_data, ["001", "002", "003"])
+    assert total == 15
+
+
+# ------------------------------------------------------------------ #
+# load_season_pbp                                                     #
+# ------------------------------------------------------------------ #
+
+def test_load_season_pbp_skips_when_already_loaded(
+    sqlite_con_with_data: sqlite3.Connection,
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    import src.etl.utils as utils_mod
+    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    from src.etl.utils import record_run
+    record_run(sqlite_con_with_data, "fact_play_by_play", "2023-24",
+               "play_by_play.load_season", 500, "ok")
+    result = load_season_pbp(sqlite_con_with_data, "2023-24")
+    assert result == 0
+
+
+def test_load_season_pbp_processes_games(
+    sqlite_con_with_data: sqlite3.Connection,
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    import src.etl.utils as utils_mod
+    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+
+    with patch("src.etl.play_by_play.load_games", return_value=10) as mock_lg:
+        with patch("src.etl.play_by_play.log_load_summary", return_value=10):
+            result = load_season_pbp(sqlite_con_with_data, "2023-24")
+    assert result == 10
+    mock_lg.assert_called_once()

@@ -18,7 +18,7 @@ from src.db.schema import ALTER_STATEMENTS, DDL_STATEMENTS
 # ------------------------------------------------------------------ #
 
 @pytest.fixture
-def sqlite_con() -> sqlite3.Connection:
+def sqlite_con():
     """An in-memory SQLite db with the full NBA schema initialised."""
     con = sqlite3.connect(":memory:")
     con.execute("PRAGMA foreign_keys=ON;")
@@ -31,7 +31,8 @@ def sqlite_con() -> sqlite3.Connection:
         except sqlite3.OperationalError:
             pass
     con.commit()
-    return con
+    yield con
+    con.close()
 
 
 @pytest.fixture
@@ -87,7 +88,8 @@ def sqlite_con_with_data(sqlite_con: sqlite3.Connection) -> sqlite3.Connection:
          "1610612747", "1610612744", 120, 110, "Regular Season", "Final"),
     )
     con.commit()
-    return con
+    yield con
+
 
 
 # ------------------------------------------------------------------ #
