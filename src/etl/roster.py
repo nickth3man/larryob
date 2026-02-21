@@ -40,7 +40,7 @@ def load_team_roster(
     """
     cache_key = f"roster_{team_id}_{season_id}"
     cached = load_cache(cache_key)
-    if cached:
+    if cached is not None:
         rows = cached
     else:
         try:
@@ -133,7 +133,7 @@ def load_rosters_for_seasons(
     return total
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     from src.db.schema import init_db
 
     logging.basicConfig(level=logging.INFO)

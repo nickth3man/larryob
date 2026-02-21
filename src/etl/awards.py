@@ -10,7 +10,6 @@ Strategy
 
 import logging
 import sqlite3
-import time
 
 from nba_api.stats.endpoints import playerawards
 
@@ -65,7 +64,7 @@ def _player_awards_to_rows(records: list[dict]) -> list[dict]:
             continue
         season_id = str(season).strip()
         award_name = _build_award_name(
-            r.get("description"),
+            r.get("description") or "",
             r.get("all_nba_team_number"),
         )
         rows.append({
@@ -139,7 +138,7 @@ def load_all_awards(
     return load_player_awards(con, player_ids)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     from src.db.schema import init_db
 
     logging.basicConfig(level=logging.INFO)

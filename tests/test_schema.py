@@ -1,6 +1,7 @@
 """Tests: SQLite schema integrity."""
 
 import sqlite3
+from pathlib import Path
 
 
 def _table_columns(con: sqlite3.Connection, table: str) -> list[str]:
@@ -19,9 +20,13 @@ def test_all_tables_created(sqlite_con: sqlite3.Connection) -> None:
         "fact_game", "fact_roster",
         "player_game_log", "team_game_log",
         "fact_play_by_play", "fact_player_award",
-        "dim_salary_cap", "fact_salary",
+        "dim_salary_cap", "fact_salary", "etl_run_log",
+        "dim_team_history", "fact_team_season", "dim_league_season",
+        "fact_draft", "fact_player_season_stats",
+        "fact_player_advanced_season", "fact_player_shooting_season",
+        "fact_player_pbp_season",
     }
-    assert expected.issubset(tables), f"Missing tables: {expected - tables}"
+    assert expected == tables, f"Missing/extra tables: expected {expected}, got {tables}"
 
 
 def test_player_game_log_columns(sqlite_con: sqlite3.Connection) -> None:
@@ -82,3 +87,51 @@ def test_schema_is_idempotent(sqlite_con: sqlite3.Connection) -> None:
     from src.db.schema import DDL_STATEMENTS
     for ddl in DDL_STATEMENTS:
         sqlite_con.execute(ddl)  # should not raise
+
+
+def test_init_db_creates_file_and_returns_connection(tmp_path: Path) -> None:
+    from src.db.schema import init_db
+    db_file = tmp_path / "test_init.db"
+    con = init_db(db_file)
+    try:
+        assert db_file.exists()
+        tables = {
+            r[0]
+            for r in con.execute(
+                "SELECT name FROM sqlite_master WHERE type='table'"
+            ).fetchall()
+        }
+        assert "dim_season" in tables
+        assert "fact_game" in tables
+        assert "etl_run_log" in tables
+    finally:
+        con.close()
+
+
+def test_init_db_is_idempotent(tmp_path: Path) -> None:
+    """Calling init_db twice on the same file must not raise."""
+    from src.db.schema import init_db
+    db_file = tmp_path / "test_idempotent.db"
+    con1 = init_db(db_file)
+    con1.close()
+    con2 = init_db(db_file)
+    con2.close()
+
+
+def test_init_db_enables_foreign_keys(tmp_path: Path) -> None:
+    from src.db.schema import init_db
+    db_file = tmp_path / "test_fk.db"
+    con = init_db(db_file)
+    try:
+        result = con.execute("PRAGMA foreign_keys").fetchone()[0]
+        assert result == 1
+    finally:
+        con.close()
+
+
+def test_dim_team_columns(sqlite_con: sqlite3.Connection) -> None:
+    cols = [row[1] for row in sqlite_con.execute("PRAGMA table_info(dim_team)").fetchall()]
+    required = ["team_id", "abbreviation", "full_name", "city", "nickname",
+                "conference", "division", "color_primary", "arena_name", "founded_year"]
+    for col in required:
+        assert col in cols, f"Missing column '{col}' in dim_team"

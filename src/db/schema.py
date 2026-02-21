@@ -14,6 +14,29 @@ logger = logging.getLogger(__name__)
 
 DB_PATH = Path(__file__).parent.parent.parent / "nba_raw_data.db"
 
+# Migrations applied with try/except so re-running is safe.
+# SQLite does not support ALTER TABLE ... ADD COLUMN IF NOT EXISTS.
+ALTER_STATEMENTS = [
+    # dim_player additions for Basketball-Reference cross-reference.
+    # SQLite's ALTER TABLE ADD COLUMN does not support UNIQUE; uniqueness is
+    # enforced by the index created below.
+    "ALTER TABLE dim_player ADD COLUMN bref_id TEXT",
+    "ALTER TABLE dim_player ADD COLUMN college TEXT",
+    "ALTER TABLE dim_player ADD COLUMN hof INTEGER DEFAULT 0",
+    # dim_team: bref uses different abbreviations (BRK vs BKN, CHO vs CHA, etc.)
+    "ALTER TABLE dim_team ADD COLUMN bref_abbrev TEXT",
+    # Indexes on the new columns — must run AFTER the ALTER TABLE statements.
+    "CREATE UNIQUE INDEX IF NOT EXISTS idx_player_bref ON dim_player(bref_id)",
+]
+
+ROLLBACK_STATEMENTS = [
+    "DROP INDEX IF EXISTS idx_player_bref",
+    "ALTER TABLE dim_player DROP COLUMN bref_id",
+    "ALTER TABLE dim_player DROP COLUMN college",
+    "ALTER TABLE dim_player DROP COLUMN hof",
+    "ALTER TABLE dim_team DROP COLUMN bref_abbrev",
+]
+
 DDL_STATEMENTS = [
     # ------------------------------------------------------------------ #
     # Dimension: seasons                                                   #
@@ -255,6 +278,220 @@ DDL_STATEMENTS = [
     "CREATE INDEX IF NOT EXISTS idx_roster_player_dates ON fact_roster(player_id, start_date, end_date);",
     "CREATE UNIQUE INDEX IF NOT EXISTS idx_roster_unique ON fact_roster(player_id, team_id, season_id);",
     "CREATE INDEX IF NOT EXISTS idx_tgl_team   ON team_game_log(team_id);",
+
+    # ------------------------------------------------------------------ #
+    # Dimension: franchise/team history (SuperSonics→Thunder, etc.)       #
+    # One row per city/name era for each franchise.                        #
+    # ------------------------------------------------------------------ #
+    """
+    CREATE TABLE IF NOT EXISTS dim_team_history (
+        id                  INTEGER PRIMARY KEY,
+        team_id             TEXT NOT NULL REFERENCES dim_team(team_id),
+        team_city           TEXT NOT NULL,
+        team_name           TEXT NOT NULL,
+        team_abbrev         TEXT NOT NULL,
+        season_founded      INTEGER NOT NULL,
+        season_active_till  INTEGER NOT NULL,
+        league              TEXT NOT NULL,  -- 'NBA' | 'BAA' | 'ABA'
+        UNIQUE (team_id, season_founded)
+    ) STRICT;
+    """,
+
+    # ------------------------------------------------------------------ #
+    # Fact: team season summaries (pace, ratings, four factors, etc.)     #
+    # Source: Basketball-Reference Team Summaries                          #
+    # ------------------------------------------------------------------ #
+    """
+    CREATE TABLE IF NOT EXISTS fact_team_season (
+        id           INTEGER PRIMARY KEY,
+        season_id    TEXT NOT NULL REFERENCES dim_season(season_id),
+        bref_abbrev  TEXT NOT NULL,
+        lg           TEXT,
+        playoffs     INTEGER NOT NULL DEFAULT 0,
+        w INTEGER, l INTEGER,
+        pw REAL, pl REAL,
+        mov REAL,
+        sos REAL, srs REAL,
+        o_rtg REAL, d_rtg REAL, n_rtg REAL,
+        pace REAL,
+        ts_pct REAL, e_fg_pct REAL,
+        tov_pct REAL, orb_pct REAL, ft_fga REAL,
+        opp_e_fg_pct REAL, opp_tov_pct REAL,
+        drb_pct REAL, opp_ft_fga REAL,
+        arena TEXT,
+        attend INTEGER, attend_g INTEGER,
+        UNIQUE (season_id, bref_abbrev)
+    ) STRICT;
+    """,
+
+    # ------------------------------------------------------------------ #
+    # Dimension: league-wide averages per season                          #
+    # Required for PER, Win Shares, BPM, VORP formulas.                  #
+    # ------------------------------------------------------------------ #
+    """
+    CREATE TABLE IF NOT EXISTS dim_league_season (
+        season_id    TEXT PRIMARY KEY REFERENCES dim_season(season_id),
+        num_teams    INTEGER,
+        avg_pace     REAL,
+        avg_ortg     REAL,
+        avg_pts      REAL,
+        avg_fga      REAL,
+        avg_fta      REAL,
+        avg_trb      REAL,
+        avg_ast      REAL,
+        avg_stl      REAL,
+        avg_blk      REAL,
+        avg_tov      REAL
+    ) STRICT;
+    """,
+
+    # ------------------------------------------------------------------ #
+    # Fact: NBA draft pick history                                         #
+    # Source: Basketball-Reference Draft Pick History                      #
+    # Uses bref player/team identifiers (no FK to dim tables).            #
+    # ------------------------------------------------------------------ #
+    """
+    CREATE TABLE IF NOT EXISTS fact_draft (
+        id                  INTEGER PRIMARY KEY,
+        season_id           TEXT NOT NULL REFERENCES dim_season(season_id),
+        draft_round         INTEGER,
+        overall_pick        INTEGER,
+        bref_team_abbrev    TEXT,
+        bref_player_id      TEXT,
+        player_name         TEXT,
+        college             TEXT,
+        lg                  TEXT,
+        UNIQUE (season_id, overall_pick)
+    ) STRICT;
+    """,
+
+    # ------------------------------------------------------------------ #
+    # Fact: player season totals (1947–present)                           #
+    # Source: Basketball-Reference Player Totals                           #
+    # Uses bref_player_id — no FK to dim_player (covers ABA/BAA eras).   #
+    # ------------------------------------------------------------------ #
+    """
+    CREATE TABLE IF NOT EXISTS fact_player_season_stats (
+        id              INTEGER PRIMARY KEY,
+        bref_player_id  TEXT NOT NULL,
+        season_id       TEXT NOT NULL REFERENCES dim_season(season_id),
+        lg              TEXT,
+        team_abbrev     TEXT,
+        pos             TEXT,
+        age             INTEGER,
+        g INTEGER, gs INTEGER, mp INTEGER,
+        fg INTEGER, fga INTEGER,
+        x3p INTEGER, x3pa INTEGER,
+        ft INTEGER, fta INTEGER,
+        orb INTEGER, drb INTEGER, reb INTEGER,
+        ast INTEGER, stl INTEGER, blk INTEGER,
+        tov INTEGER, pf INTEGER, pts INTEGER,
+        UNIQUE (bref_player_id, season_id, team_abbrev)
+    ) STRICT;
+    """,
+
+    # ------------------------------------------------------------------ #
+    # Fact: player advanced season stats (1947–present)                   #
+    # PER, WS, BPM, VORP are precomputed by Basketball-Reference.         #
+    # ------------------------------------------------------------------ #
+    """
+    CREATE TABLE IF NOT EXISTS fact_player_advanced_season (
+        id              INTEGER PRIMARY KEY,
+        bref_player_id  TEXT NOT NULL,
+        season_id       TEXT NOT NULL REFERENCES dim_season(season_id),
+        team_abbrev     TEXT,
+        pos TEXT, age INTEGER, g INTEGER, gs INTEGER, mp INTEGER,
+        per REAL, ts_pct REAL, x3p_ar REAL, f_tr REAL,
+        orb_pct REAL, drb_pct REAL, trb_pct REAL,
+        ast_pct REAL, stl_pct REAL, blk_pct REAL,
+        tov_pct REAL, usg_pct REAL,
+        ows REAL, dws REAL, ws REAL, ws_48 REAL,
+        obpm REAL, dbpm REAL, bpm REAL, vorp REAL,
+        UNIQUE (bref_player_id, season_id, team_abbrev)
+    ) STRICT;
+    """,
+
+    # ------------------------------------------------------------------ #
+    # Fact: player shooting zone breakdown (1997–present)                 #
+    # Source: Basketball-Reference Player Shooting                         #
+    # ------------------------------------------------------------------ #
+    """
+    CREATE TABLE IF NOT EXISTS fact_player_shooting_season (
+        id              INTEGER PRIMARY KEY,
+        bref_player_id  TEXT NOT NULL,
+        season_id       TEXT NOT NULL REFERENCES dim_season(season_id),
+        team_abbrev     TEXT,
+        g INTEGER, mp INTEGER,
+        avg_dist_fga    REAL,
+        pct_fga_2p      REAL, pct_fga_0_3   REAL, pct_fga_3_10  REAL,
+        pct_fga_10_16   REAL, pct_fga_16_3p REAL, pct_fga_3p    REAL,
+        fg_pct_2p       REAL, fg_pct_0_3    REAL, fg_pct_3_10   REAL,
+        fg_pct_10_16    REAL, fg_pct_16_3p  REAL, fg_pct_3p     REAL,
+        pct_ast_2p      REAL, pct_ast_3p    REAL,
+        pct_dunks_fga   REAL, num_dunks     INTEGER,
+        pct_corner3_3pa REAL, corner3_pct   REAL,
+        UNIQUE (bref_player_id, season_id, team_abbrev)
+    ) STRICT;
+    """,
+
+    # ------------------------------------------------------------------ #
+    # Fact: player play-by-play season aggregates (1997–present)          #
+    # Source: Basketball-Reference Player Play By Play                     #
+    # ------------------------------------------------------------------ #
+    """
+    CREATE TABLE IF NOT EXISTS fact_player_pbp_season (
+        id              INTEGER PRIMARY KEY,
+        bref_player_id  TEXT NOT NULL,
+        season_id       TEXT NOT NULL REFERENCES dim_season(season_id),
+        team_abbrev     TEXT,
+        g INTEGER, mp INTEGER,
+        pg_pct REAL, sg_pct REAL, sf_pct REAL, pf_pct REAL, c_pct REAL,
+        on_court_pm_per100  REAL,
+        net_pm_per100       REAL,
+        bad_pass_tov        INTEGER,
+        lost_ball_tov       INTEGER,
+        shoot_foul_committed INTEGER,
+        off_foul_committed  INTEGER,
+        shoot_foul_drawn    INTEGER,
+        off_foul_drawn      INTEGER,
+        pts_gen_by_ast      INTEGER,
+        and1                INTEGER,
+        fga_blocked         INTEGER,
+        UNIQUE (bref_player_id, season_id, team_abbrev)
+    ) STRICT;
+    """,
+
+    # ------------------------------------------------------------------ #
+    # Indexes for new tables                                              #
+    # ------------------------------------------------------------------ #
+    "CREATE INDEX IF NOT EXISTS idx_team_hist_team  ON dim_team_history(team_id);",
+    "CREATE INDEX IF NOT EXISTS idx_fts_season      ON fact_team_season(season_id);",
+    "CREATE INDEX IF NOT EXISTS idx_fts_abbrev      ON fact_team_season(bref_abbrev);",
+    "CREATE INDEX IF NOT EXISTS idx_draft_season    ON fact_draft(season_id);",
+    "CREATE INDEX IF NOT EXISTS idx_draft_player    ON fact_draft(bref_player_id);",
+    "CREATE INDEX IF NOT EXISTS idx_pss_player      ON fact_player_season_stats(bref_player_id);",
+    "CREATE INDEX IF NOT EXISTS idx_pss_season      ON fact_player_season_stats(season_id);",
+    "CREATE INDEX IF NOT EXISTS idx_pas_player      ON fact_player_advanced_season(bref_player_id);",
+    "CREATE INDEX IF NOT EXISTS idx_pas_season      ON fact_player_advanced_season(season_id);",
+    "CREATE INDEX IF NOT EXISTS idx_pshoot_player   ON fact_player_shooting_season(bref_player_id);",
+    "CREATE INDEX IF NOT EXISTS idx_ppbp_player     ON fact_player_pbp_season(bref_player_id);",
+
+    # ------------------------------------------------------------------ #
+    # Internal: ETL Run Log                                               #
+    # ------------------------------------------------------------------ #
+    """
+    CREATE TABLE IF NOT EXISTS etl_run_log (
+        id          INTEGER PRIMARY KEY,
+        table_name  TEXT NOT NULL,
+        season_id   TEXT,
+        loader      TEXT NOT NULL,       -- e.g. 'game_logs.load_season'
+        started_at  TEXT NOT NULL,       -- ISO-8601 UTC
+        finished_at TEXT,
+        row_count   INTEGER,
+        status      TEXT NOT NULL        -- 'ok' | 'error'
+    ) STRICT;
+    """,
+    "CREATE INDEX IF NOT EXISTS idx_runlog_table_season ON etl_run_log(table_name, season_id);",
 ]
 
 
@@ -269,11 +506,33 @@ def init_db(db_path: Path = DB_PATH) -> sqlite3.Connection:
     con.execute("DROP INDEX IF EXISTS idx_pgl_player_season;")
     for ddl in DDL_STATEMENTS:
         con.execute(ddl)
+    # ALTER TABLE statements are not idempotent in SQLite; swallow the
+    # OperationalError that fires when the column already exists.
+    for alter in ALTER_STATEMENTS:
+        try:
+            con.execute(alter)
+        except sqlite3.OperationalError as e:
+            if "duplicate column name" in str(e).lower():
+                logger.debug("ALTER skipped (already applied?): %s", alter)
+            else:
+                raise
     con.commit()
     return con
 
 
-if __name__ == "__main__":
+def rollback_db(db_path: Path = DB_PATH) -> sqlite3.Connection:
+    """Execute rollback statements in reverse order."""
+    con = sqlite3.connect(db_path)
+    for sql in ROLLBACK_STATEMENTS:
+        try:
+            con.execute(sql)
+        except sqlite3.OperationalError as e:
+            logger.debug("Rollback statement failed: %s", e)
+    con.commit()
+    return con
+
+
+if __name__ == "__main__":  # pragma: no cover
     logging.basicConfig(level=logging.INFO)
     con = init_db()
     tables = con.execute(

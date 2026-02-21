@@ -1,14 +1,18 @@
 """Tests: ETL game log transformation and deduplication."""
 
 import sqlite3
+from pathlib import Path
+from unittest.mock import MagicMock, patch
 
 import pandas as pd
+import pytest
 
 from src.etl.game_logs import (
     _build_game_rows,
     _build_player_rows,
     _build_team_rows,
     _parse_matchup,
+    load_season,
 )
 from src.etl.utils import upsert_rows
 
@@ -127,3 +131,109 @@ def test_pts_integrity(sqlite_con_with_data: sqlite3.Connection) -> None:
         "SELECT pts FROM player_game_log WHERE player_id='2544'"
     ).fetchone()[0]
     assert pts == 25
+
+
+# ------------------------------------------------------------------ #
+# _build_game_rows: away-team branch                                 #
+# ------------------------------------------------------------------ #
+
+def test_build_game_rows_away_team_populates_away_team_id() -> None:
+    df = _make_mock_df()
+    # Use the GSW row, which has away matchup "GSW @ LAL"
+    df_away = df[df["TEAM_ABBREVIATION"] == "GSW"].copy()
+    rows = _build_game_rows(df_away, "2023-24", "Regular Season")
+    assert len(rows) == 1
+    game = rows[0]
+    assert game["home_team_id"] is None
+    assert game["away_team_id"] == str(df_away["TEAM_ID"].iloc[0])
+
+
+def test_build_game_rows_stores_season_type() -> None:
+    df = _make_mock_df()
+    rows = _build_game_rows(df, "2023-24", "Playoffs")
+    for row in rows:
+        assert row["season_type"] == "Playoffs"
+
+
+def test_build_game_rows_date_truncated_to_10_chars() -> None:
+    df = _make_mock_df()
+    rows = _build_game_rows(df, "2023-24", "Regular Season")
+    for row in rows:
+        assert len(row["game_date"]) == 10
+
+
+# ------------------------------------------------------------------ #
+# load_season: skips when already loaded                             #
+# ------------------------------------------------------------------ #
+
+def test_load_season_skips_when_already_loaded(
+    sqlite_con_with_data: sqlite3.Connection,
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    """When etl_run_log already has a successful entry, load_season returns {}."""
+    from src.etl.utils import record_run
+    import src.etl.utils as utils_mod
+    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+
+    record_run(
+        sqlite_con_with_data,
+        "player_game_log",
+        "2023-24",
+        "game_logs.load_season.Regular Season",
+        100,
+        "ok",
+    )
+    result = load_season(sqlite_con_with_data, "2023-24")
+    assert result == {}
+
+
+def test_load_season_returns_empty_dict_for_empty_api_response(
+    sqlite_con_with_data: sqlite3.Connection,
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    """Empty API DataFrame → load_season returns {}."""
+    import src.etl.utils as utils_mod
+    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+
+    mock_ep = MagicMock()
+    mock_ep.get_data_frames.return_value = [pd.DataFrame()]
+
+    with patch("src.etl.game_logs.playergamelogs.PlayerGameLogs", return_value=mock_ep):
+        with patch("src.etl.utils.time.sleep"):
+            result = load_season(sqlite_con_with_data, "2099-00")
+    assert result == {}
+
+
+def test_load_season_returns_counts_dict_on_success(
+    sqlite_con_with_data: sqlite3.Connection,
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    """load_season returns a dict with fact_game/player_game_log/team_game_log keys on success."""
+    import src.etl.utils as utils_mod
+    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+
+    df = pd.DataFrame({
+        "GAME_ID": ["0022300001"],
+        "PLAYER_ID": ["2544"],
+        "PLAYER_NAME": ["LeBron James"],
+        "TEAM_ID": ["1610612747"],
+        "TEAM_ABBREVIATION": ["LAL"],
+        "GAME_DATE": ["2023-10-24"],
+        "MATCHUP": ["LAL vs. GSW"],
+        "WL": ["W"],
+        "MIN": [32.5],
+        "FGM": [10], "FGA": [18], "FG3M": [2], "FG3A": [5],
+        "FTM": [3], "FTA": [4], "OREB": [1], "DREB": [6], "REB": [7],
+        "AST": [8], "STL": [1], "BLK": [0], "TOV": [3], "PF": [1],
+        "PTS": [25], "PLUS_MINUS": [10],
+    })
+    from src.etl.utils import save_cache
+    save_cache("pgl_2023-24_Regular_Season", df.to_dict(orient="records"))
+
+    result = load_season(sqlite_con_with_data, "2023-24")
+
+    assert isinstance(result, dict)
+    assert "fact_game" in result

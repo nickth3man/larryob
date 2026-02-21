@@ -23,11 +23,22 @@ EVENTMSGTYPE reference
 import logging
 import sqlite3
 from collections.abc import Iterable
+from datetime import UTC
 
 import pandas as pd
 from nba_api.stats.endpoints import playbyplayv2
 
-from .utils import call_with_backoff, load_cache, save_cache, upsert_rows
+from .utils import (
+    already_loaded,
+    call_with_backoff,
+    load_cache,
+    log_load_summary,
+    record_run,
+    save_cache,
+    transaction,
+    upsert_rows,
+)
+from .validate import validate_rows
 
 logger = logging.getLogger(__name__)
 
@@ -135,7 +146,9 @@ def load_game(con: sqlite3.Connection, game_id: str) -> int:
         logger.warning("No PBP data for game %s.", game_id)
         return 0
     rows = _transform_pbp(df)
-    n = upsert_rows(con, "fact_play_by_play", rows)
+    rows = validate_rows("fact_play_by_play", rows)
+    with transaction(con):
+        n = upsert_rows(con, "fact_play_by_play", rows, autocommit=False)
     logger.info("fact_play_by_play: %d events loaded for game %s.", n, game_id)
     return n
 
@@ -173,6 +186,14 @@ def load_season_pbp(
     limit : int | None
         If set, only process the first *limit* games (useful for testing).
     """
+    loader_id = "play_by_play.load_season"
+    if already_loaded(con, "fact_play_by_play", season, loader_id):
+        logger.info("Skipping play by play for %s (already loaded)", season)
+        return 0
+
+    from datetime import datetime
+    started_at = datetime.now(UTC).isoformat()
+
     cursor = con.execute(
         "SELECT game_id FROM fact_game WHERE season_id = ? ORDER BY game_date",
         (season,),
@@ -181,10 +202,17 @@ def load_season_pbp(
     if limit:
         game_ids = game_ids[:limit]
     logger.info("Loading PBP for %d games in season %s.", len(game_ids), season)
-    return load_games(con, game_ids)
+
+    total = load_games(con, game_ids)
+
+    status = "partial" if limit else "ok"
+    record_run(con, "fact_play_by_play", season, loader_id, total, status, started_at)
+    log_load_summary(con, "fact_play_by_play", season)
+
+    return total
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     from src.db.schema import init_db
     logging.basicConfig(level=logging.INFO)
     con = init_db()

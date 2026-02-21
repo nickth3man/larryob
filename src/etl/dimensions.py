@@ -13,12 +13,20 @@ All inserts use INSERT OR IGNORE so the module is safe to re-run.
 
 import logging
 import sqlite3
+from datetime import UTC
 
 from nba_api.stats.endpoints import commonallplayers, commonplayerinfo
 from nba_api.stats.static import players as nba_players_static
 from nba_api.stats.static import teams as nba_teams_static
 
-from .utils import call_with_backoff, load_cache, save_cache, upsert_rows
+from .utils import (
+    already_loaded,
+    call_with_backoff,
+    load_cache,
+    record_run,
+    save_cache,
+    upsert_rows,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +44,14 @@ def _season_id(start_year: int) -> str:
 
 def load_seasons(con: sqlite3.Connection, up_to_start_year: int = 2024) -> int:
     """Seed dim_season from the inaugural 1946-47 season through *up_to_start_year*."""
+    loader_id = f"dimensions.load_seasons.{up_to_start_year}"
+    if already_loaded(con, "dim_season", None, loader_id):
+        logger.info("Skipping dim_season (already loaded)")
+        return 0
+
+    from datetime import datetime
+    started_at = datetime.now(UTC).isoformat()
+
     rows = []
     for y in range(NBA_FIRST_SEASON_START, up_to_start_year + 1):
         rows.append({
@@ -45,6 +61,8 @@ def load_seasons(con: sqlite3.Connection, up_to_start_year: int = 2024) -> int:
         })
     inserted = upsert_rows(con, "dim_season", rows)
     logger.info("dim_season: %d rows upserted.", inserted)
+
+    record_run(con, "dim_season", None, loader_id, inserted, "ok", started_at)
     return inserted
 
 
@@ -140,6 +158,14 @@ def _map_nba_team(t: dict) -> dict:
 
 def load_teams(con: sqlite3.Connection) -> int:
     """Seed dim_team from nba_api static data (all 30 franchises)."""
+    loader_id = "dimensions.load_teams"
+    if already_loaded(con, "dim_team", None, loader_id):
+        logger.info("Skipping dim_team (already loaded)")
+        return 0
+
+    from datetime import datetime
+    started_at = datetime.now(UTC).isoformat()
+
     cache_key = "teams_static"
     cached = load_cache(cache_key)
     if cached:
@@ -150,9 +176,14 @@ def load_teams(con: sqlite3.Connection) -> int:
         save_cache(cache_key, raw_teams)
 
     rows = [_map_nba_team(t) for t in raw_teams]
-    inserted = upsert_rows(con, "dim_team", rows)
-    logger.info("dim_team: %d rows upserted from nba_api static data.", inserted)
-    return inserted
+    try:
+        inserted = upsert_rows(con, "dim_team", rows)
+        record_run(con, "dim_team", None, loader_id, inserted, "ok", started_at)
+        logger.info("dim_team: %d rows upserted from nba_api static data.", inserted)
+        return inserted
+    except Exception:
+        record_run(con, "dim_team", None, loader_id, 0, "error", started_at)
+        raise
 
 
 # ------------------------------------------------------------------ #
@@ -308,11 +339,24 @@ def load_players_static(con: sqlite3.Connection) -> int:
     Fast seed of dim_player using nba_api static data.
     Covers all historical + active players without any HTTP calls.
     """
+    loader_id = "dimensions.load_players_static"
+    if already_loaded(con, "dim_player", None, loader_id):
+        logger.info("Skipping dim_player static (already loaded)")
+        return 0
+
+    from datetime import datetime
+    started_at = datetime.now(UTC).isoformat()
+
     raw = nba_players_static.get_players()
     rows = [_map_nba_player_static(p) for p in raw]
-    inserted = upsert_rows(con, "dim_player", rows)
-    logger.info("dim_player: %d rows upserted from nba_api static data.", inserted)
-    return inserted
+    try:
+        inserted = upsert_rows(con, "dim_player", rows)
+        record_run(con, "dim_player", None, loader_id, inserted, "ok", started_at)
+        logger.info("dim_player: %d rows upserted from nba_api static data.", inserted)
+        return inserted
+    except Exception:
+        record_run(con, "dim_player", None, loader_id, 0, "error", started_at)
+        raise
 
 
 def load_players_full(con: sqlite3.Connection, season_id: str = "2024-25") -> int:
@@ -321,6 +365,14 @@ def load_players_full(con: sqlite3.Connection, season_id: str = "2024-25") -> in
     Fetches richer metadata and fills gaps left by the static dataset.
     Falls back to cached data if the API call fails.
     """
+    loader_id = f"dimensions.load_players_full.{season_id}"
+    if already_loaded(con, "dim_player", None, loader_id):
+        logger.info("Skipping dim_player full (already loaded)")
+        return 0
+
+    from datetime import datetime
+    started_at = datetime.now(UTC).isoformat()
+
     cache_key = f"common_all_players_{season_id}"
     cached = load_cache(cache_key)
 
@@ -342,12 +394,18 @@ def load_players_full(con: sqlite3.Connection, season_id: str = "2024-25") -> in
     # Normalise column names to lower-case
     records = [{k.lower(): v for k, v in r.items()} for r in records]
     rows = [_map_common_all_player(r) for r in records]
-    inserted = upsert_rows(con, "dim_player", rows, conflict="REPLACE")
-    logger.info(
-        "dim_player full: %d rows upserted from CommonAllPlayers(%s).",
-        inserted, season_id,
-    )
-    return inserted
+    
+    try:
+        inserted = upsert_rows(con, "dim_player", rows, conflict="REPLACE")
+        record_run(con, "dim_player", None, loader_id, inserted, "ok", started_at)
+        logger.info(
+            "dim_player full: %d rows upserted from CommonAllPlayers(%s).",
+            inserted, season_id,
+        )
+        return inserted
+    except Exception:
+        record_run(con, "dim_player", None, loader_id, 0, "error", started_at)
+        raise
 
 
 def load_players_bio_enrichment(
@@ -359,7 +417,14 @@ def load_players_bio_enrichment(
     Enrich dim_player with bio data (height, weight, birth_date, draft info, etc.)
     via CommonPlayerInfo. One API call per player; use active_only=True to limit.
     """
+    loader_id = f"dimensions.load_players_bio_enrichment.active_{active_only}"
+    if player_ids is None and already_loaded(con, "dim_player", None, loader_id):
+        logger.info("Skipping dim_player bio enrichment (already loaded)")
+        return 0
+
     import time
+    from datetime import datetime
+    started_at = datetime.now(UTC).isoformat()
 
     if player_ids is None:
         if active_only:
@@ -394,9 +459,17 @@ def load_players_bio_enrichment(
         time.sleep(2.5)
 
     if rows:
-        inserted = upsert_rows(con, "dim_player", rows, conflict="REPLACE")
-        logger.info("dim_player bio enrichment: %d rows updated.", inserted)
-        return inserted
+        try:
+            inserted = upsert_rows(con, "dim_player", rows, conflict="REPLACE")
+            record_run(con, "dim_player", None, loader_id, inserted, "ok", started_at)
+            logger.info("dim_player bio enrichment: %d rows updated.", inserted)
+            return inserted
+        except Exception:
+            record_run(con, "dim_player", None, loader_id, 0, "error", started_at)
+            raise
+    
+    if player_ids is None:
+        record_run(con, "dim_player", None, loader_id, 0, "ok", started_at)
     return 0
 
 
@@ -430,7 +503,7 @@ def run_all(
         load_players_bio_enrichment(con, active_only=True)
 
 
-if __name__ == "__main__":
+if __name__ == "__main__":  # pragma: no cover
     from src.db.schema import init_db
     logging.basicConfig(level=logging.INFO)
     con = init_db()
