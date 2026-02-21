@@ -11,7 +11,7 @@ from pathlib import Path
 import duckdb
 import pytest
 
-from src.db.schema import DDL_STATEMENTS
+from src.db.schema import ALTER_STATEMENTS, DDL_STATEMENTS
 
 # ------------------------------------------------------------------ #
 # SQLite fixtures                                                     #
@@ -24,6 +24,12 @@ def sqlite_con() -> sqlite3.Connection:
     con.execute("PRAGMA foreign_keys=ON;")
     for ddl in DDL_STATEMENTS:
         con.execute(ddl)
+    # Apply column-addition migrations (swallow duplicate-column errors).
+    for alter in ALTER_STATEMENTS:
+        try:
+            con.execute(alter)
+        except sqlite3.OperationalError:
+            pass
     con.commit()
     return con
 
@@ -37,22 +43,38 @@ def sqlite_con_with_data(sqlite_con: sqlite3.Connection) -> sqlite3.Connection:
         ("2023-24", 2023, 2024),
     )
     con.execute(
-        "INSERT INTO dim_team VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+        """INSERT INTO dim_team
+           (team_id, abbreviation, full_name, city, nickname,
+            conference, division, color_primary, color_secondary, arena_name, founded_year)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
         ("1610612747", "LAL", "Los Angeles Lakers", "Los Angeles",
          "Lakers", "West", "Pacific", "#552583", "#FDB927", "Crypto.com Arena", 1947),
     )
     con.execute(
-        "INSERT INTO dim_team VALUES (?,?,?,?,?,?,?,?,?,?,?)",
+        """INSERT INTO dim_team
+           (team_id, abbreviation, full_name, city, nickname,
+            conference, division, color_primary, color_secondary, arena_name, founded_year)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
         ("1610612744", "GSW", "Golden State Warriors", "San Francisco",
          "Warriors", "West", "Pacific", "#1D428A", "#FFC72C", "Chase Center", 1946),
     )
     con.execute(
-        "INSERT INTO dim_player VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        """INSERT INTO dim_player
+           (player_id, first_name, last_name, full_name,
+            birth_date, birth_city, birth_country,
+            height_cm, weight_kg, position,
+            draft_year, draft_round, draft_number, is_active)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         ("2544", "LeBron", "James", "LeBron James",
          "1984-12-30", "Akron", "USA", 206.0, 113.0, "SF", 2003, 1, 1, 1),
     )
     con.execute(
-        "INSERT INTO dim_player VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        """INSERT INTO dim_player
+           (player_id, first_name, last_name, full_name,
+            birth_date, birth_city, birth_country,
+            height_cm, weight_kg, position,
+            draft_year, draft_round, draft_number, is_active)
+           VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         ("203999", "Nikola", "Jokic", "Nikola Jokic",
          "1995-02-19", "Sombor", "Serbia", 211.0, 129.0, "C", 2014, 2, 41, 1),
     )

@@ -17,6 +17,12 @@ Usage
 
     # Seed PBP for up to N games already in fact_game:
     uv run python ingest.py --pbp-limit 10
+
+    # Backfill all tables from the raw/ CSV directory:
+    uv run python ingest.py --raw-backfill
+
+    # Custom raw/ directory location:
+    uv run python ingest.py --raw-backfill --raw-dir /path/to/raw
 """
 
 import argparse
@@ -29,6 +35,7 @@ from src.db.schema import init_db
 
 load_dotenv()
 from src.etl.awards import load_all_awards
+from src.etl.raw_backfill import run_raw_backfill
 from src.etl.utils import setup_logging
 from src.etl.dimensions import run_all as run_dimensions
 from src.etl.game_logs import load_multiple_seasons
@@ -76,6 +83,14 @@ def main() -> None:
         help="Number of games to load PBP for (0 = skip PBP)",
     )
     parser.add_argument(
+        "--raw-backfill", action="store_true",
+        help="Seed all tables from the raw/ CSV directory (handles load order automatically)",
+    )
+    parser.add_argument(
+        "--raw-dir", type=str, default=None,
+        help="Path to the raw/ directory (default: <repo_root>/raw)",
+    )
+    parser.add_argument(
         "--log-level", default="INFO",
         help="Logging level (DEBUG, INFO, WARNING, ERROR)",
     )
@@ -102,6 +117,12 @@ def main() -> None:
         full_players=not args.dims_only,
         enrich_bio=args.enrich_bio,
     )
+
+    if args.raw_backfill:
+        from src.etl.raw_backfill import RAW_DIR
+        raw_dir = Path(args.raw_dir) if args.raw_dir else RAW_DIR
+        logger.info("Running raw/ backfill from %s…", raw_dir)
+        run_raw_backfill(con, raw_dir)
 
     if args.awards:
         logger.info("Loading player awards…")
