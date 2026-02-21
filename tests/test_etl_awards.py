@@ -3,8 +3,6 @@
 import sqlite3
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from src.etl.awards import (
     _build_award_name,
     _map_award_type,
@@ -12,7 +10,6 @@ from src.etl.awards import (
     load_all_awards,
     load_player_awards,
 )
-
 
 # ------------------------------------------------------------------ #
 # _build_award_name                                                   #

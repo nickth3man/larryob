@@ -1,3 +1,4 @@
+
 """
 NBA database ingest entrypoint.
 
@@ -29,19 +30,15 @@ import argparse
 import logging
 from pathlib import Path
 
-from dotenv import load_dotenv
-
 from src.db.schema import init_db
-
-load_dotenv()
 from src.etl.awards import load_all_awards
-from src.etl.raw_backfill import run_raw_backfill, RAW_DIR
-from src.etl.utils import setup_logging
 from src.etl.dimensions import run_all as run_dimensions
 from src.etl.game_logs import load_multiple_seasons
 from src.etl.play_by_play import load_season_pbp
+from src.etl.raw_backfill import RAW_DIR, run_raw_backfill
 from src.etl.roster import load_rosters_for_seasons
 from src.etl.salaries import load_salaries_for_seasons
+from src.etl.utils import setup_logging
 
 logger = logging.getLogger("ingest")
 
@@ -49,6 +46,9 @@ DEFAULT_SEASONS = ["2023-24", "2024-25"]
 
 
 def main() -> None:
+    from dotenv import load_dotenv
+    load_dotenv()
+
     parser = argparse.ArgumentParser(description="NBA database ingest pipeline")
     parser.add_argument(
         "--seasons", nargs="+", default=DEFAULT_SEASONS,

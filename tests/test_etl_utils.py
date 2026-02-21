@@ -3,9 +3,8 @@
 import json
 import logging
 import sqlite3
-import time
 from pathlib import Path
-from unittest.mock import MagicMock, call, patch
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -22,7 +21,6 @@ from src.etl.utils import (
     transaction,
     upsert_rows,
 )
-
 
 # ------------------------------------------------------------------ #
 # Helpers                                                             #
@@ -318,7 +316,6 @@ def test_log_load_summary_warns_when_count_below_min_rows(
 
 
 def test_log_load_summary_with_season_filter(sqlite_con: sqlite3.Connection) -> None:
-    from src.db.schema import DDL_STATEMENTS
     sqlite_con.execute(
         "INSERT INTO dim_season (season_id, start_year, end_year) VALUES ('2023-24', 2023, 2024)"
     )

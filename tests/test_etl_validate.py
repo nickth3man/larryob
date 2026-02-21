@@ -1,13 +1,12 @@
 import sqlite3
-import pytest
-from pathlib import Path
+
+from src.etl.utils import load_cache, save_cache
 from src.etl.validate import (
     check_game_stat_consistency,
     run_consistency_checks,
     validate_rows,
 )
-from src.etl.utils import CACHE_VERSION, load_cache, save_cache
-import time
+
 
 def test_validate_rows_player_game_log():
     rows = [
@@ -20,7 +19,7 @@ def test_validate_rows_player_game_log():
         # Invalid REB sum
         {"game_id": "4", "player_id": "D", "fgm": 1, "fga": 2, "pts": 2, "oreb": 1, "dreb": 1, "reb": 5},
     ]
-    
+
     valid = validate_rows("player_game_log", rows)
     assert len(valid) == 1
     assert valid[0]["player_id"] == "A"
@@ -35,7 +34,7 @@ def test_validate_rows_fact_game():
         # Invalid date format
         {"game_id": "3", "home_score": 100, "away_score": 90, "game_date": "2024/10/22"},
     ]
-    
+
     valid = validate_rows("fact_game", rows)
     assert len(valid) == 1
     assert valid[0]["game_id"] == "1"
@@ -50,7 +49,7 @@ def test_validate_rows_shooting_zones():
         # Nulls (bypasses rule)
         {"bref_player_id": "C", "pct_fga_0_3": None, "pct_fga_3_10": None, "pct_fga_10_16": None, "pct_fga_16_3p": None, "pct_fga_3p": None},
     ]
-    
+
     valid = validate_rows("fact_player_shooting_season", rows)
     assert len(valid) == 2
     assert {r["bref_player_id"] for r in valid} == {"A", "C"}
@@ -58,25 +57,25 @@ def test_validate_rows_shooting_zones():
 
 def test_check_game_stat_consistency(sqlite_con_with_data: sqlite3.Connection):
     from src.etl.utils import upsert_rows
-    
+
     # Insert team game log with 100 pts
     upsert_rows(sqlite_con_with_data, "team_game_log", [{
         "game_id": "0022300001", "team_id": "1610612747", "pts": 100, "reb": 40, "ast": 20,
-        "fgm": 0, "fga": 0, "fg3m": 0, "fg3a": 0, "ftm": 0, "fta": 0, "oreb": 0, "dreb": 0, 
+        "fgm": 0, "fga": 0, "fg3m": 0, "fg3a": 0, "ftm": 0, "fta": 0, "oreb": 0, "dreb": 0,
         "stl": 0, "blk": 0, "tov": 0, "pf": 0, "plus_minus": 0
     }])
-    
+
     # Insert player game logs summing to 90 pts (mismatch)
     upsert_rows(sqlite_con_with_data, "player_game_log", [
         {"game_id": "0022300001", "player_id": "2544", "team_id": "1610612747", "pts": 50, "reb": 20, "ast": 10,
-         "minutes_played": 20, "fgm": 0, "fga": 0, "fg3m": 0, "fg3a": 0, "ftm": 0, "fta": 0, "oreb": 0, "dreb": 0, 
+         "minutes_played": 20, "fgm": 0, "fga": 0, "fg3m": 0, "fg3a": 0, "ftm": 0, "fta": 0, "oreb": 0, "dreb": 0,
          "stl": 0, "blk": 0, "tov": 0, "pf": 0, "plus_minus": 0, "starter": 1},
         {"game_id": "0022300001", "player_id": "203999", "team_id": "1610612747", "pts": 40, "reb": 20, "ast": 10,
-         "minutes_played": 20, "fgm": 0, "fga": 0, "fg3m": 0, "fg3a": 0, "ftm": 0, "fta": 0, "oreb": 0, "dreb": 0, 
+         "minutes_played": 20, "fgm": 0, "fga": 0, "fg3m": 0, "fg3a": 0, "ftm": 0, "fta": 0, "oreb": 0, "dreb": 0,
          "stl": 0, "blk": 0, "tov": 0, "pf": 0, "plus_minus": 0, "starter": 0},
     ])
     sqlite_con_with_data.commit()
-    
+
     warnings = check_game_stat_consistency(sqlite_con_with_data, "0022300001")
     assert len(warnings) == 1
     assert "PTS mismatch" in warnings[0]
@@ -88,18 +87,18 @@ def test_cache_versioning_and_ttl(tmp_path, monkeypatch):
     # Point CACHE_DIR to temp path
     from src.etl import utils
     monkeypatch.setattr(utils, "CACHE_DIR", tmp_path)
-    
+
     key = "test_key"
     data = {"hello": "world"}
-    
+
     save_cache(key, data)
-    
+
     # 1. Normal load works
     assert load_cache(key) == data
-    
+
     # 2. Load with TTL works if fresh
     assert load_cache(key, ttl_days=1) == data
-    
+
     # 3. Load with TTL fails if expired
     # Manipulate the saved timestamp to be 2 days old
     import json
@@ -107,14 +106,14 @@ def test_cache_versioning_and_ttl(tmp_path, monkeypatch):
     payload = json.loads(p.read_text())
     payload["ts"] -= 86400 * 2
     p.write_text(json.dumps(payload))
-    
+
     assert load_cache(key, ttl_days=1) is None
-    
+
     # 4. Version mismatch fails
     payload["ts"] += 86400 * 2  # restore time
     payload["v"] = utils.CACHE_VERSION - 1
     p.write_text(json.dumps(payload))
-    
+
     assert load_cache(key) is None
 
 

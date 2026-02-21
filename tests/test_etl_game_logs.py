@@ -5,7 +5,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
-import pytest
 
 from src.etl.game_logs import (
     _build_game_rows,
@@ -172,8 +171,8 @@ def test_load_season_skips_when_already_loaded(
     tmp_path: Path,
 ) -> None:
     """When etl_run_log already has a successful entry, load_season returns {}."""
-    from src.etl.utils import record_run
     import src.etl.utils as utils_mod
+    from src.etl.utils import record_run
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
 
     record_run(

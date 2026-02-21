@@ -394,7 +394,7 @@ def load_players_full(con: sqlite3.Connection, season_id: str = "2024-25") -> in
     # Normalise column names to lower-case
     records = [{k.lower(): v for k, v in r.items()} for r in records]
     rows = [_map_common_all_player(r) for r in records]
-    
+
     try:
         inserted = upsert_rows(con, "dim_player", rows, conflict="REPLACE")
         record_run(con, "dim_player", None, loader_id, inserted, "ok", started_at)
@@ -467,7 +467,7 @@ def load_players_bio_enrichment(
         except Exception:
             record_run(con, "dim_player", None, loader_id, 0, "error", started_at)
             raise
-    
+
     if player_ids is None:
         record_run(con, "dim_player", None, loader_id, 0, "ok", started_at)
     return 0

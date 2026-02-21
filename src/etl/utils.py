@@ -4,6 +4,7 @@ Shared ETL utilities: rate-limit handling, JSON caching, logging.
 
 import json
 import logging
+import re
 import sqlite3
 import sys
 import time
@@ -119,6 +120,10 @@ def save_cache(key: str, data: Any) -> None:
 
 _VALID_CONFLICT = frozenset({"IGNORE", "REPLACE", "ABORT", "ROLLBACK", "FAIL"})
 
+def _validate_identifier(name: str) -> None:
+    if not re.fullmatch(r"^[a-zA-Z0-9_]+$", name):
+        raise ValueError(f"Invalid SQL identifier: {name!r}")
+
 def upsert_rows(
     con: sqlite3.Connection,
     table: str,
@@ -134,14 +139,17 @@ def upsert_rows(
         return 0
     if conflict and conflict.upper() not in _VALID_CONFLICT:
         raise ValueError(f"Invalid conflict clause: {conflict!r}")
-    
+    _validate_identifier(table)
+    for c in rows[0].keys():
+        _validate_identifier(c)
+
     columns = list(rows[0].keys())
     placeholders = ", ".join("?" * len(columns))
     col_list = ", ".join(columns)
     or_clause = f" OR {conflict}" if conflict else ""
     sql = f"INSERT{or_clause} INTO {table} ({col_list}) VALUES ({placeholders})"
     data = [tuple(r[c] for c in columns) for r in rows]
-    
+
     try:
         cur = con.executemany(sql, data)
         if autocommit:
@@ -220,6 +228,7 @@ def log_load_summary(
     min_rows: int = 0
 ) -> int:
     """Log actual row count for table (optionally filtered by season_id)."""
+    _validate_identifier(table)
     sql = f"SELECT COUNT(*) FROM {table}"
     params: list = []
     if season_id:

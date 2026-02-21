@@ -16,6 +16,7 @@ Usage
 """
 
 import logging
+import threading
 from pathlib import Path
 
 import duckdb
@@ -638,9 +639,7 @@ _VIEWS: list[tuple[str, str]] = [
 ]
 
 
-_cached_con: duckdb.DuckDBPyConnection | None = None
-_cached_sqlite_path: str | None = None
-_cached_duck_db_path: str | None = None
+_local = threading.local()
 
 def get_duck_con(
     sqlite_path: Path = SQLITE_DB,
@@ -662,19 +661,22 @@ def get_duck_con(
     force_refresh : bool
         If True, recreates the connection and all views even if cached.
     """
-    global _cached_con, _cached_sqlite_path, _cached_duck_db_path
-    
-    cache_match = (_cached_sqlite_path == str(sqlite_path) and _cached_duck_db_path == duck_db_path)
-    if _cached_con is not None and not force_refresh and cache_match:
-        try:
-            _cached_con.execute("SELECT 1")
-            return _cached_con
-        except Exception:
-            _cached_con = None
+    if not hasattr(_local, "cached_con"):
+        _local.cached_con = None
+        _local.cached_sqlite_path = None
+        _local.cached_duck_db_path = None
 
-    if _cached_con is not None:
+    cache_match = (_local.cached_sqlite_path == str(sqlite_path) and _local.cached_duck_db_path == duck_db_path)
+    if _local.cached_con is not None and not force_refresh and cache_match:
         try:
-            _cached_con.close()
+            _local.cached_con.execute("SELECT 1")
+            return _local.cached_con
+        except Exception:
+            _local.cached_con = None
+
+    if _local.cached_con is not None:
+        try:
+            _local.cached_con.close()
         except Exception:
             pass
 
@@ -694,9 +696,9 @@ def get_duck_con(
         logger.debug("View created: %s", name)
 
     logger.info("DuckDB analytics layer ready (%d views).", len(_VIEWS))
-    _cached_con = con
-    _cached_sqlite_path = str(sqlite_path)
-    _cached_duck_db_path = duck_db_path
+    _local.cached_con = con
+    _local.cached_sqlite_path = str(sqlite_path)
+    _local.cached_duck_db_path = duck_db_path
     return con
 
 
@@ -708,6 +710,6 @@ if __name__ == "__main__":  # pragma: no cover
     for v in views:
         logger.info(" - %s", v[0])
     duck.close()
-    _cached_con = None
-    _cached_sqlite_path = None
-    _cached_duck_db_path = None
+    _local.cached_con = None
+    _local.cached_sqlite_path = None
+    _local.cached_duck_db_path = None

@@ -1,10 +1,7 @@
 """Tests: ETL salary loaders — pure-logic helpers and mock-boundary integrations."""
 
 import sqlite3
-from pathlib import Path
 from unittest.mock import MagicMock, patch
-
-import pytest
 
 from src.etl.salaries import (
     _SALARY_CAP_BY_SEASON,
@@ -13,7 +10,6 @@ from src.etl.salaries import (
     _parse_salary,
     load_salary_cap,
 )
-
 
 # ------------------------------------------------------------------ #
 # _normalize_name                                                     #

@@ -191,7 +191,7 @@ def _build_team_rows(df: pd.DataFrame) -> list[dict]:
     df2["team_id"] = df2["team_id"].astype(str)
     agg = (
         df2.groupby(["game_id", "team_id"])[_TEAM_SUM_COLS]
-        .sum()
+        .agg(lambda s: None if s.isna().all() else s.sum())
         .reset_index()
     )
     return agg.where(pd.notna(agg), None).to_dict(orient="records")

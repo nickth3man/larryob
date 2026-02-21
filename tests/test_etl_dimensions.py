@@ -2,7 +2,7 @@
 
 import sqlite3
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 import pytest
 
@@ -253,7 +253,6 @@ def test_map_common_all_player_uses_player_slug_fallback() -> None:
 def test_load_seasons_skips_when_etl_run_log_has_entry(
     sqlite_con: sqlite3.Connection,
 ) -> None:
-    from src.etl.utils import record_run
     load_seasons(sqlite_con, up_to_start_year=1950)
     count_before = sqlite_con.execute("SELECT COUNT(*) FROM dim_season").fetchone()[0]
     result = load_seasons(sqlite_con, up_to_start_year=1950)

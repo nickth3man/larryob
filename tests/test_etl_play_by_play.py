@@ -5,7 +5,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
-import pytest
 
 from src.etl.play_by_play import _fetch_pbp, _transform_pbp, load_game, load_games, load_season_pbp
 from src.etl.utils import upsert_rows

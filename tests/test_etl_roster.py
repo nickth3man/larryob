@@ -5,10 +5,8 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pandas as pd
-import pytest
 
 from src.etl.roster import _season_start_date, load_team_roster
-
 
 # ------------------------------------------------------------------ #
 # _season_start_date                                                  #

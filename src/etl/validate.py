@@ -3,7 +3,6 @@ Centralized business-rule validation for ETL output rows.
 """
 
 import logging
-import re
 import sqlite3
 from collections.abc import Callable
 
@@ -108,6 +107,7 @@ def validate_rows(table: str, rows: list[dict]) -> list[dict]:
         return rows
 
     valid_rows = []
+    # Optimized list comprehension where possible, though iteration remains for complex predicate logic
     for row in rows:
         is_valid = True
 

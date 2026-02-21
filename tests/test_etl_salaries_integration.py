@@ -1,5 +1,5 @@
 import sqlite3
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from src.etl.salaries import load_player_salaries
 
@@ -15,7 +15,7 @@ def test_load_player_salaries_historical_season(
     mock_html = """
     <html>
       <body>
-        <!-- 
+        <!--
         <table id="salaries2">
             <thead>
                 <tr><th>Rk</th><th>Player</th><th>Salary</th></tr>
@@ -32,7 +32,7 @@ def test_load_player_salaries_historical_season(
 
     with patch("src.etl.salaries._get_html", return_value=mock_html):
         with patch("src.etl.salaries.time.sleep"):
-            inserted = load_player_salaries(sqlite_con_with_data, "2023-24")
+            load_player_salaries(sqlite_con_with_data, "2023-24")
 
     row = sqlite_con_with_data.execute("SELECT player_id, salary FROM fact_salary").fetchone()
     assert row[0] == "2544"
@@ -46,7 +46,7 @@ def test_load_player_salaries_current_season(
 ):
     import src.etl.utils as utils_mod
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
-    
+
     import datetime as dt
     current_year = dt.date.today().year
     season = f"{current_year}-{str(current_year+1)[-2:]}"
@@ -90,7 +90,7 @@ def test_load_player_salaries_current_season(
 
     with patch("src.etl.salaries._get_html", return_value=mock_html):
         with patch("src.etl.salaries.time.sleep"):
-            inserted = load_player_salaries(sqlite_con_with_data, season)
+            load_player_salaries(sqlite_con_with_data, season)
 
     row = sqlite_con_with_data.execute(f"SELECT player_id, salary FROM fact_salary WHERE season_id = '{season}'").fetchone()
     assert row[0] == "2544"

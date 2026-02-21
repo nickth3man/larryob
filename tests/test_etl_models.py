@@ -5,7 +5,6 @@ from pydantic import ValidationError
 
 from src.etl.models import PlayerGameLogRow, TeamGameLogRow
 
-
 # ------------------------------------------------------------------ #
 # PlayerGameLogRow — happy path                                       #
 # ------------------------------------------------------------------ #
