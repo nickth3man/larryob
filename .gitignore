@@ -19,5 +19,6 @@ wheels/
 *.db
 *.db-shm
 *.db-wal
-/raw.coverage
+/raw
+.coverage
 coverage.json
