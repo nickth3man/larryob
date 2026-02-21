@@ -39,6 +39,7 @@ from src.etl.raw_backfill import RAW_DIR, run_raw_backfill
 from src.etl.roster import load_rosters_for_seasons
 from src.etl.salaries import load_salaries_for_seasons
 from src.etl.utils import setup_logging
+from src.etl.validate import run_consistency_checks
 
 logger = logging.getLogger("ingest")
 
@@ -81,6 +82,14 @@ def main() -> None:
     parser.add_argument(
         "--pbp-limit", type=int, default=0,
         help="Number of games to load PBP for (0 = skip PBP)",
+    )
+    parser.add_argument(
+        "--skip-reconciliation", action="store_true",
+        help="Skip post-boxscore reconciliation checks (player totals vs team totals)",
+    )
+    parser.add_argument(
+        "--reconciliation-warn-only", action="store_true",
+        help="Do not fail ingest when reconciliation checks find discrepancies",
     )
     parser.add_argument(
         "--raw-backfill", action="store_true",
@@ -146,6 +155,22 @@ def main() -> None:
 
     logger.info("Loading box scores for seasons: %s", args.seasons)
     load_multiple_seasons(con, args.seasons, season_types=season_types)
+
+    if not args.skip_reconciliation:
+        total_warnings = 0
+        for season in args.seasons:
+            logger.info("Running reconciliation checks for season %s…", season)
+            total_warnings += run_consistency_checks(con, season)
+        if total_warnings > 0:
+            msg = (
+                f"Reconciliation checks found {total_warnings} discrepancy warning(s). "
+                "Re-run with --reconciliation-warn-only to continue despite mismatches."
+            )
+            if args.reconciliation_warn_only:
+                logger.warning(msg)
+            else:
+                con.close()
+                raise RuntimeError(msg)
 
     if args.pbp_limit > 0:
         for season in args.seasons:

@@ -332,6 +332,24 @@ def test_load_players_bio_enrichment_api_exception_skips_player(
     assert result == 0
 
 
+def test_load_players_bio_enrichment_records_run_when_auto_selected_empty(
+    sqlite_con: sqlite3.Connection,
+) -> None:
+    result = load_players_bio_enrichment(sqlite_con, player_ids=None, active_only=True)
+    assert result == 0
+    row = sqlite_con.execute(
+        """
+        SELECT status, row_count
+        FROM etl_run_log
+        WHERE table_name = 'dim_player'
+          AND loader = 'dimensions.load_players_bio_enrichment.active_True'
+        ORDER BY id DESC
+        LIMIT 1
+        """
+    ).fetchone()
+    assert row == ("ok", 0)
+
+
 # ------------------------------------------------------------------ #
 # run_all                                                             #
 # ------------------------------------------------------------------ #

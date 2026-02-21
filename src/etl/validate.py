@@ -6,6 +6,10 @@ import logging
 import sqlite3
 from collections.abc import Callable
 
+from pydantic import BaseModel, ValidationError
+
+from .models import PlayerGameLogRow, TeamGameLogRow
+
 logger = logging.getLogger(__name__)
 
 # Basic predicates
@@ -97,6 +101,25 @@ RULES: dict[str, list[tuple[str, Callable[[dict], bool], str]]] = {
     ],
 }
 
+_ROW_MODELS: dict[str, type[BaseModel]] = {
+    "player_game_log": PlayerGameLogRow,
+    "team_game_log": TeamGameLogRow,
+}
+
+_ROW_MODEL_REQUIRED_KEYS: dict[str, set[str]] = {
+    "player_game_log": {"game_id", "player_id", "team_id"},
+    "team_game_log": {"game_id", "team_id"},
+}
+
+
+def _row_ident(row: dict) -> dict:
+    return {
+        k: row[k]
+        for k in ["game_id", "player_id", "team_id", "season_id", "bref_player_id"]
+        if k in row
+    }
+
+
 def validate_rows(table: str, rows: list[dict]) -> list[dict]:
     """
     Drop invalid rows based on business rules for `table` and log warnings.
@@ -107,17 +130,33 @@ def validate_rows(table: str, rows: list[dict]) -> list[dict]:
         return rows
 
     valid_rows = []
+    model_cls = _ROW_MODELS.get(table)
+    model_required_keys = _ROW_MODEL_REQUIRED_KEYS.get(table, set())
     # Optimized list comprehension where possible, though iteration remains for complex predicate logic
     for row in rows:
+        if model_cls is not None and model_required_keys.issubset(row):
+            try:
+                validated = model_cls.model_validate(row)
+                # Keep any loader-supplied extras while normalizing typed fields from the model.
+                row = {**row, **validated.model_dump()}
+            except ValidationError as exc:
+                errors = exc.errors()
+                first = errors[0] if errors else {}
+                msg = first.get("msg", str(exc)) if isinstance(first, dict) else str(exc)
+                logger.warning(
+                    "Validation failed for table '%s', model rule: %s (ident=%r)",
+                    table, msg, _row_ident(row),
+                )
+                continue
+
         is_valid = True
 
         # Standard rules
         for field_name, predicate, msg in rules:
             if not predicate(row):
-                ident = {k: row[k] for k in ["game_id", "player_id", "team_id", "season_id", "bref_player_id"] if k in row}
                 logger.warning(
                     "Validation failed for table '%s', rule '%s': %s (ident=%r)",
-                    table, field_name, msg, ident
+                    table, field_name, msg, _row_ident(row)
                 )
                 is_valid = False
                 break
@@ -131,10 +170,9 @@ def validate_rows(table: str, rows: list[dict]) -> list[dict]:
             if not any(z is None for z in zones):
                 zone_sum = sum(zones)
                 if abs(zone_sum - 1.0) > 0.05:
-                    ident = {k: row[k] for k in ["game_id", "player_id", "team_id", "season_id", "bref_player_id"] if k in row}
                     logger.warning(
                         "Validation failed for table '%s', rule 'zone_sum': sum is %.3f, expected ~1.0 (ident=%r)",
-                        table, zone_sum, ident
+                        table, zone_sum, _row_ident(row)
                     )
                     is_valid = False
 
@@ -187,7 +225,7 @@ def check_game_stat_consistency(con: sqlite3.Connection, game_id: str) -> list[s
     return warnings
 
 
-def run_consistency_checks(con: sqlite3.Connection, season_id: str) -> None:
+def run_consistency_checks(con: sqlite3.Connection, season_id: str) -> int:
     """Run check_game_stat_consistency for all games in season_id, log warnings."""
     games = con.execute("SELECT game_id FROM fact_game WHERE season_id = ?", (season_id,)).fetchall()
 
@@ -202,3 +240,5 @@ def run_consistency_checks(con: sqlite3.Connection, season_id: str) -> None:
         logger.info("Consistency check passed for season %s (%d games)", season_id, len(games))
     else:
         logger.warning("Consistency check found %d discrepancies in season %s", total_warnings, season_id)
+
+    return total_warnings

@@ -1,6 +1,8 @@
 import sqlite3
 from unittest.mock import patch
 
+import pytest
+
 import ingest
 
 
@@ -59,7 +61,9 @@ def test_ingest_full_pipeline_mocked(tmp_path, monkeypatch):
                             with patch("ingest.load_rosters_for_seasons"):
                                 with patch("ingest.load_multiple_seasons"):
                                     with patch("ingest.load_season_pbp"):
-                                        ingest.main()
+                                        with patch("ingest.run_consistency_checks", return_value=0) as reconcile:
+                                            ingest.main()
+                                            reconcile.assert_called_once_with(con, "2023-24")
 
     # Verify tables exist
     con = sqlite3.connect(db_file)
@@ -81,3 +85,48 @@ def test_ingest_full_pipeline_mocked(tmp_path, monkeypatch):
             setattr(analytics._local, "cached_duck_db_path", None)
     except Exception:
         pass
+
+
+def test_ingest_reconciliation_discrepancy_raises_by_default(tmp_path):
+    db_file = tmp_path / "test_ingest_reconcile_fail.db"
+    from src.db.schema import init_db
+    con = init_db(db_file)
+
+    test_args = ["ingest.py", "--seasons", "2023-24"]
+    with patch("sys.argv", test_args):
+        with patch("ingest.init_db", return_value=con):
+            with patch("ingest.run_dimensions"):
+                with patch("ingest.load_multiple_seasons"):
+                    with patch("ingest.run_consistency_checks", return_value=2):
+                        with pytest.raises(RuntimeError, match="Reconciliation checks found 2"):
+                            ingest.main()
+
+
+def test_ingest_reconciliation_warn_only_continues(tmp_path):
+    db_file = tmp_path / "test_ingest_reconcile_warn.db"
+    from src.db.schema import init_db
+    con = init_db(db_file)
+
+    test_args = ["ingest.py", "--seasons", "2023-24", "--reconciliation-warn-only"]
+    with patch("sys.argv", test_args):
+        with patch("ingest.init_db", return_value=con):
+            with patch("ingest.run_dimensions"):
+                with patch("ingest.load_multiple_seasons"):
+                    with patch("ingest.run_consistency_checks", return_value=3) as reconcile:
+                        ingest.main()
+                        reconcile.assert_called_once_with(con, "2023-24")
+
+
+def test_ingest_skip_reconciliation_bypasses_checks(tmp_path):
+    db_file = tmp_path / "test_ingest_skip_reconcile.db"
+    from src.db.schema import init_db
+    con = init_db(db_file)
+
+    test_args = ["ingest.py", "--seasons", "2023-24", "--skip-reconciliation"]
+    with patch("sys.argv", test_args):
+        with patch("ingest.init_db", return_value=con):
+            with patch("ingest.run_dimensions"):
+                with patch("ingest.load_multiple_seasons"):
+                    with patch("ingest.run_consistency_checks") as reconcile:
+                        ingest.main()
+                        reconcile.assert_not_called()

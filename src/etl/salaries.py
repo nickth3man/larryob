@@ -14,13 +14,13 @@ import logging
 import re
 import sqlite3
 import time
-import unicodedata
 from datetime import UTC
 from typing import cast
 
 import pandas as pd
 import requests
 
+from .helpers import _norm_name
 from .utils import already_loaded, load_cache, record_run, save_cache, upsert_rows
 from .validate import validate_rows
 
@@ -127,10 +127,8 @@ def load_salary_cap(con: sqlite3.Connection) -> int:
 
 
 def _normalize_name(name: str) -> str:
-    """Lowercase, strip accents, strip non-alpha characters for fuzzy matching."""
-    nfkd = unicodedata.normalize("NFKD", name)
-    ascii_str = "".join(c for c in nfkd if not unicodedata.combining(c))
-    return re.sub(r"[^a-z ]", "", ascii_str.lower()).strip()
+    """Compatibility wrapper around shared helper normalization."""
+    return _norm_name(name, strip_non_alpha=True)
 
 
 def _parse_salary(value: object) -> int | None:

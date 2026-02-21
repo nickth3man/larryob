@@ -1,5 +1,6 @@
 """Pure transformation helpers for ETL modules."""
 
+import re
 import unicodedata
 from typing import Any
 
@@ -96,8 +97,12 @@ def season_id_from_date(date_str: str) -> str:
     return f"{start_year}-{end_suffix}"
 
 
-def _norm_name(name: str) -> str:
-    """Lowercase, strip accents and extra whitespace for fuzzy name matching."""
+def _norm_name(name: str, *, strip_non_alpha: bool = False) -> str:
+    """Lowercase, strip accents and normalize whitespace for fuzzy name matching."""
     nfkd = unicodedata.normalize("NFKD", str(name))
     ascii_str = nfkd.encode("ascii", "ignore").decode("ascii")
-    return " ".join(ascii_str.lower().split())
+    normalized = " ".join(ascii_str.lower().split())
+    if strip_non_alpha:
+        normalized = re.sub(r"[^a-z ]", "", normalized)
+        normalized = " ".join(normalized.split())
+    return normalized

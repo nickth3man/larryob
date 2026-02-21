@@ -418,7 +418,8 @@ def load_players_bio_enrichment(
     via CommonPlayerInfo. One API call per player; use active_only=True to limit.
     """
     loader_id = f"dimensions.load_players_bio_enrichment.active_{active_only}"
-    if player_ids is None and already_loaded(con, "dim_player", None, loader_id):
+    selected_from_db = player_ids is None
+    if selected_from_db and already_loaded(con, "dim_player", None, loader_id):
         logger.info("Skipping dim_player bio enrichment (already loaded)")
         return 0
 
@@ -426,12 +427,14 @@ def load_players_bio_enrichment(
     from datetime import datetime
     started_at = datetime.now(UTC).isoformat()
 
-    if player_ids is None:
+    if selected_from_db:
         if active_only:
             cur = con.execute("SELECT player_id FROM dim_player WHERE is_active = 1")
         else:
             cur = con.execute("SELECT player_id FROM dim_player")
         player_ids = [r[0] for r in cur.fetchall()]
+    if player_ids is None:
+        player_ids = []
 
     rows: list[dict] = []
     for i, pid in enumerate(player_ids):
@@ -468,7 +471,7 @@ def load_players_bio_enrichment(
             record_run(con, "dim_player", None, loader_id, 0, "error", started_at)
             raise
 
-    if player_ids is None:
+    if selected_from_db:
         record_run(con, "dim_player", None, loader_id, 0, "ok", started_at)
     return 0
 

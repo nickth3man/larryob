@@ -157,9 +157,10 @@ def upsert_rows(
         return cur.rowcount
     except sqlite3.OperationalError as e:
         if "no such table" in str(e).lower():
+            logger.warning("Skipping upsert into missing table '%s': %s", table, e)
             return 0
-        logger.debug("OperationalError in upsert_rows: %s", e)
-        return 0
+        logger.error("OperationalError in upsert_rows for table '%s': %s", table, e)
+        raise
 
 
 # --------------------------------------------------------------------------- #

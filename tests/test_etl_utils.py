@@ -233,6 +233,19 @@ def test_upsert_rows_autocommit_false_does_not_commit() -> None:
     assert count == 0
 
 
+def test_upsert_rows_returns_zero_when_target_table_missing() -> None:
+    con = sqlite3.connect(":memory:")
+    result = upsert_rows(con, "missing_table_xyz", [{"name": "apple"}])
+    assert result == 0
+
+
+def test_upsert_rows_raises_for_non_missing_operational_error() -> None:
+    con = sqlite3.connect(":memory:")
+    _make_schema(con)
+    with pytest.raises(sqlite3.OperationalError, match="no column named"):
+        upsert_rows(con, "fruits", [{"missing_column": "apple"}])
+
+
 # ------------------------------------------------------------------ #
 # already_loaded                                                      #
 # ------------------------------------------------------------------ #
