@@ -94,33 +94,100 @@ def load_player_awards(
         api_caller = APICaller()
 
     all_rows: list[dict] = []
+    cached_players = 0
+    fetched_players = 0
+    failed_players = 0
+    total_players = len(player_ids)
     for i, pid in enumerate(player_ids):
+        source = "none"
+        added_rows = 0
         cache_key = f"awards_{pid}"
         cached = load_cache(cache_key)
         if cached:
-            all_rows.extend(_player_awards_to_rows(cached))
-            continue
-        try:
-            def _fetch():
-                ep = playerawards.PlayerAwards(player_id=pid)
-                df = ep.get_data_frames()[0]
-                if df.empty:
-                    return []
-                return df.to_dict(orient="records")
+            source = "cache"
+            cached_players += 1
+            mapped = _player_awards_to_rows(cached)
+            added_rows = len(mapped)
+            all_rows.extend(mapped)
+        else:
+            try:
+                def _fetch():
+                    ep = playerawards.PlayerAwards(player_id=pid)
+                    df = ep.get_data_frames()[0]
+                    if df.empty:
+                        return []
+                    return df.to_dict(orient="records")
 
-            records = api_caller.call_with_backoff(_fetch, label=f"PlayerAwards({pid})")
-            save_cache(cache_key, records if records is not None else [])
-            if records:
-                all_rows.extend(_player_awards_to_rows(records))
-        except Exception as exc:
-            logger.warning("PlayerAwards(%s) failed: %s", pid, exc)
-        if (i + 1) % 50 == 0:
-            logger.info("Awards: %d/%d players processed.", i + 1, len(player_ids))
+                records = api_caller.call_with_backoff(_fetch, label=f"PlayerAwards({pid})")
+                fetched_players += 1
+                save_cache(cache_key, records if records is not None else [])
+                if records:
+                    mapped = _player_awards_to_rows(records)
+                    added_rows = len(mapped)
+                    all_rows.extend(mapped)
+                source = "api"
+            except Exception as exc:
+                failed_players += 1
+                source = "error"
+                logger.warning("PlayerAwards(%s) failed: %s", pid, exc)
+
+        processed = i + 1
+        logger.info(
+            "Awards player [%d/%d] pid=%s source=%s added_rows=%d cumulative_rows=%d "
+            "cached=%d fetched=%d failed=%d",
+            processed,
+            total_players,
+            pid,
+            source,
+            added_rows,
+            len(all_rows),
+            cached_players,
+            fetched_players,
+            failed_players,
+        )
+        if processed % 10 == 0 or processed == total_players:
+            logger.info(
+                "Awards progress: %d/%d players processed (cached=%d fetched=%d failed=%d rows_buffered=%d)",
+                processed,
+                total_players,
+                cached_players,
+                fetched_players,
+                failed_players,
+                len(all_rows),
+            )
 
     if not all_rows:
         return 0
-    inserted = upsert_rows(con, "fact_player_award", all_rows, conflict="IGNORE")
-    logger.info("fact_player_award: %d rows upserted.", inserted)
+    valid_player_ids = {r[0] for r in con.execute("SELECT player_id FROM dim_player")}
+    valid_seasons = {r[0] for r in con.execute("SELECT season_id FROM dim_season")}
+
+    filtered_rows: list[dict] = []
+    skipped_missing_player = 0
+    skipped_missing_season = 0
+    for row in all_rows:
+        if row["player_id"] not in valid_player_ids:
+            skipped_missing_player += 1
+            continue
+        if row["season_id"] not in valid_seasons:
+            skipped_missing_season += 1
+            continue
+        filtered_rows.append(row)
+
+    logger.info(
+        "Awards row filter: kept=%d skipped_missing_player=%d skipped_missing_season=%d",
+        len(filtered_rows),
+        skipped_missing_player,
+        skipped_missing_season,
+    )
+    if not filtered_rows:
+        return 0
+
+    inserted = upsert_rows(con, "fact_player_award", filtered_rows, conflict="IGNORE")
+    logger.info(
+        "fact_player_award: %d rows upserted from %d filtered rows.",
+        inserted,
+        len(filtered_rows),
+    )
     return inserted
 
 

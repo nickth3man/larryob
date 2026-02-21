@@ -1,0 +1,126 @@
+01:49:11  INFO      ingest  Initialising database schema...
+01:49:11  INFO      ingest  Loading dimension tables...
+01:49:11  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+01:49:11  INFO      src.etl.dimensions  Skipping dim_team (already loaded)
+01:49:11  INFO      src.etl.dimensions  Skipping dim_player static (already loaded)
+01:49:11  INFO      src.etl.dimensions  Skipping dim_player full (already loaded)
+01:49:11  INFO      ingest  Checkpoint post-dimensions: etl_run_log status counts={'error': 1, 'ok': 26}
+01:49:11  INFO      ingest  Checkpoint post-dimensions: table=dim_season row_count=80
+01:49:11  INFO      ingest  Checkpoint post-dimensions: table=dim_team row_count=30
+01:49:11  INFO      ingest  Checkpoint post-dimensions: table=dim_player row_count=5115
+01:49:11  INFO      ingest  Loading box scores for seasons: ['2023-24']
+01:49:11  INFO      src.etl.game_logs  Game logs [1/2] starting season=2023-24 season_type=Regular Season
+01:49:33  INFO      src.etl.game_logs  player_game_logs: fetched 26401 rows for 2023-24.
+01:49:35  INFO      src.etl.game_logs  Season 2023-24 Regular Season → games: 0, player_logs: 0, team_logs: 0
+01:49:35  INFO      src.etl.utils  Table fact_game (season 2023-24) loaded 1,383 rows
+01:49:35  INFO      src.etl.utils  Table player_game_log (season 2023-24) loaded 37,191 rows
+01:49:35  INFO      src.etl.utils  Table team_game_log (season 2023-24) loaded 2,766 rows
+01:49:35  INFO      src.etl.game_logs  Game logs [1/2] completed season=2023-24 season_type=Regular Season counts={'fact_game': 0, 'player_game_log': 0, 'team_game_log': 0}
+01:49:37  INFO      src.etl.game_logs  Game logs [2/2] starting season=2023-24 season_type=Playoffs
+01:49:46  INFO      src.etl.game_logs  player_game_logs: fetched 1685 rows for 2023-24.
+01:49:46  INFO      src.etl.game_logs  Season 2023-24 Playoffs → games: 0, player_logs: 0, team_logs: 0
+01:49:46  INFO      src.etl.utils  Table fact_game (season 2023-24) loaded 1,383 rows
+01:49:46  INFO      src.etl.utils  Table player_game_log (season 2023-24) loaded 37,191 rows
+01:49:46  INFO      src.etl.utils  Table team_game_log (season 2023-24) loaded 2,766 rows
+01:49:46  INFO      src.etl.game_logs  Game logs [2/2] completed season=2023-24 season_type=Playoffs counts={'fact_game': 0, 'player_game_log': 0, 'team_game_log': 0}
+01:49:48  INFO      ingest  Checkpoint post-game-logs: etl_run_log status counts={'error': 1, 'ok': 32}
+01:49:48  INFO      ingest  Checkpoint post-game-logs: table=fact_game row_count=71884
+01:49:48  INFO      ingest  Checkpoint post-game-logs: table=player_game_log row_count=1380394
+01:49:48  INFO      ingest  Checkpoint post-game-logs: table=team_game_log row_count=143644
+01:49:48  INFO      ingest  Running reconciliation checks for season 2023-24...
+01:49:48  WARNING   src.etl.validate  PTS mismatch for team 1610612742 in game 0012300001: Team=99, Players=91
+01:49:48  WARNING   src.etl.validate  AST mismatch for team 1610612742 in game 0012300001: Team=18, Players=15
+01:49:48  WARNING   src.etl.validate  PTS mismatch for team 1610612742 in game 0012300002: Team=96, Players=90
+01:49:48  WARNING   src.etl.validate  REB mismatch for team 1610612742 in game 0012300002: Team=51, Players=50
+01:49:48  WARNING   src.etl.validate  AST mismatch for team 1610612742 in game 0012300002: Team=19, Players=17
+01:49:48  WARNING   src.etl.validate  PTS mismatch for team 1610612744 in game 0012300003: Team=125, Players=115
+01:49:48  WARNING   src.etl.validate  REB mismatch for team 1610612744 in game 0012300003: Team=61, Players=58
+01:49:48  WARNING   src.etl.validate  AST mismatch for team 1610612744 in game 0012300003: Team=27, Players=24
+01:49:48  WARNING   src.etl.validate  PTS mismatch for team 1610612741 in game 0012300004: Team=102, Players=101
+01:49:48  WARNING   src.etl.validate  PTS mismatch for team 1610612746 in game 0012300009: Team=96, Players=91
+01:49:48  WARNING   src.etl.validate  PTS mismatch for team 1610612738 in game 0012300010: Team=107, Players=104
+01:49:48  WARNING   src.etl.validate  REB mismatch for team 1610612738 in game 0012300010: Team=50, Players=49
+01:49:48  WARNING   src.etl.validate  PTS mismatch for team 1610612759 in game 0012300011: Team=121, Players=111
+01:49:48  WARNING   src.etl.validate  REB mismatch for team 1610612759 in game 0012300011: Team=48, Players=47
+01:49:48  WARNING   src.etl.validate  AST mismatch for team 1610612759 in game 0012300011: Team=29, Players=27
+01:49:48  WARNING   src.etl.validate  PTS mismatch for team 1610612745 in game 0012300017: Team=122, Players=119
+01:49:48  WARNING   src.etl.validate  REB mismatch for team 1610612745 in game 0012300017: Team=56, Players=54
+01:49:48  WARNING   src.etl.validate  REB mismatch for team 1610612738 in game 0012300023: Team=47, Players=46
+01:49:48  WARNING   src.etl.validate  PTS mismatch for team 1610612740 in game 0012300031: Team=87, Players=85
+01:49:48  WARNING   src.etl.validate  REB mismatch for team 1610612752 in game 0012300036: Team=40, Players=39
+01:49:48  WARNING   src.etl.validate  REB mismatch for team 1610612747 in game 0012300041: Team=47, Players=45
+01:49:48  WARNING   src.etl.validate  PTS mismatch for team 1610612757 in game 0012300049: Team=106, Players=104
+01:49:48  WARNING   src.etl.validate  REB mismatch for team 1610612757 in game 0012300049: Team=45, Players=42
+01:49:48  WARNING   src.etl.validate  REB mismatch for team 1610612749 in game 0012300053: Team=40, Players=39
+01:49:48  WARNING   src.etl.validate  AST mismatch for team 1610612743 in game 0012300055: Team=23, Players=21
+01:49:48  WARNING   src.etl.validate  PTS mismatch for team 1610612746 in game 0012300055: Team=116, Players=114
+01:49:48  WARNING   src.etl.validate  REB mismatch for team 1610612746 in game 0012300055: Team=49, Players=48
+01:49:48  WARNING   src.etl.validate  PTS mismatch for team 1610612738 in game 0012300060: Team=127, Players=125
+01:49:48  WARNING   src.etl.validate  REB mismatch for team 1610612739 in game 0012300066: Team=38, Players=37
+01:49:48  WARNING   src.etl.validate  PTS mismatch for team 1610612759 in game 0012300073: Team=122, Players=121
+01:49:48  WARNING   src.etl.validate  AST mismatch for team 1610612759 in game 0012300073: Team=36, Players=35
+01:49:48  WARNING   src.etl.validate  REB mismatch for team 1610612743 in game 0022300078: Team=40, Players=39
+01:49:48  WARNING   src.etl.validate  AST mismatch for team 1610612764 in game 0022300089: Team=24, Players=25
+01:49:48  WARNING   src.etl.validate  REB mismatch for team 1610612739 in game 0022300091: Team=51, Players=52
+01:49:48  WARNING   src.etl.validate  AST mismatch for team 1610612764 in game 0022300465: Team=22, Players=23
+01:49:48  WARNING   src.etl.validate  Consistency check found 35 discrepancies in season 2023-24
+01:50:31  INFO      ingest  Initialising database schema...
+01:50:31  INFO      ingest  Loading dimension tables...
+01:50:31  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+01:50:31  INFO      src.etl.dimensions  Skipping dim_team (already loaded)
+01:50:31  INFO      src.etl.dimensions  Skipping dim_player static (already loaded)
+01:50:31  INFO      src.etl.dimensions  Skipping dim_player full (already loaded)
+01:50:31  INFO      ingest  Checkpoint post-dimensions: etl_run_log status counts={'error': 1, 'ok': 32}
+01:50:31  INFO      ingest  Checkpoint post-dimensions: table=dim_season row_count=80
+01:50:31  INFO      ingest  Checkpoint post-dimensions: table=dim_team row_count=30
+01:50:31  INFO      ingest  Checkpoint post-dimensions: table=dim_player row_count=5115
+01:50:31  INFO      ingest  Loading box scores for seasons: ['2023-24']
+01:50:31  INFO      src.etl.game_logs  Game logs [1/2] starting season=2023-24 season_type=Regular Season
+01:50:31  INFO      src.etl.game_logs  Skipping game logs for 2023-24 Regular Season (already loaded)
+01:50:31  INFO      src.etl.game_logs  Game logs [1/2] completed season=2023-24 season_type=Regular Season with no new rows
+01:50:33  INFO      src.etl.game_logs  Game logs [2/2] starting season=2023-24 season_type=Playoffs
+01:50:33  INFO      src.etl.game_logs  Skipping game logs for 2023-24 Playoffs (already loaded)
+01:50:33  INFO      src.etl.game_logs  Game logs [2/2] completed season=2023-24 season_type=Playoffs with no new rows
+01:50:35  INFO      ingest  Checkpoint post-game-logs: etl_run_log status counts={'error': 1, 'ok': 32}
+01:50:35  INFO      ingest  Checkpoint post-game-logs: table=fact_game row_count=71884
+01:50:35  INFO      ingest  Checkpoint post-game-logs: table=player_game_log row_count=1380394
+01:50:35  INFO      ingest  Checkpoint post-game-logs: table=team_game_log row_count=143644
+01:50:35  INFO      ingest  Running reconciliation checks for season 2023-24...
+01:50:35  WARNING   src.etl.validate  PTS mismatch for team 1610612742 in game 0012300001: Team=99, Players=91
+01:50:35  WARNING   src.etl.validate  AST mismatch for team 1610612742 in game 0012300001: Team=18, Players=15
+01:50:35  WARNING   src.etl.validate  PTS mismatch for team 1610612742 in game 0012300002: Team=96, Players=90
+01:50:35  WARNING   src.etl.validate  REB mismatch for team 1610612742 in game 0012300002: Team=51, Players=50
+01:50:35  WARNING   src.etl.validate  AST mismatch for team 1610612742 in game 0012300002: Team=19, Players=17
+01:50:35  WARNING   src.etl.validate  PTS mismatch for team 1610612744 in game 0012300003: Team=125, Players=115
+01:50:35  WARNING   src.etl.validate  REB mismatch for team 1610612744 in game 0012300003: Team=61, Players=58
+01:50:35  WARNING   src.etl.validate  AST mismatch for team 1610612744 in game 0012300003: Team=27, Players=24
+01:50:35  WARNING   src.etl.validate  PTS mismatch for team 1610612741 in game 0012300004: Team=102, Players=101
+01:50:35  WARNING   src.etl.validate  PTS mismatch for team 1610612746 in game 0012300009: Team=96, Players=91
+01:50:35  WARNING   src.etl.validate  PTS mismatch for team 1610612738 in game 0012300010: Team=107, Players=104
+01:50:35  WARNING   src.etl.validate  REB mismatch for team 1610612738 in game 0012300010: Team=50, Players=49
+01:50:35  WARNING   src.etl.validate  PTS mismatch for team 1610612759 in game 0012300011: Team=121, Players=111
+01:50:35  WARNING   src.etl.validate  REB mismatch for team 1610612759 in game 0012300011: Team=48, Players=47
+01:50:35  WARNING   src.etl.validate  AST mismatch for team 1610612759 in game 0012300011: Team=29, Players=27
+01:50:35  WARNING   src.etl.validate  PTS mismatch for team 1610612745 in game 0012300017: Team=122, Players=119
+01:50:35  WARNING   src.etl.validate  REB mismatch for team 1610612745 in game 0012300017: Team=56, Players=54
+01:50:35  WARNING   src.etl.validate  REB mismatch for team 1610612738 in game 0012300023: Team=47, Players=46
+01:50:35  WARNING   src.etl.validate  PTS mismatch for team 1610612740 in game 0012300031: Team=87, Players=85
+01:50:35  WARNING   src.etl.validate  REB mismatch for team 1610612752 in game 0012300036: Team=40, Players=39
+01:50:35  WARNING   src.etl.validate  REB mismatch for team 1610612747 in game 0012300041: Team=47, Players=45
+01:50:35  WARNING   src.etl.validate  PTS mismatch for team 1610612757 in game 0012300049: Team=106, Players=104
+01:50:35  WARNING   src.etl.validate  REB mismatch for team 1610612757 in game 0012300049: Team=45, Players=42
+01:50:35  WARNING   src.etl.validate  REB mismatch for team 1610612749 in game 0012300053: Team=40, Players=39
+01:50:35  WARNING   src.etl.validate  AST mismatch for team 1610612743 in game 0012300055: Team=23, Players=21
+01:50:35  WARNING   src.etl.validate  PTS mismatch for team 1610612746 in game 0012300055: Team=116, Players=114
+01:50:35  WARNING   src.etl.validate  REB mismatch for team 1610612746 in game 0012300055: Team=49, Players=48
+01:50:35  WARNING   src.etl.validate  PTS mismatch for team 1610612738 in game 0012300060: Team=127, Players=125
+01:50:35  WARNING   src.etl.validate  REB mismatch for team 1610612739 in game 0012300066: Team=38, Players=37
+01:50:35  WARNING   src.etl.validate  PTS mismatch for team 1610612759 in game 0012300073: Team=122, Players=121
+01:50:35  WARNING   src.etl.validate  AST mismatch for team 1610612759 in game 0012300073: Team=36, Players=35
+01:50:35  WARNING   src.etl.validate  REB mismatch for team 1610612743 in game 0022300078: Team=40, Players=39
+01:50:35  WARNING   src.etl.validate  AST mismatch for team 1610612764 in game 0022300089: Team=24, Players=25
+01:50:35  WARNING   src.etl.validate  REB mismatch for team 1610612739 in game 0022300091: Team=51, Players=52
+01:50:35  WARNING   src.etl.validate  AST mismatch for team 1610612764 in game 0022300465: Team=22, Players=23
+01:50:35  WARNING   src.etl.validate  Consistency check found 35 discrepancies in season 2023-24
+01:50:35  WARNING   ingest  Reconciliation checks found 35 discrepancy warning(s). Re-run with --reconciliation-warn-only to continue despite mismatches.
+01:50:35  INFO      ingest  Ingest complete.

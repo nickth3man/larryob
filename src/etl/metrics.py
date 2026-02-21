@@ -231,7 +231,7 @@ def log_metrics_summary() -> None:
     if summary["etl_rows_loaded"]:
         logger.info("ETL Rows Loaded:")
         for key, count in summary["etl_rows_loaded"].items():
-            logger.info("  %s: %,d rows", key, count)
+            logger.info("  %s: %s rows", key, f"{count:,}")
 
     if summary["api_calls"]:
         logger.info("API Calls:")

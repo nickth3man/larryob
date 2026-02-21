@@ -1,5 +1,6 @@
 import logging
 import sqlite3
+import time
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -70,19 +71,41 @@ def run_raw_backfill(
     logger.info("=== Raw backfill starting (raw_dir=%s) ===", raw_dir)
 
     summary: dict[str, Any] = {"ok": [], "skipped": [], "failed": [], "details": []}
+    total = len(_LOADERS)
 
-    for name, table_name, loader_name in _LOADERS:
+    for idx, (name, table_name, loader_name) in enumerate(_LOADERS, start=1):
         loader = globals()[loader_name]
         loader_id = f"backfill.{name}"
         started_at = datetime.now(UTC).isoformat()
+        started_perf = time.perf_counter()
+        before_count = _table_count(con, table_name)
+        logger.info(
+            "Raw backfill [%d/%d] starting loader=%s target_table=%s before_row_count=%s",
+            idx,
+            total,
+            name,
+            table_name,
+            before_count if before_count is not None else "n/a",
+        )
         if already_loaded(con, table_name, None, loader_id):
-            logger.info("Skipping backfill loader %s (already loaded)", name)
+            elapsed = time.perf_counter() - started_perf
+            logger.info(
+                "Raw backfill [%d/%d] skipped loader=%s (already loaded) elapsed=%.2fs",
+                idx,
+                total,
+                name,
+                elapsed,
+            )
             summary["skipped"].append(name)
             summary["details"].append(
                 {
                     "loader": name,
                     "status": "skipped",
                     "table": table_name,
+                    "before_row_count": before_count,
+                    "after_row_count": before_count,
+                    "delta_row_count": 0,
+                    "elapsed_sec": round(elapsed, 3),
                     "row_count": None,
                     "error": None,
                 }
@@ -92,26 +115,59 @@ def run_raw_backfill(
         try:
             loader(con, raw_dir)
             row_count = _table_count(con, table_name)
+            elapsed = time.perf_counter() - started_perf
+            delta = (
+                row_count - before_count
+                if row_count is not None and before_count is not None
+                else None
+            )
             record_run(con, table_name, None, loader_id, row_count, "ok", started_at)
+            logger.info(
+                "Raw backfill [%d/%d] completed loader=%s row_count=%s before=%s delta=%s elapsed=%.2fs",
+                idx,
+                total,
+                name,
+                row_count if row_count is not None else "n/a",
+                before_count if before_count is not None else "n/a",
+                delta if delta is not None else "n/a",
+                elapsed,
+            )
             summary["ok"].append(name)
             summary["details"].append(
                 {
                     "loader": name,
                     "status": "ok",
                     "table": table_name,
+                    "before_row_count": before_count,
+                    "after_row_count": row_count,
+                    "delta_row_count": delta,
+                    "elapsed_sec": round(elapsed, 3),
                     "row_count": row_count,
                     "error": None,
                 }
             )
         except Exception as exc:
+            elapsed = time.perf_counter() - started_perf
             record_run(con, table_name, None, loader_id, None, "error", started_at)
             logger.exception("Loader %s failed during raw backfill:", name)
+            logger.error(
+                "Raw backfill [%d/%d] failed loader=%s before=%s elapsed=%.2fs",
+                idx,
+                total,
+                name,
+                before_count if before_count is not None else "n/a",
+                elapsed,
+            )
             summary["failed"].append(name)
             summary["details"].append(
                 {
                     "loader": name,
                     "status": "error",
                     "table": table_name,
+                    "before_row_count": before_count,
+                    "after_row_count": None,
+                    "delta_row_count": None,
+                    "elapsed_sec": round(elapsed, 3),
                     "row_count": None,
                     "error": str(exc),
                 }
@@ -125,4 +181,16 @@ def run_raw_backfill(
         len(summary["skipped"]),
         len(summary["failed"]),
     )
+    for detail in summary["details"]:
+        logger.info(
+            "Raw backfill detail: loader=%s status=%s table=%s before=%s after=%s delta=%s elapsed_sec=%s error=%s",
+            detail["loader"],
+            detail["status"],
+            detail["table"],
+            detail.get("before_row_count"),
+            detail.get("after_row_count"),
+            detail.get("delta_row_count"),
+            detail.get("elapsed_sec"),
+            detail.get("error"),
+        )
     return summary

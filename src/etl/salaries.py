@@ -11,6 +11,7 @@ Strategy
 
 import io
 import logging
+import os
 import re
 import sqlite3
 import time
@@ -38,7 +39,86 @@ def _abbr_to_bref(abbr: str) -> str:
 
 _BREF_BASE = "https://www.basketball-reference.com"
 _HEADERS = {"User-Agent": "Mozilla/5.0 (personal research project, non-commercial)"}
-_REQUEST_DELAY = 4.0  # seconds between requests (be polite)
+_LOADER_ID = "salaries.load_player_salaries.v2"
+
+
+class BBRRateLimitExceeded(RuntimeError):
+    """Raised when Basketball-Reference asks for an excessive Retry-After delay."""
+
+    def __init__(self, url: str, retry_after: int, max_allowed: int) -> None:
+        self.url = url
+        self.retry_after = retry_after
+        self.max_allowed = max_allowed
+        super().__init__(
+            f"BBref rate limit exceeded: url={url} retry_after={retry_after}s max_allowed={max_allowed}s"
+        )
+
+
+def _bref_delay_seconds() -> float:
+    return float(os.getenv("LARRYOB_BREF_DELAY_SECONDS", "1.5"))
+
+
+def _bref_max_retries() -> int:
+    return int(os.getenv("LARRYOB_BREF_MAX_RETRIES", "3"))
+
+
+def _bref_max_retry_after_seconds() -> int:
+    return int(os.getenv("LARRYOB_BREF_MAX_RETRY_AFTER_SECONDS", "300"))
+
+
+class _AdaptiveBRefThrottle:
+    """
+    Adaptive, process-wide request throttle for Basketball-Reference.
+
+    - Starts cautiously.
+    - Backs off aggressively on 429 / transient failures.
+    - Slowly ramps up after sustained success.
+    """
+
+    def __init__(self) -> None:
+        self.min_delay = 0.4
+        self.max_delay = 30.0
+        self.delay = max(self.min_delay, _bref_delay_seconds())
+        self.next_allowed_at = 0.0
+        self.success_streak = 0
+        self.rate_limit_streak = 0
+
+    def _sleep_until_allowed(self) -> None:
+        now = time.monotonic()
+        if now < self.next_allowed_at:
+            time.sleep(self.next_allowed_at - now)
+
+    def before_request(self) -> None:
+        self._sleep_until_allowed()
+
+    def on_success(self) -> None:
+        self.success_streak += 1
+        self.rate_limit_streak = 0
+        if self.success_streak >= 3:
+            self.delay = max(self.min_delay, self.delay * 0.9)
+        self.next_allowed_at = time.monotonic() + self.delay
+
+    def on_transient_error(self) -> None:
+        self.success_streak = 0
+        self.delay = min(self.max_delay, max(self.delay * 1.4, self.delay + 0.5))
+        self.next_allowed_at = time.monotonic() + self.delay
+
+    def on_rate_limit(self, retry_after: int | None) -> int:
+        self.success_streak = 0
+        self.rate_limit_streak += 1
+        requested_wait = retry_after if retry_after is not None and retry_after > 0 else int(self.delay * 2)
+        wait = int(max(self.min_delay, min(self.max_delay, float(requested_wait))))
+        self.delay = min(self.max_delay, max(self.delay * 1.8, float(wait)))
+        self.next_allowed_at = time.monotonic() + wait
+        return wait
+
+    def inter_season_pause(self) -> float:
+        if self.rate_limit_streak == 0:
+            return 0.0
+        return min(5.0, self.delay)
+
+
+_BREF_THROTTLE = _AdaptiveBRefThrottle()
 
 
 def load_salary_cap(con: sqlite3.Connection) -> int:
@@ -69,33 +149,55 @@ def _parse_salary(value: object) -> int | None:
     return int(cleaned) if cleaned else None
 
 
-def _get_html(url: str, max_retries: int = 3) -> str | None:
+def _get_html(url: str, max_retries: int | None = None) -> str | None:
     """
     Fetch URL with exponential backoff on 429 Too Many Requests.
     Returns response text or None on persistent error.
     """
-    delay = 15.0
-    for attempt in range(max_retries):
+    retries = max_retries if max_retries is not None else _bref_max_retries()
+    max_retry_after = _bref_max_retry_after_seconds()
+    for attempt in range(retries):
         try:
+            _BREF_THROTTLE.before_request()
             resp = requests.get(url, headers=_HEADERS, timeout=20)
             if resp.status_code == 429:
                 try:
-                    retry_after = int(resp.headers.get("Retry-After", delay))
+                    retry_after = int(resp.headers.get("Retry-After", 0))
                 except (ValueError, TypeError):
-                    retry_after = int(delay)
-                logger.info("BBref rate-limited (%s); waiting %ds…", url, retry_after)
-                time.sleep(retry_after)
-                delay *= 2
+                    retry_after = None
+                if retry_after is not None and retry_after > max_retry_after:
+                    raise BBRRateLimitExceeded(url, retry_after, max_retry_after)
+                wait = _BREF_THROTTLE.on_rate_limit(retry_after)
+                logger.warning(
+                    "BBref rate-limited (%s): attempt=%d/%d retry_after=%s adaptive_wait=%ds next_delay=%.2fs",
+                    url,
+                    attempt + 1,
+                    retries,
+                    retry_after,
+                    wait,
+                    _BREF_THROTTLE.delay,
+                )
                 continue
+            # Historical team abbreviations often 404; treat as terminal miss.
+            if resp.status_code == 404:
+                _BREF_THROTTLE.on_success()
+                logger.debug("BBref page not found (404): %s", url)
+                return None
+            # Do not retry other non-rate-limited client errors.
+            if 400 <= resp.status_code < 500:
+                _BREF_THROTTLE.on_transient_error()
+                logger.debug("BBref client error %s for %s; skipping.", resp.status_code, url)
+                return None
             resp.raise_for_status()
             resp.encoding = "utf-8"
+            _BREF_THROTTLE.on_success()
             return resp.text
         except requests.RequestException as exc:
-            if attempt < max_retries - 1:
+            if attempt < retries - 1:
+                _BREF_THROTTLE.on_transient_error()
                 logger.debug("BBref fetch error (%s), retry %d: %s", url, attempt + 1, exc)
-                time.sleep(delay)
-                delay *= 2
             else:
+                _BREF_THROTTLE.on_transient_error()
                 logger.warning("BBref fetch failed (%s): %s", url, exc)
     return None
 
@@ -193,6 +295,57 @@ def _fetch_team_current_contracts(bref_abbr: str) -> list[dict]:
     return rows
 
 
+def _season_team_map(
+    con: sqlite3.Connection,
+    season_id: str,
+) -> tuple[dict[str, str], str]:
+    """
+    Resolve season-specific Basketball-Reference team abbreviations to team IDs.
+
+    Prefers fact_team_season coverage (historical abbreviations like MNL/PHW/etc.).
+    Falls back to dim_team -> current abbrev mapping for seasons not present there.
+    """
+    start_year = int(season_id.split("-")[0])
+
+    rows = con.execute(
+        """
+        SELECT DISTINCT fts.bref_abbrev, dth.team_id
+        FROM fact_team_season AS fts
+        JOIN dim_team_history AS dth
+          ON dth.team_abbrev = fts.bref_abbrev
+         AND dth.season_founded <= ?
+         AND dth.season_active_till >= ?
+        WHERE fts.season_id = ?
+          AND fts.bref_abbrev IS NOT NULL
+        """,
+        (start_year, start_year, season_id),
+    ).fetchall()
+    if rows:
+        bref_to_team: dict[str, str] = {}
+        for bref_abbr, team_id in rows:
+            b = str(bref_abbr).strip().upper()
+            t = str(team_id).strip()
+            prev = bref_to_team.get(b)
+            if prev and prev != t:
+                logger.warning(
+                    "fact_team_season duplicate bref_abbrev mapping season=%s bref_abbrev=%s team_ids=%s/%s; using first",
+                    season_id,
+                    b,
+                    prev,
+                    t,
+                )
+                continue
+            bref_to_team[b] = t
+        return bref_to_team, "fact_team_season"
+
+    cur = con.execute("SELECT team_id, abbreviation FROM dim_team")
+    bref_to_team = {}
+    for team_id, nba_abbr in cur.fetchall():
+        b = _abbr_to_bref(str(nba_abbr).strip().upper())
+        bref_to_team[b] = str(team_id).strip()
+    return bref_to_team, "dim_team"
+
+
 def load_player_salaries(
     con: sqlite3.Connection,
     season_id: str,
@@ -220,7 +373,7 @@ def load_player_salaries(
     int
         Number of rows inserted/replaced.
     """
-    loader_id = "salaries.load_player_salaries"
+    loader_id = _LOADER_ID
     if already_loaded(con, "fact_salary", season_id, loader_id):
         logger.info("Skipping player salaries for %s (already loaded)", season_id)
         return 0
@@ -242,43 +395,61 @@ def load_player_salaries(
         _normalize_name(row[1]): row[0] for row in cur.fetchall()
     }
 
-    cur = con.execute("SELECT team_id, abbreviation FROM dim_team")
-    team_abbr_to_id: dict[str, str] = {row[1]: row[0] for row in cur.fetchall()}
+    bref_to_team_id, team_map_source = _season_team_map(con, season_id)
+    logger.info(
+        "fact_salary (%s): team_map_source=%s teams=%d",
+        season_id,
+        team_map_source,
+        len(bref_to_team_id),
+    )
 
     rows_to_insert: list[dict] = []
     unmatched_names: set[str] = set()
+    fetched_pages = 0
+    cached_pages = 0
+    rate_limit_exc: BBRRateLimitExceeded | None = None
 
-    # Get all NBA abbreviations from dim_team
-    for nba_abbr in team_abbr_to_id.keys():
-        bref_abbr = _abbr_to_bref(nba_abbr)
-        team_id = team_abbr_to_id.get(nba_abbr)
+    for bref_abbr, team_id in bref_to_team_id.items():
         if not team_id:
-            logger.debug("Team %s not found in dim_team; skipping.", nba_abbr)
+            logger.debug("No team_id for bref_abbr=%s season=%s; skipping.", bref_abbr, season_id)
             continue
 
         cache_key_season = f"bref_season_sal_{bref_abbr}_{end_year}"
         cache_key_contracts = f"bref_contracts_{bref_abbr}"
         was_cached = False
 
-        if end_year < current_year:
-            # Historical (season fully complete): team season page has a commented salary table
-            logger.debug("BBref team season salary: %s %d", bref_abbr, end_year)
-            was_cached = load_cache(cache_key_season) is not None
-            entries = [
-                {"name": e["name"], "season_id": season_id, "salary": e["salary"]}
-                for e in _fetch_team_season_salaries(bref_abbr, end_year)
-            ]
-        else:
-            # Current or future season: team contract page
-            logger.debug("BBref team contracts: %s", bref_abbr)
-            was_cached = load_cache(cache_key_contracts) is not None
-            entries = [
-                e for e in _fetch_team_current_contracts(bref_abbr)
-                if e["season_id"] == season_id
-            ]
+        try:
+            if end_year < current_year:
+                # Historical (season fully complete): team season page has a commented salary table
+                logger.debug("BBref team season salary: %s %d", bref_abbr, end_year)
+                was_cached = load_cache(cache_key_season) is not None
+                entries = [
+                    {"name": e["name"], "season_id": season_id, "salary": e["salary"]}
+                    for e in _fetch_team_season_salaries(bref_abbr, end_year)
+                ]
+            else:
+                # Current or future season: team contract page
+                logger.debug("BBref team contracts: %s", bref_abbr)
+                was_cached = load_cache(cache_key_contracts) is not None
+                entries = [
+                    e for e in _fetch_team_current_contracts(bref_abbr)
+                    if e["season_id"] == season_id
+                ]
+        except BBRRateLimitExceeded as exc:
+            rate_limit_exc = exc
+            logger.warning(
+                "fact_salary (%s): stopping early due rate-limit url=%s retry_after=%ds max_allowed=%ds",
+                season_id,
+                exc.url,
+                exc.retry_after,
+                exc.max_allowed,
+            )
+            break
 
-        if not was_cached:
-            time.sleep(_REQUEST_DELAY)
+        if was_cached:
+            cached_pages += 1
+        else:
+            fetched_pages += 1
 
         for entry in entries:
             norm = _normalize_name(entry["name"])
@@ -293,6 +464,15 @@ def load_player_salaries(
                 "salary": entry["salary"],
             })
 
+    logger.info(
+        "fact_salary (%s): team_pages fetched=%d cached=%d candidate_rows=%d unmatched_names=%d",
+        season_id,
+        fetched_pages,
+        cached_pages,
+        len(rows_to_insert),
+        len(unmatched_names),
+    )
+
     if unmatched_names:
         logger.debug(
             "fact_salary (%s): %d unmatched player name(s): %s",
@@ -300,6 +480,10 @@ def load_player_salaries(
             len(unmatched_names),
             sorted(unmatched_names)[:10],
         )
+
+    if rate_limit_exc and not rows_to_insert:
+        record_run(con, "fact_salary", season_id, loader_id, 0, "rate_limited", started_at)
+        return 0
 
     if not rows_to_insert:
         logger.warning(
@@ -315,7 +499,8 @@ def load_player_salaries(
             "fact_salary (%s): all rows dropped by validation.",
             season_id,
         )
-        record_run(con, "fact_salary", season_id, loader_id, 0, "ok", started_at)
+        status = "rate_limited" if rate_limit_exc else "ok"
+        record_run(con, "fact_salary", season_id, loader_id, 0, status, started_at)
         return 0
 
     from .utils import transaction
@@ -323,7 +508,8 @@ def load_player_salaries(
         inserted = upsert_rows(con, "fact_salary", rows_to_insert, conflict="REPLACE", autocommit=False)
     logger.info("fact_salary (%s): %d rows upserted.", season_id, inserted)
 
-    record_run(con, "fact_salary", season_id, loader_id, inserted, "ok", started_at)
+    status = "partial_rate_limited" if rate_limit_exc else "ok"
+    record_run(con, "fact_salary", season_id, loader_id, inserted, status, started_at)
     return inserted
 
 
@@ -336,7 +522,10 @@ def load_salaries_for_seasons(
     total = 0
     for sid in season_ids:
         total += load_player_salaries(con, sid)
-        time.sleep(2.0)
+        pause = _BREF_THROTTLE.inter_season_pause()
+        if pause > 0:
+            logger.info("fact_salary (%s): adaptive inter-season pause %.2fs", sid, pause)
+            time.sleep(pause)
     return total
 
 

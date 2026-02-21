@@ -176,6 +176,48 @@ def test_load_player_awards_from_cache(
     assert inserted >= 1
 
 
+def test_load_player_awards_filters_rows_missing_fk_targets(
+    monkeypatch,
+    sqlite_con_with_data: sqlite3.Connection,
+    tmp_path,
+) -> None:
+    import src.etl.utils as utils_mod
+    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+
+    from src.etl.utils import save_cache
+    save_cache("awards_2544", [
+        {
+            "PERSON_ID": "2544",
+            "DESCRIPTION": "MVP",
+            "SEASON": "2023-24",
+            "TYPE": "Individual",
+            "ALL_NBA_TEAM_NUMBER": None,
+            "SUBTYPE1": None,
+        },
+        {
+            "PERSON_ID": "999999",
+            "DESCRIPTION": "MVP",
+            "SEASON": "2023-24",
+            "TYPE": "Individual",
+            "ALL_NBA_TEAM_NUMBER": None,
+            "SUBTYPE1": None,
+        },
+        {
+            "PERSON_ID": "2544",
+            "DESCRIPTION": "MVP",
+            "SEASON": "1999-00",
+            "TYPE": "Individual",
+            "ALL_NBA_TEAM_NUMBER": None,
+            "SUBTYPE1": None,
+        },
+    ])
+
+    inserted = load_player_awards(sqlite_con_with_data, ["2544"])
+    assert inserted == 1
+    count = sqlite_con_with_data.execute("SELECT COUNT(*) FROM fact_player_award").fetchone()[0]
+    assert count == 1
+
+
 def test_load_player_awards_returns_zero_for_no_awards(
     monkeypatch,
     sqlite_con_with_data: sqlite3.Connection,

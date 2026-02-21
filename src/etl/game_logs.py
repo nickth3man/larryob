@@ -18,6 +18,7 @@ Rate-limit notes
 
 import logging
 import sqlite3
+import time
 from datetime import UTC
 
 import pandas as pd
@@ -104,7 +105,12 @@ def _fetch_player_game_logs(
     cache_key = f"pgl_{season}_{season_type.replace(' ', '_')}"
     cached = load_cache(cache_key)
     if cached:
-        logger.info("player_game_logs: loaded from cache for %s.", season)
+        logger.info(
+            "player_game_logs: loaded from cache for %s %s (rows=%d).",
+            season,
+            season_type,
+            len(cached),
+        )
         return pd.DataFrame(cached)
 
     if api_caller is None:
@@ -145,25 +151,45 @@ def _parse_matchup(matchup: str) -> tuple[str | None, str | None, bool]:
 def _build_game_rows(df: pd.DataFrame, season_id: str, season_type: str) -> list[dict]:
     """
     Derive fact_game rows from the flat player-game-log DataFrame.
-    Uses the first player log per game to establish the game record.
+    Uses all rows for a game to resolve both home and away team IDs.
     """
     game_rows: dict[str, dict] = {}
-    for _, row in df.drop_duplicates("GAME_ID").iterrows():
-        gid = str(row["GAME_ID"])
-        matchup = str(row.get("MATCHUP", ""))
-        _my_abbr, opp_abbr, am_home = _parse_matchup(matchup)
+    dropped = 0
+    for game_id, grp in df.groupby("GAME_ID", sort=False):
+        gid = str(game_id)
+        home_team_id: str | None = None
+        away_team_id: str | None = None
+        team_ids: set[str] = set()
 
-        if am_home:
-            home_team_id = str(row["TEAM_ID"])
-            away_team_id = None  # resolved later from team table if needed
-        else:
-            home_team_id = None
-            away_team_id = str(row["TEAM_ID"])
+        for _, row in grp.iterrows():
+            team_id = str(row["TEAM_ID"])
+            team_ids.add(team_id)
+            matchup = str(row.get("MATCHUP", ""))
+            if " vs. " in matchup:
+                home_team_id = team_id
+            elif " @ " in matchup:
+                away_team_id = team_id
 
+        if len(team_ids) == 2:
+            if home_team_id is None and away_team_id is not None:
+                home_team_id = next((tid for tid in team_ids if tid != away_team_id), None)
+            if away_team_id is None and home_team_id is not None:
+                away_team_id = next((tid for tid in team_ids if tid != home_team_id), None)
+
+        if home_team_id is None or away_team_id is None:
+            dropped += 1
+            logger.warning(
+                "build_game_rows: dropping game_id=%s season=%s season_type=%s unresolved teams "
+                "(team_ids=%s home=%s away=%s)",
+                gid, season_id, season_type, sorted(team_ids), home_team_id, away_team_id,
+            )
+            continue
+
+        first = grp.iloc[0]
         game_rows[gid] = {
             "game_id": gid,
             "season_id": season_id,
-            "game_date": str(row.get("GAME_DATE", ""))[:10],
+            "game_date": str(first.get("GAME_DATE", ""))[:10],
             "home_team_id": home_team_id,
             "away_team_id": away_team_id,
             "home_score": None,
@@ -173,6 +199,12 @@ def _build_game_rows(df: pd.DataFrame, season_id: str, season_type: str) -> list
             "arena": None,
             "attendance": None,
         }
+    if dropped > 0:
+        logger.warning(
+            "build_game_rows: dropped %d/%d games due to unresolved team mapping",
+            dropped,
+            len(df.drop_duplicates("GAME_ID")),
+        )
     return list(game_rows.values())
 
 
@@ -226,9 +258,16 @@ def load_season(
 
     from datetime import datetime
     started_at = datetime.now(UTC).isoformat()
+    started_perf = time.perf_counter()
 
     with ETLTimer("player_game_log", season):
         df = _fetch_player_game_logs(season, season_type, api_caller)
+    logger.info(
+        "Season %s %s fetch summary: fetched_player_game_rows=%d",
+        season,
+        season_type,
+        len(df),
+    )
 
     if df.empty:
         logger.warning("No data returned for %s %s.", season, season_type)
@@ -240,10 +279,65 @@ def load_season(
     game_rows = _build_game_rows(df, season, season_type)
     player_rows = _build_player_rows(df)
     team_rows = _build_team_rows(df)
+    raw_counts = {
+        "fact_game": len(game_rows),
+        "player_game_log": len(player_rows),
+        "team_game_log": len(team_rows),
+    }
 
     game_rows = validate_rows("fact_game", game_rows)
     player_rows = validate_rows("player_game_log", player_rows)
     team_rows = validate_rows("team_game_log", team_rows)
+    validated_counts = {
+        "fact_game": len(game_rows),
+        "player_game_log": len(player_rows),
+        "team_game_log": len(team_rows),
+    }
+    dropped_counts = {
+        table: raw_counts[table] - validated_counts[table]
+        for table in raw_counts
+    }
+    logger.info(
+        "Season %s %s transform summary: raw=%s validated=%s dropped=%s",
+        season,
+        season_type,
+        raw_counts,
+        validated_counts,
+        dropped_counts,
+    )
+
+    candidate_game_ids = {row["game_id"] for row in game_rows}
+    if candidate_game_ids:
+        existing_game_ids: set[str] = set()
+        candidate_list = list(candidate_game_ids)
+        chunk_size = 900
+        for i in range(0, len(candidate_list), chunk_size):
+            chunk = candidate_list[i:i + chunk_size]
+            placeholders = ", ".join("?" for _ in chunk)
+            sql = f"SELECT game_id FROM fact_game WHERE game_id IN ({placeholders})"
+            existing_game_ids.update(r[0] for r in con.execute(sql, chunk).fetchall())
+        valid_game_ids = candidate_game_ids | existing_game_ids
+    else:
+        valid_game_ids = set()
+
+    player_before_filter = len(player_rows)
+    team_before_filter = len(team_rows)
+    if valid_game_ids:
+        player_rows = [r for r in player_rows if r["game_id"] in valid_game_ids]
+        team_rows = [r for r in team_rows if r["game_id"] in valid_game_ids]
+    else:
+        player_rows = []
+        team_rows = []
+    logger.info(
+        "Season %s %s FK prefilter: valid_games=%d player_rows_kept=%d/%d team_rows_kept=%d/%d",
+        season,
+        season_type,
+        len(valid_game_ids),
+        len(player_rows),
+        player_before_filter,
+        len(team_rows),
+        team_before_filter,
+    )
 
     with transaction(con):
         n_games = upsert_rows(con, "fact_game", game_rows, autocommit=False)
@@ -251,8 +345,14 @@ def load_season(
         n_teams = upsert_rows(con, "team_game_log", team_rows, autocommit=False)
 
     logger.info(
-        "Season %s %s → games: %d, player_logs: %d, team_logs: %d",
-        season, season_type, n_games, n_players, n_teams,
+        "Season %s %s load summary: candidates=%s inserted={fact_game:%d,player_game_log:%d,team_game_log:%d} elapsed=%.2fs",
+        season,
+        season_type,
+        validated_counts,
+        n_games,
+        n_players,
+        n_teams,
+        time.perf_counter() - started_perf,
     )
 
     record_run(con, "fact_game", season, loader_id, n_games, "ok", started_at)
@@ -287,12 +387,46 @@ def load_multiple_seasons(
     if season_types is None:
         season_types = ["Regular Season", "Playoffs"]
 
+    total_runs = len(seasons) * len(season_types)
+    run_idx = 0
     for season in seasons:
         for s_type in season_types:
+            run_idx += 1
+            logger.info(
+                "Game logs [%d/%d] starting season=%s season_type=%s",
+                run_idx,
+                total_runs,
+                season,
+                s_type,
+            )
             try:
-                load_season(con, season, s_type, api_caller)
+                counts = load_season(con, season, s_type, api_caller)
+                if counts:
+                    logger.info(
+                        "Game logs [%d/%d] completed season=%s season_type=%s counts=%s",
+                        run_idx,
+                        total_runs,
+                        season,
+                        s_type,
+                        counts,
+                    )
+                else:
+                    logger.info(
+                        "Game logs [%d/%d] completed season=%s season_type=%s with no new rows",
+                        run_idx,
+                        total_runs,
+                        season,
+                        s_type,
+                    )
             except Exception as exc:
-                logger.error("Failed %s %s: %s", season, s_type, exc)
+                logger.error(
+                    "Game logs [%d/%d] failed season=%s season_type=%s: %s",
+                    run_idx,
+                    total_runs,
+                    season,
+                    s_type,
+                    exc,
+                )
             api_caller.sleep_between_calls()
 
 

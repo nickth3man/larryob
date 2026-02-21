@@ -1,0 +1,38 @@
+01:39:36  INFO      ingest  Initialising database schema...
+01:39:36  INFO      ingest  Loading dimension tables...
+01:39:36  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+01:39:36  INFO      src.etl.dimensions  Skipping dim_team (already loaded)
+01:39:36  INFO      src.etl.dimensions  Skipping dim_player static (already loaded)
+01:39:36  INFO      ingest  Checkpoint post-dimensions: etl_run_log status counts={'error': 1, 'ok': 20}
+01:39:36  INFO      ingest  Checkpoint post-dimensions: table=dim_season row_count=79
+01:39:36  INFO      ingest  Checkpoint post-dimensions: table=dim_team row_count=30
+01:39:36  INFO      ingest  Checkpoint post-dimensions: table=dim_player row_count=5115
+01:39:36  INFO      ingest  Loading salary cap and player salaries...
+01:39:36  INFO      src.etl.dimensions  dim_season: 1 rows upserted.
+01:39:36  INFO      src.etl.salaries  dim_salary_cap: 41 rows upserted.
+01:39:36  INFO      src.etl.dimensions  dim_season: 0 rows upserted.
+01:41:39  INFO      src.etl.salaries  fact_salary (2023-24): 544 rows upserted.
+01:41:41  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+01:43:44  INFO      src.etl.salaries  fact_salary (2024-25): 529 rows upserted.
+01:43:46  INFO      ingest  Checkpoint post-salaries: etl_run_log status counts={'error': 1, 'ok': 24}
+01:43:46  INFO      ingest  Checkpoint post-salaries: table=dim_salary_cap row_count=41
+01:43:46  INFO      ingest  Checkpoint post-salaries: table=fact_salary row_count=1023
+01:43:46  INFO      ingest  Loading rosters...
+01:44:12  INFO      src.etl.roster  Roster: 5/30 teams processed for 2023-24.
+01:44:37  INFO      src.etl.roster  Roster: 10/30 teams processed for 2023-24.
+01:45:03  INFO      src.etl.roster  Roster: 15/30 teams processed for 2023-24.
+01:45:28  INFO      src.etl.roster  Roster: 20/30 teams processed for 2023-24.
+01:45:54  INFO      src.etl.roster  Roster: 25/30 teams processed for 2023-24.
+01:46:19  INFO      src.etl.roster  Roster: 30/30 teams processed for 2023-24.
+01:46:21  INFO      src.etl.roster  fact_roster: 532 total rows for 2023-24.
+01:46:45  INFO      src.etl.roster  Roster: 5/30 teams processed for 2024-25.
+01:47:10  INFO      src.etl.roster  Roster: 10/30 teams processed for 2024-25.
+01:47:35  INFO      src.etl.roster  Roster: 15/30 teams processed for 2024-25.
+01:48:01  INFO      src.etl.roster  Roster: 20/30 teams processed for 2024-25.
+01:48:26  INFO      src.etl.roster  Roster: 25/30 teams processed for 2024-25.
+01:48:51  INFO      src.etl.roster  Roster: 30/30 teams processed for 2024-25.
+01:48:53  INFO      src.etl.roster  fact_roster: 534 total rows for 2024-25.
+01:48:53  INFO      ingest  Checkpoint post-rosters: etl_run_log status counts={'error': 1, 'ok': 26}
+01:48:53  INFO      ingest  Checkpoint post-rosters: table=fact_roster row_count=1066
+01:48:53  INFO      ingest  --dims-only set; skipping box scores.
+01:48:53  INFO      ingest  Ingest complete.

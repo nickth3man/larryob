@@ -87,7 +87,7 @@ def test_build_player_rows_null_history() -> None:
 def test_build_game_rows() -> None:
     df = _make_mock_df()
     rows = _build_game_rows(df, "2023-24", "Regular Season")
-    assert len(rows) == 2  # 2 distinct game IDs
+    assert len(rows) == 1  # game rows require resolvable home+away teams
 
 
 def test_build_team_rows() -> None:
@@ -136,15 +136,21 @@ def test_pts_integrity(sqlite_con_with_data: sqlite3.Connection) -> None:
 # _build_game_rows: away-team branch                                 #
 # ------------------------------------------------------------------ #
 
-def test_build_game_rows_away_team_populates_away_team_id() -> None:
+def test_build_game_rows_resolves_both_home_and_away_team_ids() -> None:
     df = _make_mock_df()
-    # Use the GSW row, which has away matchup "GSW @ LAL"
-    df_away = df[df["TEAM_ABBREVIATION"] == "GSW"].copy()
-    rows = _build_game_rows(df_away, "2023-24", "Regular Season")
-    assert len(rows) == 1
-    game = rows[0]
-    assert game["home_team_id"] is None
-    assert game["away_team_id"] == str(df_away["TEAM_ID"].iloc[0])
+    rows = _build_game_rows(df, "2023-24", "Regular Season")
+    by_game = {r["game_id"]: r for r in rows}
+    game = by_game["0022300001"]
+    assert game["home_team_id"] == "1610612747"
+    assert game["away_team_id"] == "1610612744"
+
+
+def test_build_game_rows_drops_game_when_teams_cannot_be_resolved() -> None:
+    df = _make_mock_df()
+    # Keep only one team for a game so home/away cannot be fully inferred.
+    df_one_team = df[df["TEAM_ABBREVIATION"] == "GSW"].copy()
+    rows = _build_game_rows(df_one_team, "2023-24", "Regular Season")
+    assert rows == []
 
 
 def test_build_game_rows_stores_season_type() -> None:

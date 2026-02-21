@@ -56,6 +56,46 @@ def test_load_team_history_skips_when_csv_missing(sqlite_con: sqlite3.Connection
     assert count == 0
 
 
+def test_load_team_history_skips_unknown_team_ids(
+    sqlite_con: sqlite3.Connection,
+    tmp_path: Path,
+) -> None:
+    sqlite_con.execute(
+        """INSERT INTO dim_team
+           (team_id, abbreviation, full_name, city, nickname)
+           VALUES ('1610612747', 'LAL', 'Los Angeles Lakers', 'Los Angeles', 'Lakers')"""
+    )
+    sqlite_con.commit()
+
+    pd.DataFrame(
+        [
+            {
+                "teamId": 1610612747,
+                "teamCity": "Los Angeles",
+                "teamName": "Lakers",
+                "teamAbbrev": "LAL",
+                "seasonFounded": 1948,
+                "seasonActiveTill": 2026,
+                "league": "NBA",
+            },
+            {
+                "teamId": 9999999999,
+                "teamCity": "Defunct",
+                "teamName": "Team",
+                "teamAbbrev": "DEF",
+                "seasonFounded": 1950,
+                "seasonActiveTill": 1951,
+                "league": "NBA",
+            },
+        ]
+    ).to_csv(tmp_path / "TeamHistories.csv", index=False)
+
+    load_team_history(sqlite_con, tmp_path)
+
+    rows = sqlite_con.execute("SELECT team_id FROM dim_team_history ORDER BY team_id").fetchall()
+    assert rows == [("1610612747",)]
+
+
 def test_enrich_dim_team_updates_latest_abbreviation(
     sqlite_con: sqlite3.Connection,
     tmp_path: Path,

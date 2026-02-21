@@ -3,13 +3,27 @@
 import sqlite3
 from unittest.mock import MagicMock, patch
 
+import pytest
+
 from src.etl.salaries import (
+    BBRRateLimitExceeded,
     _SALARY_CAP_BY_SEASON,
     _get_html,
     _normalize_name,
     _parse_salary,
+    _season_team_map,
     load_salary_cap,
 )
+
+
+@pytest.fixture(autouse=True)
+def reset_bref_throttle_state():
+    import src.etl.salaries as salaries_mod
+
+    salaries_mod._BREF_THROTTLE.delay = salaries_mod._bref_delay_seconds()
+    salaries_mod._BREF_THROTTLE.next_allowed_at = 0.0
+    salaries_mod._BREF_THROTTLE.success_streak = 0
+    salaries_mod._BREF_THROTTLE.rate_limit_streak = 0
 
 # ------------------------------------------------------------------ #
 # _normalize_name                                                     #
@@ -114,6 +128,29 @@ def test_get_html_handles_invalid_retry_after_header() -> None:
     assert result == "ok"
 
 
+def test_get_html_returns_none_on_404() -> None:
+    not_found = MagicMock()
+    not_found.status_code = 404
+    with patch("src.etl.salaries.requests.get", return_value=not_found):
+        result = _get_html("http://example.com")
+    assert result is None
+
+
+def test_get_html_skips_extreme_retry_after() -> None:
+    rate_limited = MagicMock()
+    rate_limited.status_code = 429
+    rate_limited.headers = {"Retry-After": "3600"}
+    with patch("src.etl.salaries.requests.get", return_value=rate_limited):
+        with patch("src.etl.salaries.time.sleep") as mocked_sleep:
+            try:
+                _get_html("http://example.com")
+            except BBRRateLimitExceeded:
+                pass
+            else:  # pragma: no cover - defensive
+                raise AssertionError("Expected BBRRateLimitExceeded to be raised")
+    mocked_sleep.assert_not_called()
+
+
 # ------------------------------------------------------------------ #
 # load_salary_cap                                                     #
 # ------------------------------------------------------------------ #
@@ -152,3 +189,42 @@ def test_load_salary_cap_first_season_is_1984_85(sqlite_con: sqlite3.Connection)
         r[0] for r in sqlite_con.execute("SELECT season_id FROM dim_salary_cap ORDER BY season_id").fetchall()
     ]
     assert seasons[0] == "1984-85"
+
+
+def test_season_team_map_uses_fact_team_season_when_present(sqlite_con: sqlite3.Connection) -> None:
+    sqlite_con.execute(
+        "INSERT INTO dim_season (season_id, start_year, end_year) VALUES ('1960-61', 1960, 1961)"
+    )
+    sqlite_con.execute(
+        """
+        INSERT INTO dim_team (
+            team_id, abbreviation, full_name, city, nickname,
+            conference, division, color_primary, color_secondary, arena_name, founded_year
+        ) VALUES (
+            '1610612747', 'LAL', 'Los Angeles Lakers', 'Los Angeles', 'Lakers',
+            'West', 'Pacific', '#552583', '#FDB927', 'Crypto.com Arena', 1947
+        )
+        """
+    )
+    sqlite_con.execute(
+        """
+        INSERT INTO dim_team_history (
+            team_id, team_city, team_name, team_abbrev,
+            season_founded, season_active_till, league
+        ) VALUES (
+            '1610612747', 'Minneapolis', 'Lakers', 'MNL',
+            1948, 1960, 'NBA'
+        )
+        """
+    )
+    sqlite_con.execute(
+        """
+        INSERT INTO fact_team_season (season_id, bref_abbrev, lg, playoffs)
+        VALUES ('1960-61', 'MNL', 'NBA', 1)
+        """
+    )
+    sqlite_con.commit()
+
+    mapping, source = _season_team_map(sqlite_con, "1960-61")
+    assert source == "fact_team_season"
+    assert mapping == {"MNL": "1610612747"}

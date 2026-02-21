@@ -1,0 +1,292 @@
+06:31:31  INFO      ingest  Ingest arguments: seasons=['1988-89', '1989-90', '1990-91', '1991-92', '1992-93', '1993-94', '1994-95', '1995-96', '1996-97', '1997-98', '1998-99', '1999-00', '2000-01', '2001-02', '2002-03', '2003-04', '2004-05', '2005-06', '2006-07', '2007-08', '2008-09', '2009-10', '2010-11', '2011-12', '2012-13', '2013-14', '2014-15', '2015-16', '2016-17', '2017-18', '2018-19', '2019-20', '2020-21', '2021-22', '2022-23'] dims_only=True enrich_bio=False awards=False salaries=False rosters=True include_playoffs=False pbp_limit=0 skip_reconciliation=False reconciliation_warn_only=False raw_backfill=False raw_dir=None raw_backfill_fail_fast=False analytics_view=None analytics_limit=20 analytics_output=None analytics_only=False metrics=False metrics_summary=False metrics_export_endpoint=None log_level=INFO log_file=logs\ingest_rosters_1988_2023_final.log
+06:31:31  INFO      ingest  Initialising database schema...
+06:31:31  INFO      ingest  Loading dimension tables...
+06:31:31  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+06:31:31  INFO      src.etl.dimensions  Skipping dim_team (already loaded)
+06:31:31  INFO      src.etl.dimensions  Skipping dim_player static (already loaded)
+06:31:31  INFO      ingest  Stage dimensions elapsed=0.00s
+06:31:31  INFO      ingest  Checkpoint post-dimensions: etl_run_log status counts={'empty': 12, 'ok': 502} delta={'empty': 12, 'ok': 502} elapsed_since_previous=n/a
+06:31:31  INFO      ingest  Checkpoint post-dimensions: table=dim_season row_count=80 delta=n/a previous=n/a
+06:31:31  INFO      ingest  Checkpoint post-dimensions: table=dim_team row_count=30 delta=n/a previous=n/a
+06:31:31  INFO      ingest  Checkpoint post-dimensions: table=dim_player row_count=5115 delta=n/a previous=n/a
+06:31:31  INFO      ingest  Checkpoint post-dimensions: etl_run_log tail (latest 12 rows)
+06:31:31  INFO      ingest  Checkpoint post-dimensions: runlog id=514 table=fact_roster season=1987-88 loader=roster.load_season_rosters status=ok row_count=332 started=2026-02-21T11:09:12.482919+00:00 finished=2026-02-21T11:14:33.676088+00:00
+06:31:31  INFO      ingest  Checkpoint post-dimensions: runlog id=513 table=fact_roster season=1986-87 loader=roster.load_season_rosters status=ok row_count=335 started=2026-02-21T11:07:07.816651+00:00 finished=2026-02-21T11:09:12.481079+00:00
+06:31:31  INFO      ingest  Checkpoint post-dimensions: runlog id=512 table=fact_roster season=1985-86 loader=roster.load_season_rosters status=ok row_count=325 started=2026-02-21T11:05:12.860664+00:00 finished=2026-02-21T11:07:07.816361+00:00
+06:31:31  INFO      ingest  Checkpoint post-dimensions: runlog id=511 table=fact_roster season=1984-85 loader=roster.load_season_rosters status=ok row_count=320 started=2026-02-21T11:03:04.085856+00:00 finished=2026-02-21T11:05:12.860336+00:00
+06:31:31  INFO      ingest  Checkpoint post-dimensions: runlog id=510 table=fact_roster season=1983-84 loader=roster.load_season_rosters status=ok row_count=310 started=2026-02-21T11:01:20.004131+00:00 finished=2026-02-21T11:03:04.085522+00:00
+06:31:31  INFO      ingest  Checkpoint post-dimensions: runlog id=509 table=fact_roster season=1982-83 loader=roster.load_season_rosters status=ok row_count=303 started=2026-02-21T10:58:49.470698+00:00 finished=2026-02-21T11:01:20.003952+00:00
+06:31:31  INFO      ingest  Checkpoint post-dimensions: runlog id=508 table=fact_roster season=1981-82 loader=roster.load_season_rosters status=ok row_count=316 started=2026-02-21T10:57:10.466761+00:00 finished=2026-02-21T10:58:49.470271+00:00
+06:31:31  INFO      ingest  Checkpoint post-dimensions: runlog id=507 table=fact_roster season=1980-81 loader=roster.load_season_rosters status=ok row_count=304 started=2026-02-21T10:55:13.116841+00:00 finished=2026-02-21T10:57:10.466477+00:00
+06:31:31  INFO      ingest  Checkpoint post-dimensions: runlog id=506 table=fact_roster season=1979-80 loader=roster.load_season_rosters status=ok row_count=287 started=2026-02-21T10:53:32.546567+00:00 finished=2026-02-21T10:55:13.116514+00:00
+06:31:31  INFO      ingest  Checkpoint post-dimensions: runlog id=505 table=fact_roster season=1978-79 loader=roster.load_season_rosters status=ok row_count=280 started=2026-02-21T10:50:52.204194+00:00 finished=2026-02-21T10:53:32.546241+00:00
+06:31:31  INFO      ingest  Checkpoint post-dimensions: runlog id=504 table=fact_roster season=1977-78 loader=roster.load_season_rosters status=ok row_count=285 started=2026-02-21T10:49:02.944019+00:00 finished=2026-02-21T10:50:52.203613+00:00
+06:31:31  INFO      ingest  Checkpoint post-dimensions: runlog id=503 table=fact_roster season=1976-77 loader=roster.load_season_rosters status=ok row_count=295 started=2026-02-21T10:46:56.502703+00:00 finished=2026-02-21T10:49:02.942271+00:00
+06:31:31  INFO      ingest  Loading rosters...
+06:31:48  INFO      src.etl.roster  Roster: 5/30 teams processed for 1988-89.
+06:32:11  INFO      src.etl.roster  Roster: 10/30 teams processed for 1988-89.
+06:32:32  INFO      src.etl.roster  Roster: 15/30 teams processed for 1988-89.
+06:32:47  INFO      src.etl.roster  Roster: 20/30 teams processed for 1988-89.
+06:33:04  INFO      src.etl.roster  Roster: 25/30 teams processed for 1988-89.
+06:33:20  INFO      src.etl.roster  Roster: 30/30 teams processed for 1988-89.
+06:33:20  INFO      src.etl.roster  fact_roster: 353 total rows for 1988-89.
+06:33:35  INFO      src.etl.roster  Roster: 5/30 teams processed for 1989-90.
+06:33:51  INFO      src.etl.roster  Roster: 10/30 teams processed for 1989-90.
+06:34:08  INFO      src.etl.roster  Roster: 15/30 teams processed for 1989-90.
+06:34:28  INFO      src.etl.roster  Roster: 20/30 teams processed for 1989-90.
+06:34:50  INFO      src.etl.roster  Roster: 25/30 teams processed for 1989-90.
+06:35:12  INFO      src.etl.roster  Roster: 30/30 teams processed for 1989-90.
+06:35:12  INFO      src.etl.roster  fact_roster: 381 total rows for 1989-90.
+06:35:32  INFO      src.etl.roster  Roster: 5/30 teams processed for 1990-91.
+06:35:52  INFO      src.etl.roster  Roster: 10/30 teams processed for 1990-91.
+06:36:10  INFO      src.etl.roster  Roster: 15/30 teams processed for 1990-91.
+06:36:26  INFO      src.etl.roster  Roster: 20/30 teams processed for 1990-91.
+06:36:46  INFO      src.etl.roster  Roster: 25/30 teams processed for 1990-91.
+06:37:05  INFO      src.etl.roster  Roster: 30/30 teams processed for 1990-91.
+06:37:05  INFO      src.etl.roster  fact_roster: 387 total rows for 1990-91.
+06:37:21  INFO      src.etl.roster  Roster: 5/30 teams processed for 1991-92.
+06:37:36  INFO      src.etl.roster  Roster: 10/30 teams processed for 1991-92.
+06:37:52  INFO      src.etl.roster  Roster: 15/30 teams processed for 1991-92.
+06:38:09  INFO      src.etl.roster  Roster: 20/30 teams processed for 1991-92.
+06:38:25  INFO      src.etl.roster  Roster: 25/30 teams processed for 1991-92.
+06:38:42  INFO      src.etl.roster  Roster: 30/30 teams processed for 1991-92.
+06:38:42  INFO      src.etl.roster  fact_roster: 386 total rows for 1991-92.
+06:38:58  INFO      src.etl.roster  Roster: 5/30 teams processed for 1992-93.
+06:39:14  INFO      src.etl.roster  Roster: 10/30 teams processed for 1992-93.
+06:39:29  INFO      src.etl.roster  Roster: 15/30 teams processed for 1992-93.
+06:39:48  INFO      src.etl.roster  Roster: 20/30 teams processed for 1992-93.
+06:40:10  INFO      src.etl.roster  Roster: 25/30 teams processed for 1992-93.
+06:40:50  INFO      src.etl.roster  Roster: 30/30 teams processed for 1992-93.
+06:40:50  INFO      src.etl.roster  fact_roster: 390 total rows for 1992-93.
+06:41:41  INFO      src.etl.roster  Roster: 5/30 teams processed for 1993-94.
+06:42:10  INFO      src.etl.roster  Roster: 10/30 teams processed for 1993-94.
+06:42:25  INFO      src.etl.roster  Roster: 15/30 teams processed for 1993-94.
+06:42:42  INFO      src.etl.roster  Roster: 20/30 teams processed for 1993-94.
+06:42:55  INFO      src.etl.roster  Roster: 25/30 teams processed for 1993-94.
+06:43:12  INFO      src.etl.roster  Roster: 30/30 teams processed for 1993-94.
+06:43:12  INFO      src.etl.roster  fact_roster: 403 total rows for 1993-94.
+06:43:25  INFO      src.etl.roster  Roster: 5/30 teams processed for 1994-95.
+06:43:41  INFO      src.etl.roster  Roster: 10/30 teams processed for 1994-95.
+06:43:59  INFO      src.etl.roster  Roster: 15/30 teams processed for 1994-95.
+06:44:15  INFO      src.etl.roster  Roster: 20/30 teams processed for 1994-95.
+06:44:32  INFO      src.etl.roster  Roster: 25/30 teams processed for 1994-95.
+06:44:53  INFO      src.etl.roster  Roster: 30/30 teams processed for 1994-95.
+06:44:53  INFO      src.etl.roster  fact_roster: 402 total rows for 1994-95.
+06:45:12  INFO      src.etl.roster  Roster: 5/30 teams processed for 1995-96.
+06:45:34  INFO      src.etl.roster  Roster: 10/30 teams processed for 1995-96.
+06:45:52  INFO      src.etl.roster  Roster: 15/30 teams processed for 1995-96.
+06:46:12  INFO      src.etl.roster  Roster: 20/30 teams processed for 1995-96.
+06:46:35  INFO      src.etl.roster  Roster: 25/30 teams processed for 1995-96.
+06:46:51  INFO      src.etl.roster  Roster: 30/30 teams processed for 1995-96.
+06:46:51  INFO      src.etl.roster  fact_roster: 418 total rows for 1995-96.
+06:47:09  INFO      src.etl.roster  Roster: 5/30 teams processed for 1996-97.
+06:47:27  INFO      src.etl.roster  Roster: 10/30 teams processed for 1996-97.
+06:47:49  INFO      src.etl.roster  Roster: 15/30 teams processed for 1996-97.
+06:48:15  INFO      src.etl.roster  Roster: 20/30 teams processed for 1996-97.
+06:48:38  INFO      src.etl.roster  Roster: 25/30 teams processed for 1996-97.
+06:48:56  INFO      src.etl.roster  Roster: 30/30 teams processed for 1996-97.
+06:48:56  INFO      src.etl.roster  fact_roster: 353 total rows for 1996-97.
+06:49:17  INFO      src.etl.roster  Roster: 5/30 teams processed for 1997-98.
+06:49:41  INFO      src.etl.roster  Roster: 10/30 teams processed for 1997-98.
+06:50:10  INFO      src.etl.roster  Roster: 15/30 teams processed for 1997-98.
+06:50:33  INFO      src.etl.roster  Roster: 20/30 teams processed for 1997-98.
+06:50:57  INFO      src.etl.roster  Roster: 25/30 teams processed for 1997-98.
+06:51:14  INFO      src.etl.roster  Roster: 30/30 teams processed for 1997-98.
+06:51:14  INFO      src.etl.roster  fact_roster: 350 total rows for 1997-98.
+06:51:33  INFO      src.etl.roster  Roster: 5/30 teams processed for 1998-99.
+06:52:01  INFO      src.etl.roster  Roster: 10/30 teams processed for 1998-99.
+06:52:37  INFO      src.etl.roster  Roster: 15/30 teams processed for 1998-99.
+06:53:00  INFO      src.etl.roster  Roster: 20/30 teams processed for 1998-99.
+06:53:31  INFO      src.etl.roster  Roster: 25/30 teams processed for 1998-99.
+06:53:46  INFO      src.etl.roster  Roster: 30/30 teams processed for 1998-99.
+06:53:46  INFO      src.etl.roster  fact_roster: 346 total rows for 1998-99.
+06:54:04  INFO      src.etl.roster  Roster: 5/30 teams processed for 1999-00.
+06:54:22  INFO      src.etl.roster  Roster: 10/30 teams processed for 1999-00.
+06:54:45  INFO      src.etl.roster  Roster: 15/30 teams processed for 1999-00.
+06:55:03  INFO      src.etl.roster  Roster: 20/30 teams processed for 1999-00.
+06:55:19  INFO      src.etl.roster  Roster: 25/30 teams processed for 1999-00.
+06:55:40  INFO      src.etl.roster  Roster: 30/30 teams processed for 1999-00.
+06:55:40  INFO      src.etl.roster  fact_roster: 343 total rows for 1999-00.
+06:55:40  INFO      src.etl.roster  Skipping fact_roster for 2000-01 (already loaded)
+06:55:56  INFO      src.etl.roster  Roster: 5/30 teams processed for 2001-02.
+06:56:14  INFO      src.etl.roster  Roster: 10/30 teams processed for 2001-02.
+06:56:39  INFO      src.etl.roster  Roster: 15/30 teams processed for 2001-02.
+06:56:57  INFO      src.etl.roster  Roster: 20/30 teams processed for 2001-02.
+06:57:19  INFO      src.etl.roster  Roster: 25/30 teams processed for 2001-02.
+06:57:35  INFO      src.etl.roster  Roster: 30/30 teams processed for 2001-02.
+06:57:35  INFO      src.etl.roster  fact_roster: 367 total rows for 2001-02.
+06:57:53  INFO      src.etl.roster  Roster: 5/30 teams processed for 2002-03.
+06:58:07  INFO      src.etl.roster  Roster: 10/30 teams processed for 2002-03.
+06:58:29  INFO      src.etl.roster  Roster: 15/30 teams processed for 2002-03.
+06:58:47  INFO      src.etl.roster  Roster: 20/30 teams processed for 2002-03.
+06:59:04  INFO      src.etl.roster  Roster: 25/30 teams processed for 2002-03.
+06:59:21  INFO      src.etl.roster  Roster: 30/30 teams processed for 2002-03.
+06:59:21  INFO      src.etl.roster  fact_roster: 467 total rows for 2002-03.
+06:59:38  INFO      src.etl.roster  Roster: 5/30 teams processed for 2003-04.
+06:59:53  INFO      src.etl.roster  Roster: 10/30 teams processed for 2003-04.
+07:00:39  INFO      src.etl.roster  Roster: 15/30 teams processed for 2003-04.
+07:01:11  INFO      src.etl.roster  Roster: 20/30 teams processed for 2003-04.
+07:01:41  INFO      src.etl.roster  Roster: 25/30 teams processed for 2003-04.
+07:02:14  INFO      src.etl.roster  Roster: 30/30 teams processed for 2003-04.
+07:02:14  INFO      src.etl.roster  fact_roster: 416 total rows for 2003-04.
+07:02:44  INFO      src.etl.roster  Roster: 5/30 teams processed for 2004-05.
+07:03:08  INFO      src.etl.roster  Roster: 10/30 teams processed for 2004-05.
+07:03:36  INFO      src.etl.roster  Roster: 15/30 teams processed for 2004-05.
+07:03:57  INFO      src.etl.roster  Roster: 20/30 teams processed for 2004-05.
+07:04:11  INFO      src.etl.roster  Roster: 25/30 teams processed for 2004-05.
+07:04:25  INFO      src.etl.roster  Roster: 30/30 teams processed for 2004-05.
+07:04:25  INFO      src.etl.roster  fact_roster: 378 total rows for 2004-05.
+07:04:48  INFO      src.etl.roster  Roster: 5/30 teams processed for 2005-06.
+07:05:06  INFO      src.etl.roster  Roster: 10/30 teams processed for 2005-06.
+07:05:33  INFO      src.etl.roster  Roster: 15/30 teams processed for 2005-06.
+07:05:56  INFO      src.etl.roster  Roster: 20/30 teams processed for 2005-06.
+07:06:16  INFO      src.etl.roster  Roster: 25/30 teams processed for 2005-06.
+07:06:35  INFO      src.etl.roster  Roster: 30/30 teams processed for 2005-06.
+07:06:35  INFO      src.etl.roster  fact_roster: 413 total rows for 2005-06.
+07:07:24  INFO      src.etl.roster  Roster: 5/30 teams processed for 2006-07.
+07:07:46  INFO      src.etl.roster  Roster: 10/30 teams processed for 2006-07.
+07:08:03  INFO      src.etl.roster  Roster: 15/30 teams processed for 2006-07.
+07:08:21  INFO      src.etl.roster  Roster: 20/30 teams processed for 2006-07.
+07:08:41  INFO      src.etl.roster  Roster: 25/30 teams processed for 2006-07.
+07:09:02  INFO      src.etl.roster  Roster: 30/30 teams processed for 2006-07.
+07:09:02  INFO      src.etl.roster  fact_roster: 436 total rows for 2006-07.
+07:09:24  INFO      src.etl.roster  Roster: 5/30 teams processed for 2007-08.
+07:09:48  INFO      src.etl.roster  Roster: 10/30 teams processed for 2007-08.
+07:10:24  INFO      src.etl.roster  Roster: 15/30 teams processed for 2007-08.
+07:10:54  INFO      src.etl.roster  Roster: 20/30 teams processed for 2007-08.
+07:11:17  INFO      src.etl.roster  Roster: 25/30 teams processed for 2007-08.
+07:11:35  INFO      src.etl.roster  Roster: 30/30 teams processed for 2007-08.
+07:11:35  INFO      src.etl.roster  fact_roster: 430 total rows for 2007-08.
+07:11:52  INFO      src.etl.roster  Roster: 5/30 teams processed for 2008-09.
+07:12:10  INFO      src.etl.roster  Roster: 10/30 teams processed for 2008-09.
+07:12:26  INFO      src.etl.roster  Roster: 15/30 teams processed for 2008-09.
+07:12:50  INFO      src.etl.roster  Roster: 20/30 teams processed for 2008-09.
+07:13:46  INFO      src.etl.roster  Roster: 25/30 teams processed for 2008-09.
+07:14:08  INFO      src.etl.roster  Roster: 30/30 teams processed for 2008-09.
+07:14:08  INFO      src.etl.roster  fact_roster: 435 total rows for 2008-09.
+07:14:46  WARNING   src.etl.api_client  Attempt 1/5 failed for 'CommonTeamRoster(1610612739,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:15:17  WARNING   src.etl.api_client  Attempt 2/5 failed for 'CommonTeamRoster(1610612739,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:15:47  WARNING   src.etl.api_client  Attempt 3/5 failed for 'CommonTeamRoster(1610612739,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 1s
+07:16:18  WARNING   src.etl.api_client  Attempt 4/5 failed for 'CommonTeamRoster(1610612739,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 2s
+07:16:50  WARNING   src.etl.api_client  Attempt 5/5 failed for 'CommonTeamRoster(1610612739,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 3s
+07:16:50  WARNING   src.etl.roster  CommonTeamRoster(1610612739,2009-10) failed: HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30)
+07:17:20  WARNING   src.etl.api_client  Attempt 1/5 failed for 'CommonTeamRoster(1610612740,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:17:50  WARNING   src.etl.api_client  Attempt 2/5 failed for 'CommonTeamRoster(1610612740,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:18:21  WARNING   src.etl.api_client  Attempt 3/5 failed for 'CommonTeamRoster(1610612740,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 1s
+07:18:51  WARNING   src.etl.api_client  Attempt 4/5 failed for 'CommonTeamRoster(1610612740,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 2s
+07:19:23  WARNING   src.etl.api_client  Attempt 5/5 failed for 'CommonTeamRoster(1610612740,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 3s
+07:19:23  WARNING   src.etl.roster  CommonTeamRoster(1610612740,2009-10) failed: HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30)
+07:19:53  WARNING   src.etl.api_client  Attempt 1/5 failed for 'CommonTeamRoster(1610612741,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:20:23  WARNING   src.etl.api_client  Attempt 2/5 failed for 'CommonTeamRoster(1610612741,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:20:54  WARNING   src.etl.api_client  Attempt 3/5 failed for 'CommonTeamRoster(1610612741,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 1s
+07:21:25  WARNING   src.etl.api_client  Attempt 4/5 failed for 'CommonTeamRoster(1610612741,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 2s
+07:21:56  WARNING   src.etl.api_client  Attempt 5/5 failed for 'CommonTeamRoster(1610612741,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 3s
+07:21:56  WARNING   src.etl.roster  CommonTeamRoster(1610612741,2009-10) failed: HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30)
+07:21:56  INFO      src.etl.roster  Roster: 5/30 teams processed for 2009-10.
+07:22:26  WARNING   src.etl.api_client  Attempt 1/5 failed for 'CommonTeamRoster(1610612742,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:22:57  WARNING   src.etl.api_client  Attempt 2/5 failed for 'CommonTeamRoster(1610612742,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:23:27  WARNING   src.etl.api_client  Attempt 3/5 failed for 'CommonTeamRoster(1610612742,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 1s
+07:23:58  WARNING   src.etl.api_client  Attempt 4/5 failed for 'CommonTeamRoster(1610612742,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 2s
+07:24:30  WARNING   src.etl.api_client  Attempt 5/5 failed for 'CommonTeamRoster(1610612742,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 3s
+07:24:30  WARNING   src.etl.roster  CommonTeamRoster(1610612742,2009-10) failed: HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30)
+07:25:00  WARNING   src.etl.api_client  Attempt 1/5 failed for 'CommonTeamRoster(1610612743,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:25:30  WARNING   src.etl.api_client  Attempt 2/5 failed for 'CommonTeamRoster(1610612743,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:26:00  WARNING   src.etl.api_client  Attempt 3/5 failed for 'CommonTeamRoster(1610612743,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 1s
+07:26:31  WARNING   src.etl.api_client  Attempt 4/5 failed for 'CommonTeamRoster(1610612743,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 2s
+07:27:03  WARNING   src.etl.api_client  Attempt 5/5 failed for 'CommonTeamRoster(1610612743,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 3s
+07:27:03  WARNING   src.etl.roster  CommonTeamRoster(1610612743,2009-10) failed: HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30)
+07:27:33  WARNING   src.etl.api_client  Attempt 1/5 failed for 'CommonTeamRoster(1610612744,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:28:03  WARNING   src.etl.api_client  Attempt 2/5 failed for 'CommonTeamRoster(1610612744,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:28:34  WARNING   src.etl.api_client  Attempt 3/5 failed for 'CommonTeamRoster(1610612744,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 1s
+07:29:05  WARNING   src.etl.api_client  Attempt 4/5 failed for 'CommonTeamRoster(1610612744,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 2s
+07:29:36  WARNING   src.etl.api_client  Attempt 5/5 failed for 'CommonTeamRoster(1610612744,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 3s
+07:29:36  WARNING   src.etl.roster  CommonTeamRoster(1610612744,2009-10) failed: HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30)
+07:30:06  WARNING   src.etl.api_client  Attempt 1/5 failed for 'CommonTeamRoster(1610612745,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:30:37  WARNING   src.etl.api_client  Attempt 2/5 failed for 'CommonTeamRoster(1610612745,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:31:07  WARNING   src.etl.api_client  Attempt 3/5 failed for 'CommonTeamRoster(1610612745,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 1s
+07:31:38  WARNING   src.etl.api_client  Attempt 4/5 failed for 'CommonTeamRoster(1610612745,2009-10)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 2s
+07:31:47  INFO      src.etl.roster  Roster: 10/30 teams processed for 2009-10.
+07:32:04  INFO      src.etl.roster  Roster: 15/30 teams processed for 2009-10.
+07:32:25  INFO      src.etl.roster  Roster: 20/30 teams processed for 2009-10.
+07:32:46  INFO      src.etl.roster  Roster: 25/30 teams processed for 2009-10.
+07:33:05  INFO      src.etl.roster  Roster: 30/30 teams processed for 2009-10.
+07:33:05  INFO      src.etl.roster  fact_roster: 345 total rows for 2009-10.
+07:33:22  INFO      src.etl.roster  Roster: 5/30 teams processed for 2010-11.
+07:33:43  INFO      src.etl.roster  Roster: 10/30 teams processed for 2010-11.
+07:34:22  INFO      src.etl.roster  Roster: 15/30 teams processed for 2010-11.
+07:34:39  INFO      src.etl.roster  Roster: 20/30 teams processed for 2010-11.
+07:35:00  INFO      src.etl.roster  Roster: 25/30 teams processed for 2010-11.
+07:35:27  INFO      src.etl.roster  Roster: 30/30 teams processed for 2010-11.
+07:35:27  INFO      src.etl.roster  fact_roster: 437 total rows for 2010-11.
+07:35:58  INFO      src.etl.roster  Roster: 5/30 teams processed for 2011-12.
+07:36:25  INFO      src.etl.roster  Roster: 10/30 teams processed for 2011-12.
+07:36:40  INFO      src.etl.roster  Roster: 15/30 teams processed for 2011-12.
+07:36:54  INFO      src.etl.roster  Roster: 20/30 teams processed for 2011-12.
+07:37:18  INFO      src.etl.roster  Roster: 25/30 teams processed for 2011-12.
+07:37:35  INFO      src.etl.roster  Roster: 30/30 teams processed for 2011-12.
+07:37:35  INFO      src.etl.roster  fact_roster: 442 total rows for 2011-12.
+07:37:46  INFO      src.etl.roster  Roster: 5/30 teams processed for 2012-13.
+07:37:57  INFO      src.etl.roster  Roster: 10/30 teams processed for 2012-13.
+07:38:03  INFO      src.etl.roster  Roster: 15/30 teams processed for 2012-13.
+07:38:04  INFO      src.etl.roster  Roster: 20/30 teams processed for 2012-13.
+07:38:06  INFO      src.etl.roster  Roster: 25/30 teams processed for 2012-13.
+07:38:16  INFO      src.etl.roster  Roster: 30/30 teams processed for 2012-13.
+07:38:16  INFO      src.etl.roster  fact_roster: 446 total rows for 2012-13.
+07:38:16  INFO      src.etl.roster  Roster: 5/30 teams processed for 2013-14.
+07:38:43  WARNING   src.etl.api_client  Attempt 1/5 failed for 'CommonTeamRoster(1610612745,2013-14)': ('Connection aborted.', ConnectionResetError(10054, 'An existing connection was forcibly closed by the remote host', None, 10054, None)) — retrying in 0s
+07:39:13  WARNING   src.etl.api_client  Attempt 2/5 failed for 'CommonTeamRoster(1610612745,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:39:44  WARNING   src.etl.api_client  Attempt 3/5 failed for 'CommonTeamRoster(1610612745,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 1s
+07:40:15  WARNING   src.etl.api_client  Attempt 4/5 failed for 'CommonTeamRoster(1610612745,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 2s
+07:40:46  WARNING   src.etl.api_client  Attempt 5/5 failed for 'CommonTeamRoster(1610612745,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 3s
+07:40:46  WARNING   src.etl.roster  CommonTeamRoster(1610612745,2013-14) failed: HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30)
+07:41:16  WARNING   src.etl.api_client  Attempt 1/5 failed for 'CommonTeamRoster(1610612746,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:41:47  WARNING   src.etl.api_client  Attempt 2/5 failed for 'CommonTeamRoster(1610612746,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:42:17  WARNING   src.etl.api_client  Attempt 3/5 failed for 'CommonTeamRoster(1610612746,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 1s
+07:42:48  WARNING   src.etl.api_client  Attempt 4/5 failed for 'CommonTeamRoster(1610612746,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 2s
+07:43:20  WARNING   src.etl.api_client  Attempt 5/5 failed for 'CommonTeamRoster(1610612746,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 3s
+07:43:20  WARNING   src.etl.roster  CommonTeamRoster(1610612746,2013-14) failed: HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30)
+07:43:20  INFO      src.etl.roster  Roster: 10/30 teams processed for 2013-14.
+07:43:50  WARNING   src.etl.api_client  Attempt 1/5 failed for 'CommonTeamRoster(1610612747,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:44:20  WARNING   src.etl.api_client  Attempt 2/5 failed for 'CommonTeamRoster(1610612747,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:44:51  WARNING   src.etl.api_client  Attempt 3/5 failed for 'CommonTeamRoster(1610612747,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 1s
+07:45:21  WARNING   src.etl.api_client  Attempt 4/5 failed for 'CommonTeamRoster(1610612747,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 2s
+07:45:53  WARNING   src.etl.api_client  Attempt 5/5 failed for 'CommonTeamRoster(1610612747,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 3s
+07:45:53  WARNING   src.etl.roster  CommonTeamRoster(1610612747,2013-14) failed: HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30)
+07:46:23  WARNING   src.etl.api_client  Attempt 1/5 failed for 'CommonTeamRoster(1610612748,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:46:53  WARNING   src.etl.api_client  Attempt 2/5 failed for 'CommonTeamRoster(1610612748,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:47:24  WARNING   src.etl.api_client  Attempt 3/5 failed for 'CommonTeamRoster(1610612748,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 1s
+07:47:55  WARNING   src.etl.api_client  Attempt 4/5 failed for 'CommonTeamRoster(1610612748,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 2s
+07:48:26  WARNING   src.etl.api_client  Attempt 5/5 failed for 'CommonTeamRoster(1610612748,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 3s
+07:48:26  WARNING   src.etl.roster  CommonTeamRoster(1610612748,2013-14) failed: HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30)
+07:48:56  WARNING   src.etl.api_client  Attempt 1/5 failed for 'CommonTeamRoster(1610612749,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:49:27  WARNING   src.etl.api_client  Attempt 2/5 failed for 'CommonTeamRoster(1610612749,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:49:57  WARNING   src.etl.api_client  Attempt 3/5 failed for 'CommonTeamRoster(1610612749,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 1s
+07:50:28  WARNING   src.etl.api_client  Attempt 4/5 failed for 'CommonTeamRoster(1610612749,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 2s
+07:51:00  WARNING   src.etl.api_client  Attempt 5/5 failed for 'CommonTeamRoster(1610612749,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 3s
+07:51:00  WARNING   src.etl.roster  CommonTeamRoster(1610612749,2013-14) failed: HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30)
+07:51:30  WARNING   src.etl.api_client  Attempt 1/5 failed for 'CommonTeamRoster(1610612750,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:52:00  WARNING   src.etl.api_client  Attempt 2/5 failed for 'CommonTeamRoster(1610612750,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:52:30  WARNING   src.etl.api_client  Attempt 3/5 failed for 'CommonTeamRoster(1610612750,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 1s
+07:53:01  WARNING   src.etl.api_client  Attempt 4/5 failed for 'CommonTeamRoster(1610612750,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 2s
+07:53:33  WARNING   src.etl.api_client  Attempt 5/5 failed for 'CommonTeamRoster(1610612750,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 3s
+07:53:33  WARNING   src.etl.roster  CommonTeamRoster(1610612750,2013-14) failed: HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30)
+07:54:03  WARNING   src.etl.api_client  Attempt 1/5 failed for 'CommonTeamRoster(1610612751,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:54:33  WARNING   src.etl.api_client  Attempt 2/5 failed for 'CommonTeamRoster(1610612751,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:55:04  WARNING   src.etl.api_client  Attempt 3/5 failed for 'CommonTeamRoster(1610612751,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 1s
+07:55:35  WARNING   src.etl.api_client  Attempt 4/5 failed for 'CommonTeamRoster(1610612751,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 2s
+07:56:06  WARNING   src.etl.api_client  Attempt 5/5 failed for 'CommonTeamRoster(1610612751,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 3s
+07:56:06  WARNING   src.etl.roster  CommonTeamRoster(1610612751,2013-14) failed: HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30)
+07:56:06  INFO      src.etl.roster  Roster: 15/30 teams processed for 2013-14.
+07:56:36  WARNING   src.etl.api_client  Attempt 1/5 failed for 'CommonTeamRoster(1610612752,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:57:07  WARNING   src.etl.api_client  Attempt 2/5 failed for 'CommonTeamRoster(1610612752,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:57:37  WARNING   src.etl.api_client  Attempt 3/5 failed for 'CommonTeamRoster(1610612752,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 1s
+07:58:08  WARNING   src.etl.api_client  Attempt 4/5 failed for 'CommonTeamRoster(1610612752,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 2s
+07:58:40  WARNING   src.etl.api_client  Attempt 5/5 failed for 'CommonTeamRoster(1610612752,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 3s
+07:58:40  WARNING   src.etl.roster  CommonTeamRoster(1610612752,2013-14) failed: HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30)
+07:59:10  WARNING   src.etl.api_client  Attempt 1/5 failed for 'CommonTeamRoster(1610612753,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+07:59:40  WARNING   src.etl.api_client  Attempt 2/5 failed for 'CommonTeamRoster(1610612753,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+08:00:10  WARNING   src.etl.api_client  Attempt 3/5 failed for 'CommonTeamRoster(1610612753,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 1s
+08:00:41  WARNING   src.etl.api_client  Attempt 4/5 failed for 'CommonTeamRoster(1610612753,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 2s
+08:01:13  WARNING   src.etl.api_client  Attempt 5/5 failed for 'CommonTeamRoster(1610612753,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 3s
+08:01:13  WARNING   src.etl.roster  CommonTeamRoster(1610612753,2013-14) failed: HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30)
+08:01:43  WARNING   src.etl.api_client  Attempt 1/5 failed for 'CommonTeamRoster(1610612754,2013-14)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s

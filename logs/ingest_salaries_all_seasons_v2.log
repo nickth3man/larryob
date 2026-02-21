@@ -1,0 +1,1051 @@
+15:59:11  INFO      ingest  Ingest arguments: seasons=['1946-47', '1947-48', '1948-49', '1949-50', '1950-51', '1951-52', '1952-53', '1953-54', '1954-55', '1955-56', '1956-57', '1957-58', '1958-59', '1959-60', '1960-61', '1961-62', '1962-63', '1963-64', '1964-65', '1965-66', '1966-67', '1967-68', '1968-69', '1969-70', '1970-71', '1971-72', '1972-73', '1973-74', '1974-75', '1975-76', '1976-77', '1977-78', '1978-79', '1979-80', '1980-81', '1981-82', '1982-83', '1983-84', '1984-85', '1985-86', '1986-87', '1987-88', '1988-89', '1989-90', '1990-91', '1991-92', '1992-93', '1993-94', '1994-95', '1995-96', '1996-97', '1997-98', '1998-99', '1999-00', '2000-01', '2001-02', '2002-03', '2003-04', '2004-05', '2005-06', '2006-07', '2007-08', '2008-09', '2009-10', '2010-11', '2011-12', '2012-13', '2013-14', '2014-15', '2015-16', '2016-17', '2017-18', '2018-19', '2019-20', '2020-21', '2021-22', '2022-23', '2023-24', '2024-25', '2025-26'] dims_only=True enrich_bio=False awards=False salaries=True rosters=False include_playoffs=False pbp_limit=0 skip_reconciliation=False reconciliation_warn_only=False raw_backfill=False raw_dir=None raw_backfill_fail_fast=False analytics_view=None analytics_limit=20 analytics_output=None analytics_only=False metrics=False metrics_summary=False metrics_export_endpoint=None log_level=INFO log_file=logs\ingest_salaries_all_seasons_v2.log
+15:59:11  INFO      ingest  Initialising database schema...
+15:59:11  INFO      ingest  Loading dimension tables...
+15:59:11  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+15:59:11  INFO      src.etl.dimensions  Skipping dim_team (already loaded)
+15:59:11  INFO      src.etl.dimensions  Skipping dim_player static (already loaded)
+15:59:11  INFO      ingest  Stage dimensions elapsed=0.00s
+15:59:11  INFO      ingest  Checkpoint post-dimensions: etl_run_log status counts={'empty': 12, 'ok': 689} delta={'empty': 12, 'ok': 689} elapsed_since_previous=n/a
+15:59:11  INFO      ingest  Checkpoint post-dimensions: table=dim_season row_count=80 delta=n/a previous=n/a
+15:59:11  INFO      ingest  Checkpoint post-dimensions: table=dim_team row_count=30 delta=n/a previous=n/a
+15:59:11  INFO      ingest  Checkpoint post-dimensions: table=dim_player row_count=5115 delta=n/a previous=n/a
+15:59:11  INFO      ingest  Checkpoint post-dimensions: etl_run_log tail (latest 12 rows)
+15:59:11  INFO      ingest  Checkpoint post-dimensions: runlog id=701 table=fact_salary season=2010-11 loader=salaries.load_player_salaries.v2 status=ok row_count=411 started=2026-02-21T20:58:26.577743+00:00 finished=2026-02-21T20:58:56.961169+00:00
+15:59:11  INFO      ingest  Checkpoint post-dimensions: runlog id=700 table=fact_salary season=2021-22 loader=salaries.load_player_salaries status=ok row_count=0 started=2026-02-21T15:39:19.766530+00:00 finished=2026-02-21T15:39:25.185909+00:00
+15:59:11  INFO      ingest  Checkpoint post-dimensions: runlog id=699 table=dim_season season=- loader=dimensions.load_seasons.2021 status=ok row_count=0 started=2026-02-21T15:39:19.766609+00:00 finished=2026-02-21T15:39:19.766947+00:00
+15:59:11  INFO      ingest  Checkpoint post-dimensions: runlog id=698 table=fact_salary season=2020-21 loader=salaries.load_player_salaries status=ok row_count=0 started=2026-02-21T15:39:12.297765+00:00 finished=2026-02-21T15:39:17.766129+00:00
+15:59:11  INFO      ingest  Checkpoint post-dimensions: runlog id=697 table=dim_season season=- loader=dimensions.load_seasons.2020 status=ok row_count=0 started=2026-02-21T15:39:12.297826+00:00 finished=2026-02-21T15:39:12.298096+00:00
+15:59:11  INFO      ingest  Checkpoint post-dimensions: runlog id=696 table=fact_salary season=2019-20 loader=salaries.load_player_salaries status=ok row_count=0 started=2026-02-21T15:39:04.766744+00:00 finished=2026-02-21T15:39:10.296951+00:00
+15:59:11  INFO      ingest  Checkpoint post-dimensions: runlog id=695 table=dim_season season=- loader=dimensions.load_seasons.2019 status=ok row_count=0 started=2026-02-21T15:39:04.766816+00:00 finished=2026-02-21T15:39:04.767158+00:00
+15:59:11  INFO      ingest  Checkpoint post-dimensions: runlog id=694 table=fact_salary season=2018-19 loader=salaries.load_player_salaries status=ok row_count=0 started=2026-02-21T15:38:57.272255+00:00 finished=2026-02-21T15:39:02.765965+00:00
+15:59:11  INFO      ingest  Checkpoint post-dimensions: runlog id=693 table=dim_season season=- loader=dimensions.load_seasons.2018 status=ok row_count=0 started=2026-02-21T15:38:57.272319+00:00 finished=2026-02-21T15:38:57.272580+00:00
+15:59:11  INFO      ingest  Checkpoint post-dimensions: runlog id=692 table=fact_salary season=2017-18 loader=salaries.load_player_salaries status=ok row_count=0 started=2026-02-21T15:38:49.838594+00:00 finished=2026-02-21T15:38:55.271793+00:00
+15:59:11  INFO      ingest  Checkpoint post-dimensions: runlog id=691 table=dim_season season=- loader=dimensions.load_seasons.2017 status=ok row_count=0 started=2026-02-21T15:38:49.838663+00:00 finished=2026-02-21T15:38:49.838949+00:00
+15:59:11  INFO      ingest  Checkpoint post-dimensions: runlog id=690 table=fact_salary season=2016-17 loader=salaries.load_player_salaries status=ok row_count=0 started=2026-02-21T15:38:42.549835+00:00 finished=2026-02-21T15:38:47.837806+00:00
+15:59:11  INFO      ingest  Loading salary cap and player salaries...
+15:59:11  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+15:59:11  INFO      src.etl.salaries  dim_salary_cap: 41 rows upserted.
+15:59:11  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+15:59:11  INFO      src.etl.salaries  fact_salary (1946-47): team_map_source=fact_team_season teams=2
+15:59:11  INFO      src.etl.salaries  fact_salary (1946-47): team_pages fetched=0 cached=2 candidate_rows=0 unmatched_names=0
+15:59:11  WARNING   src.etl.salaries  fact_salary (1946-47): no rows to insert.
+15:59:13  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+15:59:13  INFO      src.etl.salaries  fact_salary (1947-48): team_map_source=fact_team_season teams=2
+15:59:13  INFO      src.etl.salaries  fact_salary (1947-48): team_pages fetched=0 cached=2 candidate_rows=0 unmatched_names=0
+15:59:13  WARNING   src.etl.salaries  fact_salary (1947-48): no rows to insert.
+15:59:15  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+15:59:15  INFO      src.etl.salaries  fact_salary (1948-49): team_map_source=fact_team_season teams=3
+15:59:17  INFO      src.etl.salaries  fact_salary (1948-49): team_pages fetched=1 cached=2 candidate_rows=0 unmatched_names=0
+15:59:17  WARNING   src.etl.salaries  fact_salary (1948-49): no rows to insert.
+15:59:19  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+15:59:19  INFO      src.etl.salaries  fact_salary (1949-50): team_map_source=fact_team_season teams=5
+15:59:24  INFO      src.etl.salaries  fact_salary (1949-50): team_pages fetched=3 cached=2 candidate_rows=0 unmatched_names=0
+15:59:24  WARNING   src.etl.salaries  fact_salary (1949-50): no rows to insert.
+15:59:26  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+15:59:26  INFO      src.etl.salaries  fact_salary (1950-51): team_map_source=fact_team_season teams=5
+15:59:30  INFO      src.etl.salaries  fact_salary (1950-51): team_pages fetched=3 cached=2 candidate_rows=0 unmatched_names=0
+15:59:30  WARNING   src.etl.salaries  fact_salary (1950-51): no rows to insert.
+15:59:32  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+15:59:32  INFO      src.etl.salaries  fact_salary (1951-52): team_map_source=fact_team_season teams=4
+15:59:36  INFO      src.etl.salaries  fact_salary (1951-52): team_pages fetched=2 cached=2 candidate_rows=0 unmatched_names=0
+15:59:36  WARNING   src.etl.salaries  fact_salary (1951-52): no rows to insert.
+15:59:38  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+15:59:38  INFO      src.etl.salaries  fact_salary (1952-53): team_map_source=fact_team_season teams=4
+15:59:44  INFO      src.etl.salaries  fact_salary (1952-53): team_pages fetched=4 cached=0 candidate_rows=0 unmatched_names=0
+15:59:44  WARNING   src.etl.salaries  fact_salary (1952-53): no rows to insert.
+15:59:46  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+15:59:46  INFO      src.etl.salaries  fact_salary (1953-54): team_map_source=fact_team_season teams=4
+15:59:53  INFO      src.etl.salaries  fact_salary (1953-54): team_pages fetched=4 cached=0 candidate_rows=0 unmatched_names=0
+15:59:53  WARNING   src.etl.salaries  fact_salary (1953-54): no rows to insert.
+15:59:55  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+15:59:55  INFO      src.etl.salaries  fact_salary (1954-55): team_map_source=fact_team_season teams=4
+16:00:01  INFO      src.etl.salaries  fact_salary (1954-55): team_pages fetched=4 cached=0 candidate_rows=0 unmatched_names=0
+16:00:01  WARNING   src.etl.salaries  fact_salary (1954-55): no rows to insert.
+16:00:03  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:00:03  INFO      src.etl.salaries  fact_salary (1955-56): team_map_source=fact_team_season teams=5
+16:00:11  INFO      src.etl.salaries  fact_salary (1955-56): team_pages fetched=5 cached=0 candidate_rows=0 unmatched_names=0
+16:00:11  WARNING   src.etl.salaries  fact_salary (1955-56): no rows to insert.
+16:00:13  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:00:13  INFO      src.etl.salaries  fact_salary (1956-57): team_map_source=fact_team_season teams=5
+16:00:21  INFO      src.etl.salaries  fact_salary (1956-57): team_pages fetched=5 cached=0 candidate_rows=0 unmatched_names=0
+16:00:21  WARNING   src.etl.salaries  fact_salary (1956-57): no rows to insert.
+16:00:23  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:00:23  INFO      src.etl.salaries  fact_salary (1957-58): team_map_source=fact_team_season teams=6
+16:00:33  INFO      src.etl.salaries  fact_salary (1957-58): team_pages fetched=6 cached=0 candidate_rows=0 unmatched_names=0
+16:00:33  WARNING   src.etl.salaries  fact_salary (1957-58): no rows to insert.
+16:00:35  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:00:35  INFO      src.etl.salaries  fact_salary (1958-59): team_map_source=fact_team_season teams=6
+16:00:45  INFO      src.etl.salaries  fact_salary (1958-59): team_pages fetched=6 cached=0 candidate_rows=0 unmatched_names=0
+16:00:45  WARNING   src.etl.salaries  fact_salary (1958-59): no rows to insert.
+16:00:47  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:00:47  INFO      src.etl.salaries  fact_salary (1959-60): team_map_source=fact_team_season teams=6
+16:00:56  INFO      src.etl.salaries  fact_salary (1959-60): team_pages fetched=6 cached=0 candidate_rows=0 unmatched_names=0
+16:00:56  WARNING   src.etl.salaries  fact_salary (1959-60): no rows to insert.
+16:00:58  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:00:58  INFO      src.etl.salaries  fact_salary (1960-61): team_map_source=fact_team_season teams=7
+16:01:05  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1961.html) with Retry-After=3600s; skipping page.
+16:01:08  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SYR/1961.html) with Retry-After=3597s; skipping page.
+16:01:10  INFO      src.etl.salaries  fact_salary (1960-61): team_pages fetched=7 cached=0 candidate_rows=0 unmatched_names=0
+16:01:10  WARNING   src.etl.salaries  fact_salary (1960-61): no rows to insert.
+16:01:12  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:01:12  INFO      src.etl.salaries  fact_salary (1961-62): team_map_source=fact_team_season teams=7
+16:01:15  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1962.html) with Retry-After=3590s; skipping page.
+16:01:16  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1962.html) with Retry-After=3588s; skipping page.
+16:01:21  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SYR/1962.html) with Retry-After=3583s; skipping page.
+16:01:23  INFO      src.etl.salaries  fact_salary (1961-62): team_pages fetched=7 cached=0 candidate_rows=0 unmatched_names=0
+16:01:23  WARNING   src.etl.salaries  fact_salary (1961-62): no rows to insert.
+16:01:25  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:01:25  INFO      src.etl.salaries  fact_salary (1962-63): team_map_source=fact_team_season teams=7
+16:01:25  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1963.html) with Retry-After=3580s; skipping page.
+16:01:26  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CIN/1963.html) with Retry-After=3578s; skipping page.
+16:01:28  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1963.html) with Retry-After=3577s; skipping page.
+16:01:30  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1963.html) with Retry-After=3575s; skipping page.
+16:01:31  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1963.html) with Retry-After=3573s; skipping page.
+16:01:33  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/STL/1963.html) with Retry-After=3572s; skipping page.
+16:01:34  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SYR/1963.html) with Retry-After=3570s; skipping page.
+16:01:36  INFO      src.etl.salaries  fact_salary (1962-63): team_pages fetched=7 cached=0 candidate_rows=0 unmatched_names=0
+16:01:36  WARNING   src.etl.salaries  fact_salary (1962-63): no rows to insert.
+16:01:38  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:01:38  INFO      src.etl.salaries  fact_salary (1963-64): team_map_source=fact_team_season teams=8
+16:01:38  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BAL/1964.html) with Retry-After=3567s; skipping page.
+16:01:39  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1964.html) with Retry-After=3565s; skipping page.
+16:01:41  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CIN/1964.html) with Retry-After=3564s; skipping page.
+16:01:43  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1964.html) with Retry-After=3562s; skipping page.
+16:01:44  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1964.html) with Retry-After=3560s; skipping page.
+16:01:46  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1964.html) with Retry-After=3559s; skipping page.
+16:01:47  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1964.html) with Retry-After=3557s; skipping page.
+16:01:49  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/STL/1964.html) with Retry-After=3556s; skipping page.
+16:01:50  INFO      src.etl.salaries  fact_salary (1963-64): team_pages fetched=8 cached=0 candidate_rows=0 unmatched_names=0
+16:01:50  WARNING   src.etl.salaries  fact_salary (1963-64): no rows to insert.
+16:01:52  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:01:52  INFO      src.etl.salaries  fact_salary (1964-65): team_map_source=fact_team_season teams=8
+16:01:53  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BAL/1965.html) with Retry-After=3552s; skipping page.
+16:01:54  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1965.html) with Retry-After=3550s; skipping page.
+16:01:56  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CIN/1965.html) with Retry-After=3549s; skipping page.
+16:01:57  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1965.html) with Retry-After=3547s; skipping page.
+16:01:59  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1965.html) with Retry-After=3546s; skipping page.
+16:02:00  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1965.html) with Retry-After=3544s; skipping page.
+16:02:02  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1965.html) with Retry-After=3543s; skipping page.
+16:02:04  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/STL/1965.html) with Retry-After=3541s; skipping page.
+16:02:05  INFO      src.etl.salaries  fact_salary (1964-65): team_pages fetched=8 cached=0 candidate_rows=0 unmatched_names=0
+16:02:05  WARNING   src.etl.salaries  fact_salary (1964-65): no rows to insert.
+16:02:07  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:02:07  INFO      src.etl.salaries  fact_salary (1965-66): team_map_source=fact_team_season teams=8
+16:02:07  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BAL/1966.html) with Retry-After=3537s; skipping page.
+16:02:09  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1966.html) with Retry-After=3536s; skipping page.
+16:02:11  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CIN/1966.html) with Retry-After=3534s; skipping page.
+16:02:12  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1966.html) with Retry-After=3533s; skipping page.
+16:02:14  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1966.html) with Retry-After=3531s; skipping page.
+16:02:15  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1966.html) with Retry-After=3529s; skipping page.
+16:02:17  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1966.html) with Retry-After=3528s; skipping page.
+16:02:18  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/STL/1966.html) with Retry-After=3526s; skipping page.
+16:02:20  INFO      src.etl.salaries  fact_salary (1965-66): team_pages fetched=8 cached=0 candidate_rows=0 unmatched_names=0
+16:02:20  WARNING   src.etl.salaries  fact_salary (1965-66): no rows to insert.
+16:02:22  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:02:22  INFO      src.etl.salaries  fact_salary (1966-67): team_map_source=fact_team_season teams=9
+16:02:22  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BAL/1967.html) with Retry-After=3523s; skipping page.
+16:02:24  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1967.html) with Retry-After=3521s; skipping page.
+16:02:25  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1967.html) with Retry-After=3519s; skipping page.
+16:02:27  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CIN/1967.html) with Retry-After=3518s; skipping page.
+16:02:28  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1967.html) with Retry-After=3516s; skipping page.
+16:02:30  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1967.html) with Retry-After=3515s; skipping page.
+16:02:32  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1967.html) with Retry-After=3513s; skipping page.
+16:02:33  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1967.html) with Retry-After=3512s; skipping page.
+16:02:35  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/STL/1967.html) with Retry-After=3510s; skipping page.
+16:02:36  INFO      src.etl.salaries  fact_salary (1966-67): team_pages fetched=9 cached=0 candidate_rows=0 unmatched_names=0
+16:02:36  WARNING   src.etl.salaries  fact_salary (1966-67): no rows to insert.
+16:02:38  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:02:38  INFO      src.etl.salaries  fact_salary (1967-68): team_map_source=fact_team_season teams=10
+16:02:38  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BAL/1968.html) with Retry-After=3506s; skipping page.
+16:02:40  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1968.html) with Retry-After=3505s; skipping page.
+16:02:41  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1968.html) with Retry-After=3503s; skipping page.
+16:02:43  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CIN/1968.html) with Retry-After=3502s; skipping page.
+16:02:45  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1968.html) with Retry-After=3500s; skipping page.
+16:02:46  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1968.html) with Retry-After=3498s; skipping page.
+16:02:48  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1968.html) with Retry-After=3497s; skipping page.
+16:02:49  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1968.html) with Retry-After=3495s; skipping page.
+16:02:51  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1968.html) with Retry-After=3494s; skipping page.
+16:02:53  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/STL/1968.html) with Retry-After=3492s; skipping page.
+16:02:54  INFO      src.etl.salaries  fact_salary (1967-68): team_pages fetched=10 cached=0 candidate_rows=0 unmatched_names=0
+16:02:54  WARNING   src.etl.salaries  fact_salary (1967-68): no rows to insert.
+16:02:56  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:02:56  INFO      src.etl.salaries  fact_salary (1968-69): team_map_source=fact_team_season teams=11
+16:02:56  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1969.html) with Retry-After=3489s; skipping page.
+16:02:58  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BAL/1969.html) with Retry-After=3487s; skipping page.
+16:02:59  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1969.html) with Retry-After=3485s; skipping page.
+16:03:01  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1969.html) with Retry-After=3484s; skipping page.
+16:03:02  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CIN/1969.html) with Retry-After=3482s; skipping page.
+16:03:04  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1969.html) with Retry-After=3481s; skipping page.
+16:03:06  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1969.html) with Retry-After=3479s; skipping page.
+16:03:07  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1969.html) with Retry-After=3477s; skipping page.
+16:03:09  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1969.html) with Retry-After=3476s; skipping page.
+16:03:10  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1969.html) with Retry-After=3474s; skipping page.
+16:03:12  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1969.html) with Retry-After=3473s; skipping page.
+16:03:13  INFO      src.etl.salaries  fact_salary (1968-69): team_pages fetched=11 cached=0 candidate_rows=0 unmatched_names=0
+16:03:13  WARNING   src.etl.salaries  fact_salary (1968-69): no rows to insert.
+16:03:15  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:03:15  INFO      src.etl.salaries  fact_salary (1969-70): team_map_source=fact_team_season teams=11
+16:03:16  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1970.html) with Retry-After=3469s; skipping page.
+16:03:17  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BAL/1970.html) with Retry-After=3468s; skipping page.
+16:03:19  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1970.html) with Retry-After=3466s; skipping page.
+16:03:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1970.html) with Retry-After=3464s; skipping page.
+16:03:22  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CIN/1970.html) with Retry-After=3463s; skipping page.
+16:03:23  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1970.html) with Retry-After=3461s; skipping page.
+16:03:25  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1970.html) with Retry-After=3460s; skipping page.
+16:03:27  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1970.html) with Retry-After=3458s; skipping page.
+16:03:28  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1970.html) with Retry-After=3456s; skipping page.
+16:03:30  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1970.html) with Retry-After=3455s; skipping page.
+16:03:31  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1970.html) with Retry-After=3453s; skipping page.
+16:03:33  INFO      src.etl.salaries  fact_salary (1969-70): team_pages fetched=11 cached=0 candidate_rows=0 unmatched_names=0
+16:03:33  WARNING   src.etl.salaries  fact_salary (1969-70): no rows to insert.
+16:03:35  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:03:35  INFO      src.etl.salaries  fact_salary (1970-71): team_map_source=fact_team_season teams=14
+16:03:35  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1971.html) with Retry-After=3450s; skipping page.
+16:03:36  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BAL/1971.html) with Retry-After=3448s; skipping page.
+16:03:38  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1971.html) with Retry-After=3447s; skipping page.
+16:03:40  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BUF/1971.html) with Retry-After=3445s; skipping page.
+16:03:41  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1971.html) with Retry-After=3443s; skipping page.
+16:03:43  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CIN/1971.html) with Retry-After=3442s; skipping page.
+16:03:44  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1971.html) with Retry-After=3440s; skipping page.
+16:03:46  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1971.html) with Retry-After=3439s; skipping page.
+16:03:48  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1971.html) with Retry-After=3437s; skipping page.
+16:03:49  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1971.html) with Retry-After=3435s; skipping page.
+16:03:51  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1971.html) with Retry-After=3434s; skipping page.
+16:03:52  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1971.html) with Retry-After=3432s; skipping page.
+16:03:54  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1971.html) with Retry-After=3431s; skipping page.
+16:03:56  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1971.html) with Retry-After=3429s; skipping page.
+16:03:57  INFO      src.etl.salaries  fact_salary (1970-71): team_pages fetched=14 cached=0 candidate_rows=0 unmatched_names=0
+16:03:57  WARNING   src.etl.salaries  fact_salary (1970-71): no rows to insert.
+16:03:59  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:03:59  INFO      src.etl.salaries  fact_salary (1971-72): team_map_source=fact_team_season teams=16
+16:03:59  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1972.html) with Retry-After=3426s; skipping page.
+16:04:01  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BAL/1972.html) with Retry-After=3424s; skipping page.
+16:04:02  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1972.html) with Retry-After=3422s; skipping page.
+16:04:04  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BUF/1972.html) with Retry-After=3421s; skipping page.
+16:04:05  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1972.html) with Retry-After=3419s; skipping page.
+16:04:07  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CIN/1972.html) with Retry-After=3418s; skipping page.
+16:04:09  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1972.html) with Retry-After=3416s; skipping page.
+16:04:10  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1972.html) with Retry-After=3414s; skipping page.
+16:04:12  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1972.html) with Retry-After=3413s; skipping page.
+16:04:13  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1972.html) with Retry-After=3411s; skipping page.
+16:04:15  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1972.html) with Retry-After=3410s; skipping page.
+16:04:17  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1972.html) with Retry-After=3408s; skipping page.
+16:04:18  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1972.html) with Retry-After=3407s; skipping page.
+16:04:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1972.html) with Retry-After=3405s; skipping page.
+16:04:21  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1972.html) with Retry-After=3403s; skipping page.
+16:04:23  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1972.html) with Retry-After=3402s; skipping page.
+16:04:24  INFO      src.etl.salaries  fact_salary (1971-72): team_pages fetched=16 cached=0 candidate_rows=0 unmatched_names=0
+16:04:24  WARNING   src.etl.salaries  fact_salary (1971-72): no rows to insert.
+16:04:26  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:04:26  INFO      src.etl.salaries  fact_salary (1972-73): team_map_source=fact_team_season teams=16
+16:04:26  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1973.html) with Retry-After=3398s; skipping page.
+16:04:28  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BAL/1973.html) with Retry-After=3397s; skipping page.
+16:04:30  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1973.html) with Retry-After=3395s; skipping page.
+16:04:31  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BUF/1973.html) with Retry-After=3393s; skipping page.
+16:04:33  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1973.html) with Retry-After=3392s; skipping page.
+16:04:34  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1973.html) with Retry-After=3390s; skipping page.
+16:04:36  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1973.html) with Retry-After=3389s; skipping page.
+16:04:38  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1973.html) with Retry-After=3387s; skipping page.
+16:04:39  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1973.html) with Retry-After=3385s; skipping page.
+16:04:41  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/KCO/1973.html) with Retry-After=3384s; skipping page.
+16:04:42  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1973.html) with Retry-After=3382s; skipping page.
+16:04:44  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1973.html) with Retry-After=3381s; skipping page.
+16:04:45  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1973.html) with Retry-After=3379s; skipping page.
+16:04:47  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1973.html) with Retry-After=3378s; skipping page.
+16:04:49  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1973.html) with Retry-After=3376s; skipping page.
+16:04:50  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1973.html) with Retry-After=3374s; skipping page.
+16:04:52  INFO      src.etl.salaries  fact_salary (1972-73): team_pages fetched=16 cached=0 candidate_rows=0 unmatched_names=0
+16:04:52  WARNING   src.etl.salaries  fact_salary (1972-73): no rows to insert.
+16:04:54  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:04:54  INFO      src.etl.salaries  fact_salary (1973-74): team_map_source=fact_team_season teams=16
+16:04:54  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1974.html) with Retry-After=3371s; skipping page.
+16:04:55  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1974.html) with Retry-After=3369s; skipping page.
+16:04:57  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BUF/1974.html) with Retry-After=3368s; skipping page.
+16:04:59  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CAP/1974.html) with Retry-After=3366s; skipping page.
+16:05:00  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1974.html) with Retry-After=3364s; skipping page.
+16:05:02  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1974.html) with Retry-After=3363s; skipping page.
+16:05:03  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1974.html) with Retry-After=3361s; skipping page.
+16:05:05  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1974.html) with Retry-After=3360s; skipping page.
+16:05:06  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1974.html) with Retry-After=3358s; skipping page.
+16:05:08  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/KCO/1974.html) with Retry-After=3357s; skipping page.
+16:05:10  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1974.html) with Retry-After=3355s; skipping page.
+16:05:11  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1974.html) with Retry-After=3353s; skipping page.
+16:05:13  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1974.html) with Retry-After=3352s; skipping page.
+16:05:14  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1974.html) with Retry-After=3350s; skipping page.
+16:05:16  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1974.html) with Retry-After=3349s; skipping page.
+16:05:18  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1974.html) with Retry-After=3347s; skipping page.
+16:05:19  INFO      src.etl.salaries  fact_salary (1973-74): team_pages fetched=16 cached=0 candidate_rows=0 unmatched_names=0
+16:05:19  WARNING   src.etl.salaries  fact_salary (1973-74): no rows to insert.
+16:05:21  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:05:21  INFO      src.etl.salaries  fact_salary (1974-75): team_map_source=fact_team_season teams=15
+16:05:21  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1975.html) with Retry-After=3343s; skipping page.
+16:05:23  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1975.html) with Retry-After=3342s; skipping page.
+16:05:24  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BUF/1975.html) with Retry-After=3340s; skipping page.
+16:05:26  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1975.html) with Retry-After=3339s; skipping page.
+16:05:27  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1975.html) with Retry-After=3337s; skipping page.
+16:05:29  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1975.html) with Retry-After=3336s; skipping page.
+16:05:31  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1975.html) with Retry-After=3334s; skipping page.
+16:05:32  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1975.html) with Retry-After=3332s; skipping page.
+16:05:34  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/KCO/1975.html) with Retry-After=3331s; skipping page.
+16:05:35  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1975.html) with Retry-After=3329s; skipping page.
+16:05:37  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1975.html) with Retry-After=3328s; skipping page.
+16:05:39  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1975.html) with Retry-After=3326s; skipping page.
+16:05:40  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1975.html) with Retry-After=3325s; skipping page.
+16:05:42  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1975.html) with Retry-After=3323s; skipping page.
+16:05:43  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1975.html) with Retry-After=3321s; skipping page.
+16:05:45  INFO      src.etl.salaries  fact_salary (1974-75): team_pages fetched=15 cached=0 candidate_rows=0 unmatched_names=0
+16:05:45  WARNING   src.etl.salaries  fact_salary (1974-75): no rows to insert.
+16:05:47  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:05:47  INFO      src.etl.salaries  fact_salary (1975-76): team_map_source=fact_team_season teams=14
+16:05:47  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1976.html) with Retry-After=3318s; skipping page.
+16:05:48  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1976.html) with Retry-After=3316s; skipping page.
+16:05:50  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BUF/1976.html) with Retry-After=3315s; skipping page.
+16:05:52  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1976.html) with Retry-After=3313s; skipping page.
+16:05:53  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1976.html) with Retry-After=3311s; skipping page.
+16:05:55  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1976.html) with Retry-After=3310s; skipping page.
+16:05:56  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1976.html) with Retry-After=3308s; skipping page.
+16:05:58  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1976.html) with Retry-After=3307s; skipping page.
+16:06:00  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1976.html) with Retry-After=3305s; skipping page.
+16:06:01  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1976.html) with Retry-After=3304s; skipping page.
+16:06:03  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1976.html) with Retry-After=3302s; skipping page.
+16:06:04  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1976.html) with Retry-After=3300s; skipping page.
+16:06:06  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1976.html) with Retry-After=3299s; skipping page.
+16:06:07  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1976.html) with Retry-After=3297s; skipping page.
+16:06:09  INFO      src.etl.salaries  fact_salary (1975-76): team_pages fetched=14 cached=0 candidate_rows=0 unmatched_names=0
+16:06:09  WARNING   src.etl.salaries  fact_salary (1975-76): no rows to insert.
+16:06:11  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:06:11  WARNING   src.etl.salaries  fact_team_season duplicate bref_abbrev mapping season=1976-77 bref_abbrev=NYK team_ids=1610612751/1610612752; using first
+16:06:11  INFO      src.etl.salaries  fact_salary (1976-77): team_map_source=fact_team_season teams=16
+16:06:11  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1977.html) with Retry-After=3294s; skipping page.
+16:06:13  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1977.html) with Retry-After=3292s; skipping page.
+16:06:14  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BUF/1977.html) with Retry-After=3290s; skipping page.
+16:06:16  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1977.html) with Retry-After=3289s; skipping page.
+16:06:17  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1977.html) with Retry-After=3287s; skipping page.
+16:06:19  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1977.html) with Retry-After=3286s; skipping page.
+16:06:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1977.html) with Retry-After=3284s; skipping page.
+16:06:22  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1977.html) with Retry-After=3283s; skipping page.
+16:06:24  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1977.html) with Retry-After=3281s; skipping page.
+16:06:25  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1977.html) with Retry-After=3279s; skipping page.
+16:06:27  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1977.html) with Retry-After=3278s; skipping page.
+16:06:28  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1977.html) with Retry-After=3276s; skipping page.
+16:06:30  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1977.html) with Retry-After=3275s; skipping page.
+16:06:32  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1977.html) with Retry-After=3273s; skipping page.
+16:06:33  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1977.html) with Retry-After=3271s; skipping page.
+16:06:35  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1977.html) with Retry-After=3270s; skipping page.
+16:06:36  INFO      src.etl.salaries  fact_salary (1976-77): team_pages fetched=16 cached=0 candidate_rows=0 unmatched_names=0
+16:06:36  WARNING   src.etl.salaries  fact_salary (1976-77): no rows to insert.
+16:06:38  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:06:38  INFO      src.etl.salaries  fact_salary (1977-78): team_map_source=fact_team_season teams=16
+16:06:38  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1978.html) with Retry-After=3266s; skipping page.
+16:06:40  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1978.html) with Retry-After=3265s; skipping page.
+16:06:41  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BUF/1978.html) with Retry-After=3263s; skipping page.
+16:06:43  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1978.html) with Retry-After=3262s; skipping page.
+16:06:45  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1978.html) with Retry-After=3260s; skipping page.
+16:06:46  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1978.html) with Retry-After=3258s; skipping page.
+16:06:48  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1978.html) with Retry-After=3257s; skipping page.
+16:06:49  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1978.html) with Retry-After=3255s; skipping page.
+16:06:51  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1978.html) with Retry-After=3254s; skipping page.
+16:06:53  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1978.html) with Retry-After=3252s; skipping page.
+16:06:54  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1978.html) with Retry-After=3250s; skipping page.
+16:06:56  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1978.html) with Retry-After=3249s; skipping page.
+16:06:57  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1978.html) with Retry-After=3247s; skipping page.
+16:06:59  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1978.html) with Retry-After=3246s; skipping page.
+16:07:00  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1978.html) with Retry-After=3244s; skipping page.
+16:07:02  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1978.html) with Retry-After=3243s; skipping page.
+16:07:04  INFO      src.etl.salaries  fact_salary (1977-78): team_pages fetched=16 cached=0 candidate_rows=0 unmatched_names=0
+16:07:04  WARNING   src.etl.salaries  fact_salary (1977-78): no rows to insert.
+16:07:06  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:07:06  INFO      src.etl.salaries  fact_salary (1978-79): team_map_source=fact_team_season teams=16
+16:07:06  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1979.html) with Retry-After=3239s; skipping page.
+16:07:07  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1979.html) with Retry-After=3237s; skipping page.
+16:07:09  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1979.html) with Retry-After=3236s; skipping page.
+16:07:10  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1979.html) with Retry-After=3234s; skipping page.
+16:07:12  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1979.html) with Retry-After=3233s; skipping page.
+16:07:14  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1979.html) with Retry-After=3231s; skipping page.
+16:07:15  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1979.html) with Retry-After=3229s; skipping page.
+16:07:17  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1979.html) with Retry-After=3228s; skipping page.
+16:07:18  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1979.html) with Retry-After=3226s; skipping page.
+16:07:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1979.html) with Retry-After=3225s; skipping page.
+16:07:21  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1979.html) with Retry-After=3223s; skipping page.
+16:07:23  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1979.html) with Retry-After=3222s; skipping page.
+16:07:25  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1979.html) with Retry-After=3220s; skipping page.
+16:07:26  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1979.html) with Retry-After=3218s; skipping page.
+16:07:28  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SDC/1979.html) with Retry-After=3217s; skipping page.
+16:07:29  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1979.html) with Retry-After=3215s; skipping page.
+16:07:31  INFO      src.etl.salaries  fact_salary (1978-79): team_pages fetched=16 cached=0 candidate_rows=0 unmatched_names=0
+16:07:31  WARNING   src.etl.salaries  fact_salary (1978-79): no rows to insert.
+16:07:33  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:07:33  INFO      src.etl.salaries  fact_salary (1979-80): team_map_source=fact_team_season teams=17
+16:07:33  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1980.html) with Retry-After=3212s; skipping page.
+16:07:34  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1980.html) with Retry-After=3210s; skipping page.
+16:07:36  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1980.html) with Retry-After=3209s; skipping page.
+16:07:38  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1980.html) with Retry-After=3207s; skipping page.
+16:07:39  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1980.html) with Retry-After=3205s; skipping page.
+16:07:41  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1980.html) with Retry-After=3204s; skipping page.
+16:07:42  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1980.html) with Retry-After=3202s; skipping page.
+16:07:44  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1980.html) with Retry-After=3201s; skipping page.
+16:07:46  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1980.html) with Retry-After=3199s; skipping page.
+16:07:47  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1980.html) with Retry-After=3197s; skipping page.
+16:07:49  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1980.html) with Retry-After=3196s; skipping page.
+16:07:50  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1980.html) with Retry-After=3194s; skipping page.
+16:07:52  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1980.html) with Retry-After=3193s; skipping page.
+16:07:53  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1980.html) with Retry-After=3191s; skipping page.
+16:07:55  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SDC/1980.html) with Retry-After=3190s; skipping page.
+16:07:57  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1980.html) with Retry-After=3188s; skipping page.
+16:07:58  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1980.html) with Retry-After=3186s; skipping page.
+16:08:00  INFO      src.etl.salaries  fact_salary (1979-80): team_pages fetched=17 cached=0 candidate_rows=0 unmatched_names=0
+16:08:00  WARNING   src.etl.salaries  fact_salary (1979-80): no rows to insert.
+16:08:02  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:08:02  INFO      src.etl.salaries  fact_salary (1980-81): team_map_source=fact_team_season teams=18
+16:08:02  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1981.html) with Retry-After=3183s; skipping page.
+16:08:03  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1981.html) with Retry-After=3181s; skipping page.
+16:08:05  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1981.html) with Retry-After=3180s; skipping page.
+16:08:07  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1981.html) with Retry-After=3178s; skipping page.
+16:08:08  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1981.html) with Retry-After=3176s; skipping page.
+16:08:10  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1981.html) with Retry-After=3175s; skipping page.
+16:08:11  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1981.html) with Retry-After=3173s; skipping page.
+16:08:13  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1981.html) with Retry-After=3172s; skipping page.
+16:08:14  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1981.html) with Retry-After=3170s; skipping page.
+16:08:16  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1981.html) with Retry-After=3169s; skipping page.
+16:08:18  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1981.html) with Retry-After=3167s; skipping page.
+16:08:19  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1981.html) with Retry-After=3165s; skipping page.
+16:08:21  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1981.html) with Retry-After=3164s; skipping page.
+16:08:22  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1981.html) with Retry-After=3162s; skipping page.
+16:08:24  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1981.html) with Retry-After=3161s; skipping page.
+16:08:26  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SDC/1981.html) with Retry-After=3159s; skipping page.
+16:08:27  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1981.html) with Retry-After=3157s; skipping page.
+16:08:29  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1981.html) with Retry-After=3156s; skipping page.
+16:08:30  INFO      src.etl.salaries  fact_salary (1980-81): team_pages fetched=18 cached=0 candidate_rows=0 unmatched_names=0
+16:08:30  WARNING   src.etl.salaries  fact_salary (1980-81): no rows to insert.
+16:08:32  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:08:32  INFO      src.etl.salaries  fact_salary (1981-82): team_map_source=fact_team_season teams=18
+16:08:32  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1982.html) with Retry-After=3152s; skipping page.
+16:08:34  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1982.html) with Retry-After=3151s; skipping page.
+16:08:36  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1982.html) with Retry-After=3149s; skipping page.
+16:08:37  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1982.html) with Retry-After=3148s; skipping page.
+16:08:39  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1982.html) with Retry-After=3146s; skipping page.
+16:08:40  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1982.html) with Retry-After=3144s; skipping page.
+16:08:42  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1982.html) with Retry-After=3143s; skipping page.
+16:08:43  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1982.html) with Retry-After=3141s; skipping page.
+16:08:45  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1982.html) with Retry-After=3140s; skipping page.
+16:08:47  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1982.html) with Retry-After=3138s; skipping page.
+16:08:48  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1982.html) with Retry-After=3136s; skipping page.
+16:08:50  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1982.html) with Retry-After=3135s; skipping page.
+16:08:51  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1982.html) with Retry-After=3133s; skipping page.
+16:08:53  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1982.html) with Retry-After=3132s; skipping page.
+16:08:54  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1982.html) with Retry-After=3130s; skipping page.
+16:08:56  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SDC/1982.html) with Retry-After=3129s; skipping page.
+16:08:58  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1982.html) with Retry-After=3127s; skipping page.
+16:08:59  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1982.html) with Retry-After=3125s; skipping page.
+16:09:01  INFO      src.etl.salaries  fact_salary (1981-82): team_pages fetched=18 cached=0 candidate_rows=0 unmatched_names=0
+16:09:01  WARNING   src.etl.salaries  fact_salary (1981-82): no rows to insert.
+16:09:03  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:09:03  INFO      src.etl.salaries  fact_salary (1982-83): team_map_source=fact_team_season teams=18
+16:09:03  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1983.html) with Retry-After=3122s; skipping page.
+16:09:04  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1983.html) with Retry-After=3120s; skipping page.
+16:09:06  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1983.html) with Retry-After=3119s; skipping page.
+16:09:08  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1983.html) with Retry-After=3117s; skipping page.
+16:09:09  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1983.html) with Retry-After=3115s; skipping page.
+16:09:11  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1983.html) with Retry-After=3114s; skipping page.
+16:09:12  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1983.html) with Retry-After=3112s; skipping page.
+16:09:14  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1983.html) with Retry-After=3111s; skipping page.
+16:09:16  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1983.html) with Retry-After=3109s; skipping page.
+16:09:17  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1983.html) with Retry-After=3108s; skipping page.
+16:09:19  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1983.html) with Retry-After=3106s; skipping page.
+16:09:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1983.html) with Retry-After=3104s; skipping page.
+16:09:22  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1983.html) with Retry-After=3103s; skipping page.
+16:09:23  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1983.html) with Retry-After=3101s; skipping page.
+16:09:25  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1983.html) with Retry-After=3100s; skipping page.
+16:09:27  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SDC/1983.html) with Retry-After=3098s; skipping page.
+16:09:28  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1983.html) with Retry-After=3096s; skipping page.
+16:09:30  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1983.html) with Retry-After=3095s; skipping page.
+16:09:31  INFO      src.etl.salaries  fact_salary (1982-83): team_pages fetched=18 cached=0 candidate_rows=0 unmatched_names=0
+16:09:31  WARNING   src.etl.salaries  fact_salary (1982-83): no rows to insert.
+16:09:33  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:09:33  INFO      src.etl.salaries  fact_salary (1983-84): team_map_source=fact_team_season teams=18
+16:09:33  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1984.html) with Retry-After=3091s; skipping page.
+16:09:35  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1984.html) with Retry-After=3090s; skipping page.
+16:09:37  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1984.html) with Retry-After=3088s; skipping page.
+16:09:38  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1984.html) with Retry-After=3087s; skipping page.
+16:09:40  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1984.html) with Retry-After=3085s; skipping page.
+16:09:41  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1984.html) with Retry-After=3083s; skipping page.
+16:09:43  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1984.html) with Retry-After=3082s; skipping page.
+16:09:44  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1984.html) with Retry-After=3080s; skipping page.
+16:09:46  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1984.html) with Retry-After=3079s; skipping page.
+16:09:48  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1984.html) with Retry-After=3077s; skipping page.
+16:09:49  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1984.html) with Retry-After=3075s; skipping page.
+16:09:51  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1984.html) with Retry-After=3074s; skipping page.
+16:09:52  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1984.html) with Retry-After=3072s; skipping page.
+16:09:54  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1984.html) with Retry-After=3071s; skipping page.
+16:09:56  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1984.html) with Retry-After=3069s; skipping page.
+16:09:57  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SDC/1984.html) with Retry-After=3067s; skipping page.
+16:09:59  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1984.html) with Retry-After=3066s; skipping page.
+16:10:00  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1984.html) with Retry-After=3064s; skipping page.
+16:10:02  INFO      src.etl.salaries  fact_salary (1983-84): team_pages fetched=18 cached=0 candidate_rows=0 unmatched_names=0
+16:10:02  WARNING   src.etl.salaries  fact_salary (1983-84): no rows to insert.
+16:10:04  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:10:04  INFO      src.etl.salaries  fact_salary (1984-85): team_map_source=fact_team_season teams=18
+16:10:04  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1985.html) with Retry-After=3061s; skipping page.
+16:10:06  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1985.html) with Retry-After=3059s; skipping page.
+16:10:07  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1985.html) with Retry-After=3058s; skipping page.
+16:10:09  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1985.html) with Retry-After=3056s; skipping page.
+16:10:10  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1985.html) with Retry-After=3054s; skipping page.
+16:10:12  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1985.html) with Retry-After=3053s; skipping page.
+16:10:13  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1985.html) with Retry-After=3051s; skipping page.
+16:10:15  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1985.html) with Retry-After=3050s; skipping page.
+16:10:17  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1985.html) with Retry-After=3048s; skipping page.
+16:10:18  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1985.html) with Retry-After=3046s; skipping page.
+16:10:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/1985.html) with Retry-After=3045s; skipping page.
+16:10:21  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1985.html) with Retry-After=3043s; skipping page.
+16:10:23  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1985.html) with Retry-After=3042s; skipping page.
+16:10:24  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1985.html) with Retry-After=3040s; skipping page.
+16:10:26  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1985.html) with Retry-After=3039s; skipping page.
+16:10:28  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1985.html) with Retry-After=3037s; skipping page.
+16:10:29  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1985.html) with Retry-After=3035s; skipping page.
+16:10:31  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1985.html) with Retry-After=3034s; skipping page.
+16:10:32  INFO      src.etl.salaries  fact_salary (1984-85): team_pages fetched=18 cached=0 candidate_rows=0 unmatched_names=0
+16:10:32  WARNING   src.etl.salaries  fact_salary (1984-85): no rows to insert.
+16:10:34  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:10:34  INFO      src.etl.salaries  fact_salary (1985-86): team_map_source=fact_team_season teams=19
+16:10:34  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1986.html) with Retry-After=3030s; skipping page.
+16:10:36  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1986.html) with Retry-After=3029s; skipping page.
+16:10:38  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1986.html) with Retry-After=3027s; skipping page.
+16:10:39  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1986.html) with Retry-After=3025s; skipping page.
+16:10:41  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1986.html) with Retry-After=3024s; skipping page.
+16:10:42  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1986.html) with Retry-After=3022s; skipping page.
+16:10:44  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1986.html) with Retry-After=3021s; skipping page.
+16:10:45  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1986.html) with Retry-After=3019s; skipping page.
+16:10:47  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1986.html) with Retry-After=3018s; skipping page.
+16:10:49  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1986.html) with Retry-After=3016s; skipping page.
+16:10:50  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/1986.html) with Retry-After=3014s; skipping page.
+16:10:52  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1986.html) with Retry-After=3013s; skipping page.
+16:10:53  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1986.html) with Retry-After=3011s; skipping page.
+16:10:55  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1986.html) with Retry-After=3010s; skipping page.
+16:10:57  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1986.html) with Retry-After=3008s; skipping page.
+16:10:58  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1986.html) with Retry-After=3006s; skipping page.
+16:11:00  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/1986.html) with Retry-After=3005s; skipping page.
+16:11:01  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1986.html) with Retry-After=3003s; skipping page.
+16:11:03  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1986.html) with Retry-After=3002s; skipping page.
+16:11:04  INFO      src.etl.salaries  fact_salary (1985-86): team_pages fetched=19 cached=0 candidate_rows=0 unmatched_names=0
+16:11:04  WARNING   src.etl.salaries  fact_salary (1985-86): no rows to insert.
+16:11:06  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:11:06  INFO      src.etl.salaries  fact_salary (1986-87): team_map_source=fact_team_season teams=19
+16:11:06  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1987.html) with Retry-After=2998s; skipping page.
+16:11:08  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1987.html) with Retry-After=2997s; skipping page.
+16:11:10  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1987.html) with Retry-After=2995s; skipping page.
+16:11:11  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1987.html) with Retry-After=2993s; skipping page.
+16:11:13  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1987.html) with Retry-After=2992s; skipping page.
+16:11:14  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1987.html) with Retry-After=2990s; skipping page.
+16:11:16  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1987.html) with Retry-After=2989s; skipping page.
+16:11:18  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1987.html) with Retry-After=2987s; skipping page.
+16:11:19  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1987.html) with Retry-After=2985s; skipping page.
+16:11:21  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1987.html) with Retry-After=2984s; skipping page.
+16:11:22  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/1987.html) with Retry-After=2982s; skipping page.
+16:11:24  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1987.html) with Retry-After=2981s; skipping page.
+16:11:25  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1987.html) with Retry-After=2979s; skipping page.
+16:11:27  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1987.html) with Retry-After=2978s; skipping page.
+16:11:29  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1987.html) with Retry-After=2976s; skipping page.
+16:11:30  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1987.html) with Retry-After=2974s; skipping page.
+16:11:32  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/1987.html) with Retry-After=2973s; skipping page.
+16:11:33  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1987.html) with Retry-After=2971s; skipping page.
+16:11:35  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1987.html) with Retry-After=2970s; skipping page.
+16:11:37  INFO      src.etl.salaries  fact_salary (1986-87): team_pages fetched=19 cached=0 candidate_rows=0 unmatched_names=0
+16:11:37  WARNING   src.etl.salaries  fact_salary (1986-87): no rows to insert.
+16:11:39  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:11:39  INFO      src.etl.salaries  fact_salary (1987-88): team_map_source=fact_team_season teams=19
+16:11:39  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1988.html) with Retry-After=2966s; skipping page.
+16:11:40  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1988.html) with Retry-After=2964s; skipping page.
+16:11:42  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1988.html) with Retry-After=2963s; skipping page.
+16:11:43  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1988.html) with Retry-After=2961s; skipping page.
+16:11:45  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1988.html) with Retry-After=2960s; skipping page.
+16:11:47  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1988.html) with Retry-After=2958s; skipping page.
+16:11:48  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1988.html) with Retry-After=2957s; skipping page.
+16:11:50  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1988.html) with Retry-After=2955s; skipping page.
+16:11:51  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1988.html) with Retry-After=2953s; skipping page.
+16:11:53  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1988.html) with Retry-After=2952s; skipping page.
+16:11:54  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/1988.html) with Retry-After=2950s; skipping page.
+16:11:56  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1988.html) with Retry-After=2949s; skipping page.
+16:11:58  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1988.html) with Retry-After=2947s; skipping page.
+16:11:59  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1988.html) with Retry-After=2945s; skipping page.
+16:12:01  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1988.html) with Retry-After=2944s; skipping page.
+16:12:02  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1988.html) with Retry-After=2942s; skipping page.
+16:12:04  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/1988.html) with Retry-After=2941s; skipping page.
+16:12:06  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1988.html) with Retry-After=2939s; skipping page.
+16:12:07  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1988.html) with Retry-After=2938s; skipping page.
+16:12:09  INFO      src.etl.salaries  fact_salary (1987-88): team_pages fetched=19 cached=0 candidate_rows=0 unmatched_names=0
+16:12:09  WARNING   src.etl.salaries  fact_salary (1987-88): no rows to insert.
+16:12:11  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:12:11  INFO      src.etl.salaries  fact_salary (1988-89): team_map_source=fact_team_season teams=20
+16:12:11  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1989.html) with Retry-After=2934s; skipping page.
+16:12:12  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1989.html) with Retry-After=2932s; skipping page.
+16:12:14  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1989.html) with Retry-After=2931s; skipping page.
+16:12:15  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1989.html) with Retry-After=2929s; skipping page.
+16:12:17  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1989.html) with Retry-After=2928s; skipping page.
+16:12:19  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1989.html) with Retry-After=2926s; skipping page.
+16:12:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1989.html) with Retry-After=2924s; skipping page.
+16:12:22  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1989.html) with Retry-After=2923s; skipping page.
+16:12:23  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1989.html) with Retry-After=2921s; skipping page.
+16:12:25  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1989.html) with Retry-After=2920s; skipping page.
+16:12:27  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/1989.html) with Retry-After=2918s; skipping page.
+16:12:28  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1989.html) with Retry-After=2916s; skipping page.
+16:12:30  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIA/1989.html) with Retry-After=2915s; skipping page.
+16:12:31  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1989.html) with Retry-After=2913s; skipping page.
+16:12:33  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1989.html) with Retry-After=2912s; skipping page.
+16:12:34  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1989.html) with Retry-After=2910s; skipping page.
+16:12:36  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1989.html) with Retry-After=2909s; skipping page.
+16:12:38  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/1989.html) with Retry-After=2907s; skipping page.
+16:12:39  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1989.html) with Retry-After=2905s; skipping page.
+16:12:41  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1989.html) with Retry-After=2904s; skipping page.
+16:12:42  INFO      src.etl.salaries  fact_salary (1988-89): team_pages fetched=20 cached=0 candidate_rows=0 unmatched_names=0
+16:12:42  WARNING   src.etl.salaries  fact_salary (1988-89): no rows to insert.
+16:12:44  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:12:44  INFO      src.etl.salaries  fact_salary (1989-90): team_map_source=fact_team_season teams=22
+16:12:44  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1990.html) with Retry-After=2900s; skipping page.
+16:12:46  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1990.html) with Retry-After=2899s; skipping page.
+16:12:48  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1990.html) with Retry-After=2897s; skipping page.
+16:12:49  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1990.html) with Retry-After=2896s; skipping page.
+16:12:51  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1990.html) with Retry-After=2894s; skipping page.
+16:12:52  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1990.html) with Retry-After=2892s; skipping page.
+16:12:54  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1990.html) with Retry-After=2891s; skipping page.
+16:12:55  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1990.html) with Retry-After=2889s; skipping page.
+16:12:57  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1990.html) with Retry-After=2888s; skipping page.
+16:12:59  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1990.html) with Retry-After=2886s; skipping page.
+16:13:00  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/1990.html) with Retry-After=2884s; skipping page.
+16:13:02  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1990.html) with Retry-After=2883s; skipping page.
+16:13:03  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIA/1990.html) with Retry-After=2881s; skipping page.
+16:13:05  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1990.html) with Retry-After=2880s; skipping page.
+16:13:07  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIN/1990.html) with Retry-After=2878s; skipping page.
+16:13:08  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1990.html) with Retry-After=2876s; skipping page.
+16:13:10  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ORL/1990.html) with Retry-After=2875s; skipping page.
+16:13:11  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1990.html) with Retry-After=2873s; skipping page.
+16:13:13  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1990.html) with Retry-After=2872s; skipping page.
+16:13:14  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/1990.html) with Retry-After=2870s; skipping page.
+16:13:16  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1990.html) with Retry-After=2869s; skipping page.
+16:13:18  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1990.html) with Retry-After=2867s; skipping page.
+16:13:19  INFO      src.etl.salaries  fact_salary (1989-90): team_pages fetched=22 cached=0 candidate_rows=0 unmatched_names=0
+16:13:19  WARNING   src.etl.salaries  fact_salary (1989-90): no rows to insert.
+16:13:21  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:13:21  INFO      src.etl.salaries  fact_salary (1990-91): team_map_source=fact_team_season teams=22
+16:13:21  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1991.html) with Retry-After=2863s; skipping page.
+16:13:23  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1991.html) with Retry-After=2862s; skipping page.
+16:13:24  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1991.html) with Retry-After=2860s; skipping page.
+16:13:26  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1991.html) with Retry-After=2859s; skipping page.
+16:13:28  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1991.html) with Retry-After=2857s; skipping page.
+16:13:29  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1991.html) with Retry-After=2855s; skipping page.
+16:13:31  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1991.html) with Retry-After=2854s; skipping page.
+16:13:32  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1991.html) with Retry-After=2852s; skipping page.
+16:13:34  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1991.html) with Retry-After=2851s; skipping page.
+16:13:36  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1991.html) with Retry-After=2849s; skipping page.
+16:13:37  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/1991.html) with Retry-After=2848s; skipping page.
+16:13:39  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1991.html) with Retry-After=2846s; skipping page.
+16:13:40  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIA/1991.html) with Retry-After=2844s; skipping page.
+16:13:42  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1991.html) with Retry-After=2843s; skipping page.
+16:13:43  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIN/1991.html) with Retry-After=2841s; skipping page.
+16:13:45  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1991.html) with Retry-After=2840s; skipping page.
+16:13:47  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ORL/1991.html) with Retry-After=2838s; skipping page.
+16:13:48  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1991.html) with Retry-After=2836s; skipping page.
+16:13:50  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1991.html) with Retry-After=2835s; skipping page.
+16:13:51  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/1991.html) with Retry-After=2833s; skipping page.
+16:13:53  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1991.html) with Retry-After=2832s; skipping page.
+16:13:55  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1991.html) with Retry-After=2830s; skipping page.
+16:13:56  INFO      src.etl.salaries  fact_salary (1990-91): team_pages fetched=22 cached=0 candidate_rows=0 unmatched_names=0
+16:13:56  WARNING   src.etl.salaries  fact_salary (1990-91): no rows to insert.
+16:13:58  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:13:58  INFO      src.etl.salaries  fact_salary (1991-92): team_map_source=fact_team_season teams=22
+16:13:58  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1992.html) with Retry-After=2826s; skipping page.
+16:14:00  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1992.html) with Retry-After=2825s; skipping page.
+16:14:01  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1992.html) with Retry-After=2823s; skipping page.
+16:14:03  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1992.html) with Retry-After=2822s; skipping page.
+16:14:05  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1992.html) with Retry-After=2820s; skipping page.
+16:14:06  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1992.html) with Retry-After=2819s; skipping page.
+16:14:08  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1992.html) with Retry-After=2817s; skipping page.
+16:14:09  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1992.html) with Retry-After=2815s; skipping page.
+16:14:11  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1992.html) with Retry-After=2814s; skipping page.
+16:14:12  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1992.html) with Retry-After=2812s; skipping page.
+16:14:14  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/1992.html) with Retry-After=2811s; skipping page.
+16:14:16  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1992.html) with Retry-After=2809s; skipping page.
+16:14:17  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIA/1992.html) with Retry-After=2807s; skipping page.
+16:14:19  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1992.html) with Retry-After=2806s; skipping page.
+16:14:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIN/1992.html) with Retry-After=2804s; skipping page.
+16:14:22  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1992.html) with Retry-After=2803s; skipping page.
+16:14:24  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ORL/1992.html) with Retry-After=2801s; skipping page.
+16:14:25  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1992.html) with Retry-After=2799s; skipping page.
+16:14:27  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1992.html) with Retry-After=2798s; skipping page.
+16:14:28  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/1992.html) with Retry-After=2796s; skipping page.
+16:14:30  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1992.html) with Retry-After=2795s; skipping page.
+16:14:31  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1992.html) with Retry-After=2793s; skipping page.
+16:14:33  INFO      src.etl.salaries  fact_salary (1991-92): team_pages fetched=22 cached=0 candidate_rows=0 unmatched_names=0
+16:14:33  WARNING   src.etl.salaries  fact_salary (1991-92): no rows to insert.
+16:14:35  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:14:35  INFO      src.etl.salaries  fact_salary (1992-93): team_map_source=fact_team_season teams=22
+16:14:35  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1993.html) with Retry-After=2790s; skipping page.
+16:14:37  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1993.html) with Retry-After=2788s; skipping page.
+16:14:38  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1993.html) with Retry-After=2786s; skipping page.
+16:14:40  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1993.html) with Retry-After=2785s; skipping page.
+16:14:41  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1993.html) with Retry-After=2783s; skipping page.
+16:14:43  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1993.html) with Retry-After=2782s; skipping page.
+16:14:45  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1993.html) with Retry-After=2780s; skipping page.
+16:14:46  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1993.html) with Retry-After=2778s; skipping page.
+16:14:48  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1993.html) with Retry-After=2777s; skipping page.
+16:14:49  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1993.html) with Retry-After=2775s; skipping page.
+16:14:51  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/1993.html) with Retry-After=2774s; skipping page.
+16:14:53  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1993.html) with Retry-After=2772s; skipping page.
+16:14:54  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIA/1993.html) with Retry-After=2771s; skipping page.
+16:14:56  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1993.html) with Retry-After=2769s; skipping page.
+16:14:57  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIN/1993.html) with Retry-After=2767s; skipping page.
+16:14:59  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1993.html) with Retry-After=2766s; skipping page.
+16:15:00  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ORL/1993.html) with Retry-After=2764s; skipping page.
+16:15:02  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1993.html) with Retry-After=2763s; skipping page.
+16:15:04  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1993.html) with Retry-After=2761s; skipping page.
+16:15:05  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/1993.html) with Retry-After=2759s; skipping page.
+16:15:07  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1993.html) with Retry-After=2758s; skipping page.
+16:15:08  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1993.html) with Retry-After=2756s; skipping page.
+16:15:10  INFO      src.etl.salaries  fact_salary (1992-93): team_pages fetched=22 cached=0 candidate_rows=0 unmatched_names=0
+16:15:10  WARNING   src.etl.salaries  fact_salary (1992-93): no rows to insert.
+16:15:12  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:15:12  INFO      src.etl.salaries  fact_salary (1993-94): team_map_source=fact_team_season teams=22
+16:15:12  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1994.html) with Retry-After=2753s; skipping page.
+16:15:14  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1994.html) with Retry-After=2751s; skipping page.
+16:15:15  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1994.html) with Retry-After=2749s; skipping page.
+16:15:17  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1994.html) with Retry-After=2748s; skipping page.
+16:15:18  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1994.html) with Retry-After=2746s; skipping page.
+16:15:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1994.html) with Retry-After=2745s; skipping page.
+16:15:22  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1994.html) with Retry-After=2743s; skipping page.
+16:15:23  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1994.html) with Retry-After=2741s; skipping page.
+16:15:25  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1994.html) with Retry-After=2740s; skipping page.
+16:15:26  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1994.html) with Retry-After=2738s; skipping page.
+16:15:28  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/1994.html) with Retry-After=2737s; skipping page.
+16:15:29  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1994.html) with Retry-After=2735s; skipping page.
+16:15:31  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIA/1994.html) with Retry-After=2734s; skipping page.
+16:15:33  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1994.html) with Retry-After=2732s; skipping page.
+16:15:34  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIN/1994.html) with Retry-After=2730s; skipping page.
+16:15:36  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1994.html) with Retry-After=2729s; skipping page.
+16:15:37  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ORL/1994.html) with Retry-After=2727s; skipping page.
+16:15:39  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1994.html) with Retry-After=2726s; skipping page.
+16:15:41  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1994.html) with Retry-After=2724s; skipping page.
+16:15:42  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/1994.html) with Retry-After=2722s; skipping page.
+16:15:44  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1994.html) with Retry-After=2721s; skipping page.
+16:15:45  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1994.html) with Retry-After=2719s; skipping page.
+16:15:47  INFO      src.etl.salaries  fact_salary (1993-94): team_pages fetched=22 cached=0 candidate_rows=0 unmatched_names=0
+16:15:47  WARNING   src.etl.salaries  fact_salary (1993-94): no rows to insert.
+16:15:49  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:15:49  INFO      src.etl.salaries  fact_salary (1994-95): team_map_source=fact_team_season teams=22
+16:15:49  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1995.html) with Retry-After=2716s; skipping page.
+16:15:51  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1995.html) with Retry-After=2714s; skipping page.
+16:15:52  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1995.html) with Retry-After=2713s; skipping page.
+16:15:54  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1995.html) with Retry-After=2711s; skipping page.
+16:15:55  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1995.html) with Retry-After=2709s; skipping page.
+16:15:57  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1995.html) with Retry-After=2708s; skipping page.
+16:15:58  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1995.html) with Retry-After=2706s; skipping page.
+16:16:00  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1995.html) with Retry-After=2705s; skipping page.
+16:16:02  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1995.html) with Retry-After=2703s; skipping page.
+16:16:03  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1995.html) with Retry-After=2701s; skipping page.
+16:16:05  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/1995.html) with Retry-After=2700s; skipping page.
+16:16:06  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1995.html) with Retry-After=2698s; skipping page.
+16:16:08  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIA/1995.html) with Retry-After=2697s; skipping page.
+16:16:10  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1995.html) with Retry-After=2695s; skipping page.
+16:16:11  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIN/1995.html) with Retry-After=2693s; skipping page.
+16:16:13  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1995.html) with Retry-After=2692s; skipping page.
+16:16:14  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ORL/1995.html) with Retry-After=2690s; skipping page.
+16:16:16  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1995.html) with Retry-After=2689s; skipping page.
+16:16:17  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1995.html) with Retry-After=2687s; skipping page.
+16:16:19  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/1995.html) with Retry-After=2686s; skipping page.
+16:16:21  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1995.html) with Retry-After=2684s; skipping page.
+16:16:22  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1995.html) with Retry-After=2682s; skipping page.
+16:16:24  INFO      src.etl.salaries  fact_salary (1994-95): team_pages fetched=22 cached=0 candidate_rows=0 unmatched_names=0
+16:16:24  WARNING   src.etl.salaries  fact_salary (1994-95): no rows to insert.
+16:16:26  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:16:26  INFO      src.etl.salaries  fact_salary (1995-96): team_map_source=fact_team_season teams=24
+16:16:26  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1996.html) with Retry-After=2679s; skipping page.
+16:16:27  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1996.html) with Retry-After=2677s; skipping page.
+16:16:29  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1996.html) with Retry-After=2676s; skipping page.
+16:16:31  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1996.html) with Retry-After=2674s; skipping page.
+16:16:32  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1996.html) with Retry-After=2672s; skipping page.
+16:16:34  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1996.html) with Retry-After=2671s; skipping page.
+16:16:35  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1996.html) with Retry-After=2669s; skipping page.
+16:16:37  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1996.html) with Retry-After=2668s; skipping page.
+16:16:38  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1996.html) with Retry-After=2666s; skipping page.
+16:16:40  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1996.html) with Retry-After=2665s; skipping page.
+16:16:42  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/1996.html) with Retry-After=2663s; skipping page.
+16:16:43  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1996.html) with Retry-After=2661s; skipping page.
+16:16:45  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIA/1996.html) with Retry-After=2660s; skipping page.
+16:16:46  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1996.html) with Retry-After=2658s; skipping page.
+16:16:48  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIN/1996.html) with Retry-After=2657s; skipping page.
+16:16:50  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1996.html) with Retry-After=2655s; skipping page.
+16:16:51  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ORL/1996.html) with Retry-After=2653s; skipping page.
+16:16:53  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1996.html) with Retry-After=2652s; skipping page.
+16:16:54  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1996.html) with Retry-After=2650s; skipping page.
+16:16:56  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/1996.html) with Retry-After=2649s; skipping page.
+16:16:57  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1996.html) with Retry-After=2647s; skipping page.
+16:16:59  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/TOR/1996.html) with Retry-After=2646s; skipping page.
+16:17:01  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1996.html) with Retry-After=2644s; skipping page.
+16:17:02  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/VAN/1996.html) with Retry-After=2642s; skipping page.
+16:17:04  INFO      src.etl.salaries  fact_salary (1995-96): team_pages fetched=24 cached=0 candidate_rows=0 unmatched_names=0
+16:17:04  WARNING   src.etl.salaries  fact_salary (1995-96): no rows to insert.
+16:17:06  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:17:06  INFO      src.etl.salaries  fact_salary (1996-97): team_map_source=fact_team_season teams=24
+16:17:06  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1997.html) with Retry-After=2639s; skipping page.
+16:17:07  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1997.html) with Retry-After=2637s; skipping page.
+16:17:09  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1997.html) with Retry-After=2636s; skipping page.
+16:17:11  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1997.html) with Retry-After=2634s; skipping page.
+16:17:12  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1997.html) with Retry-After=2633s; skipping page.
+16:17:14  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1997.html) with Retry-After=2631s; skipping page.
+16:17:15  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1997.html) with Retry-After=2629s; skipping page.
+16:17:17  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1997.html) with Retry-After=2628s; skipping page.
+16:17:18  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1997.html) with Retry-After=2626s; skipping page.
+16:17:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1997.html) with Retry-After=2625s; skipping page.
+16:17:22  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/1997.html) with Retry-After=2623s; skipping page.
+16:17:23  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1997.html) with Retry-After=2621s; skipping page.
+16:17:25  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIA/1997.html) with Retry-After=2620s; skipping page.
+16:17:26  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1997.html) with Retry-After=2618s; skipping page.
+16:17:28  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIN/1997.html) with Retry-After=2617s; skipping page.
+16:17:30  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1997.html) with Retry-After=2615s; skipping page.
+16:17:31  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ORL/1997.html) with Retry-After=2614s; skipping page.
+16:17:33  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1997.html) with Retry-After=2612s; skipping page.
+16:17:34  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1997.html) with Retry-After=2610s; skipping page.
+16:17:36  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/1997.html) with Retry-After=2609s; skipping page.
+16:17:37  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1997.html) with Retry-After=2607s; skipping page.
+16:17:39  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/TOR/1997.html) with Retry-After=2606s; skipping page.
+16:17:41  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1997.html) with Retry-After=2604s; skipping page.
+16:17:42  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/VAN/1997.html) with Retry-After=2602s; skipping page.
+16:17:44  INFO      src.etl.salaries  fact_salary (1996-97): team_pages fetched=24 cached=0 candidate_rows=0 unmatched_names=0
+16:17:44  WARNING   src.etl.salaries  fact_salary (1996-97): no rows to insert.
+16:17:46  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:17:46  INFO      src.etl.salaries  fact_salary (1997-98): team_map_source=fact_team_season teams=25
+16:17:46  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1998.html) with Retry-After=2599s; skipping page.
+16:17:47  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1998.html) with Retry-After=2597s; skipping page.
+16:17:49  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1998.html) with Retry-After=2596s; skipping page.
+16:17:51  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1998.html) with Retry-After=2594s; skipping page.
+16:17:52  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1998.html) with Retry-After=2593s; skipping page.
+16:17:54  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1998.html) with Retry-After=2591s; skipping page.
+16:17:55  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1998.html) with Retry-After=2589s; skipping page.
+16:17:57  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1998.html) with Retry-After=2588s; skipping page.
+16:17:58  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1998.html) with Retry-After=2586s; skipping page.
+16:18:00  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1998.html) with Retry-After=2585s; skipping page.
+16:18:02  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/1998.html) with Retry-After=2583s; skipping page.
+16:18:03  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1998.html) with Retry-After=2581s; skipping page.
+16:18:05  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIA/1998.html) with Retry-After=2580s; skipping page.
+16:18:06  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1998.html) with Retry-After=2578s; skipping page.
+16:18:08  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIN/1998.html) with Retry-After=2577s; skipping page.
+16:18:10  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1998.html) with Retry-After=2575s; skipping page.
+16:18:11  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ORL/1998.html) with Retry-After=2574s; skipping page.
+16:18:13  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1998.html) with Retry-After=2572s; skipping page.
+16:18:14  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1998.html) with Retry-After=2570s; skipping page.
+16:18:16  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/1998.html) with Retry-After=2569s; skipping page.
+16:18:17  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1998.html) with Retry-After=2567s; skipping page.
+16:18:19  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/TOR/1998.html) with Retry-After=2566s; skipping page.
+16:18:21  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1998.html) with Retry-After=2564s; skipping page.
+16:18:22  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/VAN/1998.html) with Retry-After=2562s; skipping page.
+16:18:24  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/WAS/1998.html) with Retry-After=2561s; skipping page.
+16:18:25  INFO      src.etl.salaries  fact_salary (1997-98): team_pages fetched=25 cached=0 candidate_rows=0 unmatched_names=0
+16:18:25  WARNING   src.etl.salaries  fact_salary (1997-98): no rows to insert.
+16:18:27  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:18:27  INFO      src.etl.salaries  fact_salary (1998-99): team_map_source=fact_team_season teams=25
+16:18:27  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1999.html) with Retry-After=2557s; skipping page.
+16:18:29  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/1999.html) with Retry-After=2556s; skipping page.
+16:18:30  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1999.html) with Retry-After=2554s; skipping page.
+16:18:32  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1999.html) with Retry-After=2553s; skipping page.
+16:18:34  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1999.html) with Retry-After=2551s; skipping page.
+16:18:35  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1999.html) with Retry-After=2549s; skipping page.
+16:18:37  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1999.html) with Retry-After=2548s; skipping page.
+16:18:38  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1999.html) with Retry-After=2546s; skipping page.
+16:18:40  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1999.html) with Retry-After=2545s; skipping page.
+16:18:42  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1999.html) with Retry-After=2543s; skipping page.
+16:18:43  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/1999.html) with Retry-After=2541s; skipping page.
+16:18:45  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1999.html) with Retry-After=2540s; skipping page.
+16:18:46  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIA/1999.html) with Retry-After=2538s; skipping page.
+16:18:48  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1999.html) with Retry-After=2537s; skipping page.
+16:18:49  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIN/1999.html) with Retry-After=2535s; skipping page.
+16:18:51  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/1999.html) with Retry-After=2534s; skipping page.
+16:18:53  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ORL/1999.html) with Retry-After=2532s; skipping page.
+16:18:54  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1999.html) with Retry-After=2530s; skipping page.
+16:18:56  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1999.html) with Retry-After=2529s; skipping page.
+16:18:57  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/1999.html) with Retry-After=2527s; skipping page.
+16:18:59  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/1999.html) with Retry-After=2526s; skipping page.
+16:19:01  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/TOR/1999.html) with Retry-After=2524s; skipping page.
+16:19:02  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1999.html) with Retry-After=2523s; skipping page.
+16:19:04  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/VAN/1999.html) with Retry-After=2521s; skipping page.
+16:19:05  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/WAS/1999.html) with Retry-After=2519s; skipping page.
+16:19:07  INFO      src.etl.salaries  fact_salary (1998-99): team_pages fetched=25 cached=0 candidate_rows=0 unmatched_names=0
+16:19:07  WARNING   src.etl.salaries  fact_salary (1998-99): no rows to insert.
+16:19:09  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:19:09  INFO      src.etl.salaries  fact_salary (1999-00): team_map_source=fact_team_season teams=25
+16:19:09  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/2000.html) with Retry-After=2516s; skipping page.
+16:19:10  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/2000.html) with Retry-After=2514s; skipping page.
+16:19:12  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/2000.html) with Retry-After=2513s; skipping page.
+16:19:14  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/2000.html) with Retry-After=2511s; skipping page.
+16:19:15  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/2000.html) with Retry-After=2509s; skipping page.
+16:19:17  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/2000.html) with Retry-After=2508s; skipping page.
+16:19:18  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/2000.html) with Retry-After=2506s; skipping page.
+16:19:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/2000.html) with Retry-After=2505s; skipping page.
+16:19:22  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/2000.html) with Retry-After=2503s; skipping page.
+16:19:23  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/2000.html) with Retry-After=2502s; skipping page.
+16:19:25  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/2000.html) with Retry-After=2500s; skipping page.
+16:19:26  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/2000.html) with Retry-After=2498s; skipping page.
+16:19:28  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIA/2000.html) with Retry-After=2497s; skipping page.
+16:19:29  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/2000.html) with Retry-After=2495s; skipping page.
+16:19:31  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIN/2000.html) with Retry-After=2494s; skipping page.
+16:19:33  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/2000.html) with Retry-After=2492s; skipping page.
+16:19:34  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ORL/2000.html) with Retry-After=2490s; skipping page.
+16:19:36  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/2000.html) with Retry-After=2489s; skipping page.
+16:19:37  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/2000.html) with Retry-After=2487s; skipping page.
+16:19:39  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/2000.html) with Retry-After=2486s; skipping page.
+16:19:40  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/2000.html) with Retry-After=2484s; skipping page.
+16:19:42  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/TOR/2000.html) with Retry-After=2483s; skipping page.
+16:19:44  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/2000.html) with Retry-After=2481s; skipping page.
+16:19:45  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/VAN/2000.html) with Retry-After=2479s; skipping page.
+16:19:47  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/WAS/2000.html) with Retry-After=2478s; skipping page.
+16:19:48  INFO      src.etl.salaries  fact_salary (1999-00): team_pages fetched=25 cached=0 candidate_rows=0 unmatched_names=0
+16:19:48  WARNING   src.etl.salaries  fact_salary (1999-00): no rows to insert.
+16:19:50  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:19:50  INFO      src.etl.salaries  fact_salary (2000-01): team_map_source=fact_team_season teams=25
+16:19:50  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/2001.html) with Retry-After=2474s; skipping page.
+16:19:52  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/2001.html) with Retry-After=2473s; skipping page.
+16:19:54  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/TOR/2001.html) with Retry-After=2471s; skipping page.
+16:19:55  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/2001.html) with Retry-After=2469s; skipping page.
+16:19:57  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/VAN/2001.html) with Retry-After=2468s; skipping page.
+16:19:58  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/WAS/2001.html) with Retry-After=2466s; skipping page.
+16:20:00  INFO      src.etl.salaries  fact_salary (2000-01): team_pages fetched=6 cached=19 candidate_rows=305 unmatched_names=7
+16:20:00  INFO      src.etl.salaries  fact_salary (2000-01): 305 rows upserted.
+16:20:02  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:20:02  INFO      src.etl.salaries  fact_salary (2001-02): team_map_source=fact_team_season teams=25
+16:20:02  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/2002.html) with Retry-After=2463s; skipping page.
+16:20:04  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/2002.html) with Retry-After=2461s; skipping page.
+16:20:05  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/2002.html) with Retry-After=2459s; skipping page.
+16:20:07  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/2002.html) with Retry-After=2458s; skipping page.
+16:20:08  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/2002.html) with Retry-After=2456s; skipping page.
+16:20:10  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/2002.html) with Retry-After=2455s; skipping page.
+16:20:12  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/2002.html) with Retry-After=2453s; skipping page.
+16:20:13  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/2002.html) with Retry-After=2451s; skipping page.
+16:20:15  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/2002.html) with Retry-After=2450s; skipping page.
+16:20:16  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/2002.html) with Retry-After=2448s; skipping page.
+16:20:18  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/2002.html) with Retry-After=2447s; skipping page.
+16:20:19  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/2002.html) with Retry-After=2445s; skipping page.
+16:20:21  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MEM/2002.html) with Retry-After=2444s; skipping page.
+16:20:23  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIA/2002.html) with Retry-After=2442s; skipping page.
+16:20:24  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/2002.html) with Retry-After=2440s; skipping page.
+16:20:26  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIN/2002.html) with Retry-After=2439s; skipping page.
+16:20:27  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/2002.html) with Retry-After=2437s; skipping page.
+16:20:29  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ORL/2002.html) with Retry-After=2436s; skipping page.
+16:20:31  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/2002.html) with Retry-After=2434s; skipping page.
+16:20:32  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/2002.html) with Retry-After=2432s; skipping page.
+16:20:34  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/2002.html) with Retry-After=2431s; skipping page.
+16:20:35  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/2002.html) with Retry-After=2429s; skipping page.
+16:20:37  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/TOR/2002.html) with Retry-After=2428s; skipping page.
+16:20:38  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/2002.html) with Retry-After=2426s; skipping page.
+16:20:40  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/WAS/2002.html) with Retry-After=2425s; skipping page.
+16:20:42  INFO      src.etl.salaries  fact_salary (2001-02): team_pages fetched=25 cached=0 candidate_rows=0 unmatched_names=0
+16:20:42  WARNING   src.etl.salaries  fact_salary (2001-02): no rows to insert.
+16:20:44  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:20:44  INFO      src.etl.salaries  fact_salary (2002-03): team_map_source=fact_team_season teams=26
+16:20:44  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/2003.html) with Retry-After=2421s; skipping page.
+16:20:45  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/2003.html) with Retry-After=2419s; skipping page.
+16:20:47  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/2003.html) with Retry-After=2418s; skipping page.
+16:20:48  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/2003.html) with Retry-After=2416s; skipping page.
+16:20:50  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/2003.html) with Retry-After=2415s; skipping page.
+16:20:52  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/2003.html) with Retry-After=2413s; skipping page.
+16:20:53  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/2003.html) with Retry-After=2411s; skipping page.
+16:20:55  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/2003.html) with Retry-After=2410s; skipping page.
+16:20:56  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/2003.html) with Retry-After=2408s; skipping page.
+16:20:58  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/2003.html) with Retry-After=2407s; skipping page.
+16:21:00  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/2003.html) with Retry-After=2405s; skipping page.
+16:21:01  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/2003.html) with Retry-After=2403s; skipping page.
+16:21:03  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MEM/2003.html) with Retry-After=2402s; skipping page.
+16:21:04  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIA/2003.html) with Retry-After=2400s; skipping page.
+16:21:06  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/2003.html) with Retry-After=2399s; skipping page.
+16:21:08  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIN/2003.html) with Retry-After=2397s; skipping page.
+16:21:09  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NOH/2003.html) with Retry-After=2396s; skipping page.
+16:21:11  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/2003.html) with Retry-After=2394s; skipping page.
+16:21:12  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ORL/2003.html) with Retry-After=2392s; skipping page.
+16:21:14  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/2003.html) with Retry-After=2391s; skipping page.
+16:21:15  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/2003.html) with Retry-After=2389s; skipping page.
+16:21:17  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/2003.html) with Retry-After=2388s; skipping page.
+16:21:19  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/2003.html) with Retry-After=2386s; skipping page.
+16:21:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/TOR/2003.html) with Retry-After=2384s; skipping page.
+16:21:22  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/2003.html) with Retry-After=2383s; skipping page.
+16:21:23  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/WAS/2003.html) with Retry-After=2381s; skipping page.
+16:21:25  INFO      src.etl.salaries  fact_salary (2002-03): team_pages fetched=26 cached=0 candidate_rows=0 unmatched_names=0
+16:21:25  WARNING   src.etl.salaries  fact_salary (2002-03): no rows to insert.
+16:21:27  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:21:27  INFO      src.etl.salaries  fact_salary (2003-04): team_map_source=fact_team_season teams=26
+16:21:27  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/2004.html) with Retry-After=2378s; skipping page.
+16:21:28  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/2004.html) with Retry-After=2376s; skipping page.
+16:21:30  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/2004.html) with Retry-After=2375s; skipping page.
+16:21:32  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/2004.html) with Retry-After=2373s; skipping page.
+16:21:33  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/2004.html) with Retry-After=2371s; skipping page.
+16:21:35  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/2004.html) with Retry-After=2370s; skipping page.
+16:21:36  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/2004.html) with Retry-After=2368s; skipping page.
+16:21:38  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/2004.html) with Retry-After=2367s; skipping page.
+16:21:40  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/2004.html) with Retry-After=2365s; skipping page.
+16:21:41  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/2004.html) with Retry-After=2364s; skipping page.
+16:21:43  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/2004.html) with Retry-After=2362s; skipping page.
+16:21:44  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/2004.html) with Retry-After=2360s; skipping page.
+16:21:46  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MEM/2004.html) with Retry-After=2359s; skipping page.
+16:21:47  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIA/2004.html) with Retry-After=2357s; skipping page.
+16:21:49  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/2004.html) with Retry-After=2356s; skipping page.
+16:21:51  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIN/2004.html) with Retry-After=2354s; skipping page.
+16:21:52  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NOH/2004.html) with Retry-After=2352s; skipping page.
+16:21:54  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/2004.html) with Retry-After=2351s; skipping page.
+16:21:55  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ORL/2004.html) with Retry-After=2349s; skipping page.
+16:21:57  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/2004.html) with Retry-After=2348s; skipping page.
+16:21:59  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/2004.html) with Retry-After=2346s; skipping page.
+16:22:00  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/2004.html) with Retry-After=2345s; skipping page.
+16:22:02  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/2004.html) with Retry-After=2343s; skipping page.
+16:22:03  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/TOR/2004.html) with Retry-After=2341s; skipping page.
+16:22:05  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/2004.html) with Retry-After=2340s; skipping page.
+16:22:06  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/WAS/2004.html) with Retry-After=2338s; skipping page.
+16:22:08  INFO      src.etl.salaries  fact_salary (2003-04): team_pages fetched=26 cached=0 candidate_rows=0 unmatched_names=0
+16:22:08  WARNING   src.etl.salaries  fact_salary (2003-04): no rows to insert.
+16:22:10  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:22:10  INFO      src.etl.salaries  fact_salary (2004-05): team_map_source=fact_team_season teams=27
+16:22:10  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/2005.html) with Retry-After=2335s; skipping page.
+16:22:12  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/2005.html) with Retry-After=2333s; skipping page.
+16:22:13  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHA/2005.html) with Retry-After=2331s; skipping page.
+16:22:15  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/2005.html) with Retry-After=2330s; skipping page.
+16:22:16  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/2005.html) with Retry-After=2328s; skipping page.
+16:22:18  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/2005.html) with Retry-After=2327s; skipping page.
+16:22:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/2005.html) with Retry-After=2325s; skipping page.
+16:22:21  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/2005.html) with Retry-After=2323s; skipping page.
+16:22:23  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/2005.html) with Retry-After=2322s; skipping page.
+16:22:24  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/2005.html) with Retry-After=2320s; skipping page.
+16:22:26  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/2005.html) with Retry-After=2319s; skipping page.
+16:22:27  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/2005.html) with Retry-After=2317s; skipping page.
+16:22:29  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/2005.html) with Retry-After=2316s; skipping page.
+16:22:31  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MEM/2005.html) with Retry-After=2314s; skipping page.
+16:22:32  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIA/2005.html) with Retry-After=2312s; skipping page.
+16:22:34  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/2005.html) with Retry-After=2311s; skipping page.
+16:22:35  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIN/2005.html) with Retry-After=2309s; skipping page.
+16:22:37  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NOH/2005.html) with Retry-After=2308s; skipping page.
+16:22:39  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/2005.html) with Retry-After=2306s; skipping page.
+16:22:40  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ORL/2005.html) with Retry-After=2304s; skipping page.
+16:22:42  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/2005.html) with Retry-After=2303s; skipping page.
+16:22:43  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/2005.html) with Retry-After=2301s; skipping page.
+16:22:45  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/2005.html) with Retry-After=2300s; skipping page.
+16:22:47  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SEA/2005.html) with Retry-After=2298s; skipping page.
+16:22:48  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/TOR/2005.html) with Retry-After=2297s; skipping page.
+16:22:50  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/2005.html) with Retry-After=2295s; skipping page.
+16:22:51  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/WAS/2005.html) with Retry-After=2293s; skipping page.
+16:22:53  INFO      src.etl.salaries  fact_salary (2004-05): team_pages fetched=27 cached=0 candidate_rows=0 unmatched_names=0
+16:22:53  WARNING   src.etl.salaries  fact_salary (2004-05): no rows to insert.
+16:22:55  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:22:55  INFO      src.etl.salaries  fact_salary (2005-06): team_map_source=fact_team_season teams=27
+16:22:55  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/2006.html) with Retry-After=2290s; skipping page.
+16:22:56  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BOS/2006.html) with Retry-After=2288s; skipping page.
+16:22:58  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHA/2006.html) with Retry-After=2287s; skipping page.
+16:23:00  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/2006.html) with Retry-After=2285s; skipping page.
+16:23:01  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/2006.html) with Retry-After=2283s; skipping page.
+16:23:03  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/2006.html) with Retry-After=2282s; skipping page.
+16:23:04  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/2006.html) with Retry-After=2280s; skipping page.
+16:23:06  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/2006.html) with Retry-After=2279s; skipping page.
+16:23:08  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/2006.html) with Retry-After=2277s; skipping page.
+16:23:09  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/2006.html) with Retry-After=2276s; skipping page.
+16:23:11  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/2006.html) with Retry-After=2274s; skipping page.
+16:23:12  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/2006.html) with Retry-After=2272s; skipping page.
+16:23:14  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/2006.html) with Retry-After=2271s; skipping page.
+16:23:15  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MEM/2006.html) with Retry-After=2269s; skipping page.
+16:23:17  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIA/2006.html) with Retry-After=2268s; skipping page.
+16:23:19  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/2006.html) with Retry-After=2266s; skipping page.
+16:23:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIN/2006.html) with Retry-After=2264s; skipping page.
+16:23:22  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NOK/2006.html) with Retry-After=2263s; skipping page.
+16:23:23  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NYK/2006.html) with Retry-After=2261s; skipping page.
+16:23:25  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ORL/2006.html) with Retry-After=2260s; skipping page.

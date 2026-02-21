@@ -1,0 +1,585 @@
+03:04:36  INFO      ingest.awards_refresh  Incremental awards refresh start: active_players=528
+03:04:39  INFO      src.etl.awards  Awards player [1/528] pid=1643047 source=api added_rows=0 cumulative_rows=0 cached=0 fetched=1 failed=0
+03:04:42  INFO      src.etl.awards  Awards player [2/528] pid=1642947 source=api added_rows=0 cumulative_rows=0 cached=0 fetched=2 failed=0
+03:04:45  INFO      src.etl.awards  Awards player [3/528] pid=1642893 source=api added_rows=0 cumulative_rows=0 cached=0 fetched=3 failed=0
+03:04:48  INFO      src.etl.awards  Awards player [4/528] pid=1642365 source=api added_rows=0 cumulative_rows=0 cached=0 fetched=4 failed=0
+03:04:51  INFO      src.etl.awards  Awards player [5/528] pid=1630173 source=api added_rows=0 cumulative_rows=0 cached=0 fetched=5 failed=0
+03:04:51  INFO      src.etl.awards  Awards player [6/528] pid=203500 source=cache added_rows=1 cumulative_rows=1 cached=1 fetched=5 failed=0
+03:04:51  INFO      src.etl.awards  Awards player [7/528] pid=1628389 source=cache added_rows=13 cumulative_rows=14 cached=2 fetched=5 failed=0
+03:04:54  INFO      src.etl.awards  Awards player [8/528] pid=1630534 source=api added_rows=0 cumulative_rows=14 cached=2 fetched=6 failed=0
+03:04:58  INFO      src.etl.awards  Awards player [9/528] pid=1630583 source=api added_rows=0 cumulative_rows=14 cached=2 fetched=7 failed=0
+03:05:01  INFO      src.etl.awards  Awards player [10/528] pid=1641725 source=api added_rows=0 cumulative_rows=14 cached=2 fetched=8 failed=0
+03:05:01  INFO      src.etl.awards  Awards progress: 10/528 players processed (cached=2 fetched=8 failed=0 rows_buffered=14)
+03:05:04  INFO      src.etl.awards  Awards player [11/528] pid=1629638 source=api added_rows=0 cumulative_rows=14 cached=2 fetched=9 failed=0
+03:05:07  INFO      src.etl.awards  Awards player [12/528] pid=1628960 source=api added_rows=0 cumulative_rows=14 cached=2 fetched=10 failed=0
+03:05:07  INFO      src.etl.awards  Awards player [13/528] pid=1628386 source=cache added_rows=2 cumulative_rows=16 cached=3 fetched=10 failed=0
+03:05:10  INFO      src.etl.awards  Awards player [14/528] pid=1630631 source=api added_rows=0 cumulative_rows=16 cached=3 fetched=11 failed=0
+03:05:13  INFO      src.etl.awards  Awards player [15/528] pid=203937 source=api added_rows=0 cumulative_rows=16 cached=3 fetched=12 failed=0
+03:05:19  INFO      src.etl.awards  Awards player [16/528] pid=1630828 source=api added_rows=0 cumulative_rows=16 cached=3 fetched=13 failed=0
+03:05:19  INFO      src.etl.awards  Awards player [17/528] pid=203507 source=cache added_rows=64 cumulative_rows=80 cached=4 fetched=13 failed=0
+03:05:22  INFO      src.etl.awards  Awards player [18/528] pid=203648 source=api added_rows=1 cumulative_rows=81 cached=4 fetched=14 failed=0
+03:05:25  INFO      src.etl.awards  Awards player [19/528] pid=1630175 source=api added_rows=0 cumulative_rows=81 cached=4 fetched=15 failed=0
+03:05:25  INFO      src.etl.awards  Awards player [20/528] pid=1628384 source=cache added_rows=2 cumulative_rows=83 cached=5 fetched=15 failed=0
+03:05:25  INFO      src.etl.awards  Awards progress: 20/528 players processed (cached=5 fetched=15 failed=0 rows_buffered=83)
+03:05:25  INFO      src.etl.awards  Awards player [21/528] pid=1630166 source=cache added_rows=2 cumulative_rows=85 cached=6 fetched=15 failed=0
+03:05:25  INFO      src.etl.awards  Awards player [22/528] pid=1629028 source=cache added_rows=2 cumulative_rows=87 cached=7 fetched=15 failed=0
+03:05:25  INFO      src.etl.awards  Awards player [23/528] pid=1628963 source=cache added_rows=1 cumulative_rows=88 cached=8 fetched=15 failed=0
+03:05:28  INFO      src.etl.awards  Awards player [24/528] pid=1642846 source=api added_rows=0 cumulative_rows=88 cached=8 fetched=16 failed=0
+03:05:28  INFO      src.etl.awards  Awards player [25/528] pid=1630163 source=cache added_rows=6 cumulative_rows=94 cached=9 fetched=16 failed=0
+03:05:28  INFO      src.etl.awards  Awards player [26/528] pid=1631094 source=cache added_rows=9 cumulative_rows=103 cached=10 fetched=16 failed=0
+03:05:28  INFO      src.etl.awards  Awards player [27/528] pid=1630217 source=cache added_rows=1 cumulative_rows=104 cached=11 fetched=16 failed=0
+03:05:32  INFO      src.etl.awards  Awards player [28/528] pid=1630625 source=api added_rows=0 cumulative_rows=104 cached=11 fetched=17 failed=0
+03:05:35  INFO      src.etl.awards  Awards player [29/528] pid=1631230 source=api added_rows=0 cumulative_rows=104 cached=11 fetched=18 failed=0
+03:05:35  INFO      src.etl.awards  Awards player [30/528] pid=203084 source=cache added_rows=4 cumulative_rows=108 cached=12 fetched=18 failed=0
+03:05:35  INFO      src.etl.awards  Awards progress: 30/528 players processed (cached=12 fetched=18 failed=0 rows_buffered=108)
+03:05:35  INFO      src.etl.awards  Awards player [31/528] pid=1630567 source=cache added_rows=9 cumulative_rows=117 cached=13 fetched=18 failed=0
+03:05:38  INFO      src.etl.awards  Awards player [32/528] pid=1642964 source=api added_rows=0 cumulative_rows=117 cached=13 fetched=19 failed=0
+03:05:41  INFO      src.etl.awards  Awards player [33/528] pid=1629628 source=api added_rows=0 cumulative_rows=117 cached=13 fetched=20 failed=0
+03:05:44  INFO      src.etl.awards  Awards player [34/528] pid=1642926 source=api added_rows=0 cumulative_rows=117 cached=13 fetched=21 failed=0
+03:05:48  INFO      src.etl.awards  Awards player [35/528] pid=1642419 source=api added_rows=0 cumulative_rows=117 cached=13 fetched=22 failed=0
+03:05:48  INFO      src.etl.awards  Awards player [36/528] pid=201587 source=cache added_rows=3 cumulative_rows=120 cached=14 fetched=22 failed=0
+03:05:48  INFO      src.etl.awards  Awards player [37/528] pid=203078 source=cache added_rows=11 cumulative_rows=131 cached=15 fetched=22 failed=0
+03:05:51  INFO      src.etl.awards  Awards player [38/528] pid=1630699 source=api added_rows=0 cumulative_rows=131 cached=15 fetched=23 failed=0
+03:05:56  INFO      src.etl.awards  Awards player [39/528] pid=1642866 source=api added_rows=0 cumulative_rows=131 cached=15 fetched=24 failed=0
+03:05:56  INFO      src.etl.awards  Awards player [40/528] pid=1630180 source=cache added_rows=2 cumulative_rows=133 cached=16 fetched=24 failed=0
+03:05:56  INFO      src.etl.awards  Awards progress: 40/528 players processed (cached=16 fetched=24 failed=0 rows_buffered=133)
+03:05:59  INFO      src.etl.awards  Awards player [41/528] pid=1629048 source=api added_rows=0 cumulative_rows=133 cached=16 fetched=25 failed=0
+03:06:02  INFO      src.etl.awards  Awards player [42/528] pid=202687 source=api added_rows=0 cumulative_rows=133 cached=16 fetched=26 failed=0
+03:06:05  INFO      src.etl.awards  Awards player [43/528] pid=1641710 source=api added_rows=0 cumulative_rows=133 cached=16 fetched=27 failed=0
+03:06:08  INFO      src.etl.awards  Awards player [44/528] pid=1631205 source=api added_rows=0 cumulative_rows=133 cached=16 fetched=28 failed=0
+03:06:08  INFO      src.etl.awards  Awards player [45/528] pid=203992 source=cache added_rows=2 cumulative_rows=135 cached=17 fetched=28 failed=0
+03:06:11  INFO      src.etl.awards  Awards player [46/528] pid=1641737 source=api added_rows=0 cumulative_rows=135 cached=17 fetched=29 failed=0
+03:06:11  INFO      src.etl.awards  Awards player [47/528] pid=1626164 source=cache added_rows=23 cumulative_rows=158 cached=18 fetched=29 failed=0
+03:06:14  INFO      src.etl.awards  Awards player [48/528] pid=1631123 source=api added_rows=0 cumulative_rows=158 cached=18 fetched=30 failed=0
+03:06:14  INFO      src.etl.awards  Awards player [49/528] pid=1631128 source=cache added_rows=1 cumulative_rows=159 cached=19 fetched=30 failed=0
+03:06:18  INFO      src.etl.awards  Awards player [50/528] pid=1642886 source=api added_rows=0 cumulative_rows=159 cached=19 fetched=31 failed=0
+03:06:18  INFO      src.etl.awards  Awards progress: 50/528 players processed (cached=19 fetched=31 failed=0 rows_buffered=159)
+03:06:18  INFO      src.etl.awards  Awards player [51/528] pid=1628969 source=cache added_rows=2 cumulative_rows=161 cached=20 fetched=31 failed=0
+03:06:18  INFO      src.etl.awards  Awards player [52/528] pid=1628970 source=cache added_rows=1 cumulative_rows=162 cached=21 fetched=31 failed=0
+03:06:18  INFO      src.etl.awards  Awards player [53/528] pid=1628415 source=cache added_rows=2 cumulative_rows=164 cached=22 fetched=31 failed=0
+03:06:22  INFO      src.etl.awards  Awards player [54/528] pid=1641780 source=api added_rows=0 cumulative_rows=164 cached=22 fetched=32 failed=0
+03:06:22  INFO      src.etl.awards  Awards player [55/528] pid=1628971 source=cache added_rows=1 cumulative_rows=165 cached=23 fetched=32 failed=0
+03:06:25  INFO      src.etl.awards  Awards player [56/528] pid=1642468 source=api added_rows=0 cumulative_rows=165 cached=23 fetched=33 failed=0
+03:06:25  INFO      src.etl.awards  Awards player [57/528] pid=1627759 source=cache added_rows=16 cumulative_rows=181 cached=24 fetched=33 failed=0
+03:06:28  INFO      src.etl.awards  Awards player [58/528] pid=1641738 source=api added_rows=0 cumulative_rows=181 cached=24 fetched=34 failed=0
+03:06:28  INFO      src.etl.awards  Awards player [59/528] pid=1628973 source=cache added_rows=19 cumulative_rows=200 cached=25 fetched=34 failed=0
+03:06:31  INFO      src.etl.awards  Awards player [60/528] pid=1642868 source=api added_rows=0 cumulative_rows=200 cached=25 fetched=35 failed=0
+03:06:31  INFO      src.etl.awards  Awards progress: 60/528 players processed (cached=25 fetched=35 failed=0 rows_buffered=200)
+03:06:31  INFO      src.etl.awards  Awards player [61/528] pid=1628418 source=cache added_rows=1 cumulative_rows=201 cached=26 fetched=35 failed=0
+03:06:35  INFO      src.etl.awards  Awards player [62/528] pid=1641723 source=api added_rows=0 cumulative_rows=201 cached=26 fetched=36 failed=0
+03:06:35  INFO      src.etl.awards  Awards player [63/528] pid=202710 source=cache added_rows=25 cumulative_rows=226 cached=27 fetched=36 failed=0
+03:06:35  INFO      src.etl.awards  Awards player [64/528] pid=1641824 source=cache added_rows=1 cumulative_rows=227 cached=28 fetched=36 failed=0
+03:06:38  INFO      src.etl.awards  Awards player [65/528] pid=1631288 source=api added_rows=0 cumulative_rows=227 cached=28 fetched=37 failed=0
+03:06:38  INFO      src.etl.awards  Awards player [66/528] pid=203484 source=cache added_rows=2 cumulative_rows=229 cached=29 fetched=37 failed=0
+03:06:38  INFO      src.etl.awards  Awards player [67/528] pid=1641739 source=cache added_rows=2 cumulative_rows=231 cached=30 fetched=37 failed=0
+03:06:41  INFO      src.etl.awards  Awards player [68/528] pid=203991 source=api added_rows=0 cumulative_rows=231 cached=30 fetched=38 failed=0
+03:06:44  INFO      src.etl.awards  Awards player [69/528] pid=1642928 source=api added_rows=0 cumulative_rows=231 cached=30 fetched=39 failed=0
+03:06:44  INFO      src.etl.awards  Awards player [70/528] pid=1642382 source=cache added_rows=1 cumulative_rows=232 cached=31 fetched=39 failed=0
+03:06:44  INFO      src.etl.awards  Awards progress: 70/528 players processed (cached=31 fetched=39 failed=0 rows_buffered=232)
+03:06:44  INFO      src.etl.awards  Awards player [71/528] pid=1642267 source=cache added_rows=1 cumulative_rows=233 cached=32 fetched=39 failed=0
+03:06:47  INFO      src.etl.awards  Awards player [72/528] pid=1642269 source=api added_rows=0 cumulative_rows=233 cached=32 fetched=40 failed=0
+03:06:50  INFO      src.etl.awards  Awards player [73/528] pid=1628975 source=api added_rows=0 cumulative_rows=233 cached=32 fetched=41 failed=0
+03:06:53  INFO      src.etl.awards  Awards player [74/528] pid=1628976 source=api added_rows=0 cumulative_rows=233 cached=32 fetched=42 failed=0
+03:06:53  INFO      src.etl.awards  Awards player [75/528] pid=1627936 source=cache added_rows=4 cumulative_rows=237 cached=33 fetched=42 failed=0
+03:06:53  INFO      src.etl.awards  Awards player [76/528] pid=1642264 source=cache added_rows=4 cumulative_rows=241 cached=34 fetched=42 failed=0
+03:06:56  INFO      src.etl.awards  Awards player [77/528] pid=1630658 source=api added_rows=0 cumulative_rows=241 cached=34 fetched=43 failed=0
+03:06:59  INFO      src.etl.awards  Awards player [78/528] pid=1630577 source=api added_rows=0 cumulative_rows=241 cached=34 fetched=44 failed=0
+03:07:02  INFO      src.etl.awards  Awards player [79/528] pid=1630551 source=api added_rows=0 cumulative_rows=241 cached=34 fetched=45 failed=0
+03:07:06  INFO      src.etl.awards  Awards player [80/528] pid=1642353 source=api added_rows=0 cumulative_rows=241 cached=34 fetched=46 failed=0
+03:07:06  INFO      src.etl.awards  Awards progress: 80/528 players processed (cached=34 fetched=46 failed=0 rows_buffered=241)
+03:07:09  INFO      src.etl.awards  Awards player [81/528] pid=1631108 source=api added_rows=0 cumulative_rows=241 cached=34 fetched=47 failed=0
+03:07:12  INFO      src.etl.awards  Awards player [82/528] pid=1630619 source=api added_rows=0 cumulative_rows=241 cached=34 fetched=48 failed=0
+03:07:15  INFO      src.etl.awards  Awards player [83/528] pid=1631321 source=api added_rows=0 cumulative_rows=241 cached=34 fetched=49 failed=0
+03:07:18  INFO      src.etl.awards  Awards player [84/528] pid=1641740 source=api added_rows=0 cumulative_rows=241 cached=34 fetched=50 failed=0
+03:07:18  INFO      src.etl.awards  Awards player [85/528] pid=1629634 source=cache added_rows=1 cumulative_rows=242 cached=35 fetched=50 failed=0
+03:07:18  INFO      src.etl.awards  Awards player [86/528] pid=203903 source=cache added_rows=3 cumulative_rows=245 cached=36 fetched=50 failed=0
+03:07:21  INFO      src.etl.awards  Awards player [87/528] pid=1629651 source=api added_rows=0 cumulative_rows=245 cached=36 fetched=51 failed=0
+03:07:24  INFO      src.etl.awards  Awards player [88/528] pid=1642383 source=api added_rows=0 cumulative_rows=245 cached=36 fetched=52 failed=0
+03:07:27  INFO      src.etl.awards  Awards player [89/528] pid=1642363 source=api added_rows=0 cumulative_rows=245 cached=36 fetched=53 failed=0
+03:07:27  INFO      src.etl.awards  Awards player [90/528] pid=1642270 source=cache added_rows=1 cumulative_rows=246 cached=37 fetched=53 failed=0
+03:07:27  INFO      src.etl.awards  Awards progress: 90/528 players processed (cached=37 fetched=53 failed=0 rows_buffered=246)
+03:07:30  INFO      src.etl.awards  Awards player [91/528] pid=1641730 source=api added_rows=0 cumulative_rows=246 cached=37 fetched=54 failed=0
+03:07:34  INFO      src.etl.awards  Awards player [92/528] pid=1629599 source=api added_rows=0 cumulative_rows=246 cached=37 fetched=55 failed=0
+03:07:34  INFO      src.etl.awards  Awards player [93/528] pid=1642268 source=cache added_rows=1 cumulative_rows=247 cached=38 fetched=55 failed=0
+03:07:34  INFO      src.etl.awards  Awards player [94/528] pid=1628381 source=cache added_rows=1 cumulative_rows=248 cached=39 fetched=55 failed=0
+03:07:37  INFO      src.etl.awards  Awards player [95/528] pid=1628380 source=api added_rows=0 cumulative_rows=248 cached=39 fetched=56 failed=0
+03:07:37  INFO      src.etl.awards  Awards player [96/528] pid=201144 source=cache added_rows=4 cumulative_rows=252 cached=40 fetched=56 failed=0
+03:07:37  INFO      src.etl.awards  Awards player [97/528] pid=1626192 source=cache added_rows=1 cumulative_rows=253 cached=41 fetched=56 failed=0
+03:07:40  INFO      src.etl.awards  Awards player [98/528] pid=1631451 source=api added_rows=0 cumulative_rows=253 cached=41 fetched=57 failed=0
+03:07:44  INFO      src.etl.awards  Awards player [99/528] pid=1630536 source=api added_rows=0 cumulative_rows=253 cached=41 fetched=58 failed=0
+03:07:44  INFO      src.etl.awards  Awards player [100/528] pid=1641731 source=cache added_rows=1 cumulative_rows=254 cached=42 fetched=58 failed=0
+03:07:44  INFO      src.etl.awards  Awards progress: 100/528 players processed (cached=42 fetched=58 failed=0 rows_buffered=254)
+03:07:47  INFO      src.etl.awards  Awards player [101/528] pid=1642907 source=api added_rows=0 cumulative_rows=254 cached=42 fetched=59 failed=0
+03:07:50  INFO      src.etl.awards  Awards player [102/528] pid=1642384 source=api added_rows=0 cumulative_rows=254 cached=42 fetched=60 failed=0
+03:07:53  INFO      src.etl.awards  Awards player [103/528] pid=1643018 source=api added_rows=0 cumulative_rows=254 cached=42 fetched=61 failed=0
+03:07:53  INFO      src.etl.awards  Awards player [104/528] pid=1630595 source=cache added_rows=8 cumulative_rows=262 cached=43 fetched=61 failed=0
+03:07:57  INFO      src.etl.awards  Awards player [105/528] pid=203552 source=api added_rows=0 cumulative_rows=262 cached=43 fetched=62 failed=0
+03:07:57  INFO      src.etl.awards  Awards player [106/528] pid=201939 source=cache added_rows=68 cumulative_rows=330 cached=44 fetched=62 failed=0
+03:08:00  INFO      src.etl.awards  Awards player [107/528] pid=1642359 source=api added_rows=0 cumulative_rows=330 cached=44 fetched=63 failed=0
+03:08:00  INFO      src.etl.awards  Awards player [108/528] pid=1630700 source=cache added_rows=3 cumulative_rows=333 cached=45 fetched=63 failed=0
+03:08:00  INFO      src.etl.awards  Awards player [109/528] pid=203076 source=cache added_rows=40 cumulative_rows=373 cached=46 fetched=63 failed=0
+03:08:03  INFO      src.etl.awards  Awards player [110/528] pid=1631120 source=api added_rows=0 cumulative_rows=373 cached=46 fetched=64 failed=0
+03:08:03  INFO      src.etl.awards  Awards progress: 110/528 players processed (cached=46 fetched=64 failed=0 rows_buffered=373)
+03:08:03  INFO      src.etl.awards  Awards player [111/528] pid=201942 source=cache added_rows=29 cumulative_rows=402 cached=47 fetched=64 failed=0
+03:08:06  INFO      src.etl.awards  Awards player [112/528] pid=1642484 source=api added_rows=0 cumulative_rows=402 cached=47 fetched=65 failed=0
+03:08:06  INFO      src.etl.awards  Awards player [113/528] pid=1628978 source=cache added_rows=1 cumulative_rows=403 cached=48 fetched=65 failed=0
+03:08:10  INFO      src.etl.awards  Awards player [114/528] pid=1631217 source=api added_rows=0 cumulative_rows=403 cached=48 fetched=66 failed=0
+03:08:13  INFO      src.etl.awards  Awards player [115/528] pid=1642885 source=api added_rows=0 cumulative_rows=403 cached=48 fetched=67 failed=0
+03:08:17  INFO      src.etl.awards  Awards player [116/528] pid=1641711 source=api added_rows=0 cumulative_rows=403 cached=48 fetched=68 failed=0
+03:08:20  INFO      src.etl.awards  Awards player [117/528] pid=1630621 source=api added_rows=0 cumulative_rows=403 cached=48 fetched=69 failed=0
+03:08:20  INFO      src.etl.awards  Awards player [118/528] pid=1631172 source=cache added_rows=1 cumulative_rows=404 cached=49 fetched=69 failed=0
+03:08:23  INFO      src.etl.awards  Awards player [119/528] pid=1642265 source=api added_rows=0 cumulative_rows=404 cached=49 fetched=70 failed=0
+03:08:23  INFO      src.etl.awards  Awards player [120/528] pid=1629029 source=cache added_rows=40 cumulative_rows=444 cached=50 fetched=70 failed=0
+03:08:23  INFO      src.etl.awards  Awards progress: 120/528 players processed (cached=50 fetched=70 failed=0 rows_buffered=444)
+03:08:23  INFO      src.etl.awards  Awards player [121/528] pid=1629652 source=cache added_rows=2 cumulative_rows=446 cached=51 fetched=70 failed=0
+03:08:23  INFO      src.etl.awards  Awards player [122/528] pid=1630245 source=cache added_rows=1 cumulative_rows=447 cached=52 fetched=70 failed=0
+03:08:23  INFO      src.etl.awards  Awards player [123/528] pid=203083 source=cache added_rows=9 cumulative_rows=456 cached=53 fetched=70 failed=0
+03:08:26  INFO      src.etl.awards  Awards player [124/528] pid=1627739 source=api added_rows=0 cumulative_rows=456 cached=53 fetched=71 failed=0
+03:08:30  INFO      src.etl.awards  Awards player [125/528] pid=1642346 source=api added_rows=0 cumulative_rows=456 cached=53 fetched=72 failed=0
+03:08:30  INFO      src.etl.awards  Awards player [126/528] pid=201142 source=cache added_rows=91 cumulative_rows=547 cached=54 fetched=72 failed=0
+03:08:30  INFO      src.etl.awards  Awards player [127/528] pid=1631105 source=cache added_rows=2 cumulative_rows=549 cached=55 fetched=72 failed=0
+03:08:33  INFO      src.etl.awards  Awards player [128/528] pid=1642856 source=api added_rows=0 cumulative_rows=549 cached=55 fetched=73 failed=0
+03:08:33  INFO      src.etl.awards  Awards player [129/528] pid=1631106 source=cache added_rows=1 cumulative_rows=550 cached=56 fetched=73 failed=0
+03:08:33  INFO      src.etl.awards  Awards player [130/528] pid=1641744 source=cache added_rows=1 cumulative_rows=551 cached=57 fetched=73 failed=0
+03:08:33  INFO      src.etl.awards  Awards progress: 130/528 players processed (cached=57 fetched=73 failed=0 rows_buffered=551)
+03:08:36  INFO      src.etl.awards  Awards player [131/528] pid=1642845 source=api added_rows=0 cumulative_rows=551 cached=57 fetched=74 failed=0
+03:08:36  INFO      src.etl.awards  Awards player [132/528] pid=1630162 source=cache added_rows=14 cumulative_rows=565 cached=58 fetched=74 failed=0
+03:08:39  INFO      src.etl.awards  Awards player [133/528] pid=1642348 source=api added_rows=0 cumulative_rows=565 cached=58 fetched=75 failed=0
+03:08:42  INFO      src.etl.awards  Awards player [134/528] pid=1631165 source=api added_rows=0 cumulative_rows=565 cached=58 fetched=76 failed=0
+03:08:42  INFO      src.etl.awards  Awards player [135/528] pid=203954 source=cache added_rows=42 cumulative_rows=607 cached=59 fetched=76 failed=0
+03:08:45  INFO      src.etl.awards  Awards player [136/528] pid=1642400 source=api added_rows=0 cumulative_rows=607 cached=59 fetched=77 failed=0
+03:08:51  INFO      src.etl.awards  Awards player [137/528] pid=1642855 source=api added_rows=0 cumulative_rows=607 cached=59 fetched=78 failed=0
+03:08:54  INFO      src.etl.awards  Awards player [138/528] pid=1630623 source=api added_rows=0 cumulative_rows=607 cached=59 fetched=79 failed=0
+03:08:58  INFO      src.etl.awards  Awards player [139/528] pid=1629234 source=api added_rows=0 cumulative_rows=607 cached=59 fetched=80 failed=0
+03:09:01  INFO      src.etl.awards  Awards player [140/528] pid=1641787 source=api added_rows=0 cumulative_rows=607 cached=59 fetched=81 failed=0
+03:09:01  INFO      src.etl.awards  Awards progress: 140/528 players processed (cached=59 fetched=81 failed=0 rows_buffered=607)
+03:09:04  INFO      src.etl.awards  Awards player [141/528] pid=1642847 source=api added_rows=0 cumulative_rows=607 cached=59 fetched=82 failed=0
+03:09:07  INFO      src.etl.awards  Awards player [142/528] pid=1642271 source=api added_rows=0 cumulative_rows=607 cached=59 fetched=83 failed=0
+03:09:11  INFO      src.etl.awards  Awards player [143/528] pid=1627827 source=api added_rows=0 cumulative_rows=607 cached=59 fetched=84 failed=0
+03:09:15  INFO      src.etl.awards  Awards player [144/528] pid=1642843 source=api added_rows=3 cumulative_rows=610 cached=59 fetched=85 failed=0
+03:09:19  INFO      src.etl.awards  Awards player [145/528] pid=1642853 source=api added_rows=0 cumulative_rows=610 cached=59 fetched=86 failed=0
+03:09:22  INFO      src.etl.awards  Awards player [146/528] pid=1631323 source=api added_rows=0 cumulative_rows=610 cached=59 fetched=87 failed=0
+03:09:22  INFO      src.etl.awards  Awards player [147/528] pid=1628368 source=cache added_rows=10 cumulative_rows=620 cached=60 fetched=87 failed=0
+03:09:25  INFO      src.etl.awards  Awards player [148/528] pid=1642402 source=api added_rows=0 cumulative_rows=620 cached=60 fetched=88 failed=0
+03:09:28  INFO      src.etl.awards  Awards player [149/528] pid=1642277 source=api added_rows=0 cumulative_rows=620 cached=60 fetched=89 failed=0
+03:09:31  INFO      src.etl.awards  Awards player [150/528] pid=1629655 source=api added_rows=0 cumulative_rows=620 cached=60 fetched=90 failed=0
+03:09:31  INFO      src.etl.awards  Awards progress: 150/528 players processed (cached=60 fetched=90 failed=0 rows_buffered=620)
+03:09:35  INFO      src.etl.awards  Awards player [151/528] pid=1642066 source=api added_rows=0 cumulative_rows=620 cached=60 fetched=91 failed=0
+03:09:35  INFO      src.etl.awards  Awards player [152/528] pid=1629636 source=cache added_rows=5 cumulative_rows=625 cached=61 fetched=91 failed=0
+03:09:38  INFO      src.etl.awards  Awards player [153/528] pid=1630568 source=api added_rows=0 cumulative_rows=625 cached=61 fetched=92 failed=0
+03:09:38  INFO      src.etl.awards  Awards player [154/528] pid=1641718 source=cache added_rows=1 cumulative_rows=626 cached=62 fetched=92 failed=0
+03:09:41  INFO      src.etl.awards  Awards player [155/528] pid=1642273 source=api added_rows=0 cumulative_rows=626 cached=62 fetched=93 failed=0
+03:09:41  INFO      src.etl.awards  Awards player [156/528] pid=202331 source=cache added_rows=38 cumulative_rows=664 cached=63 fetched=93 failed=0
+03:09:41  INFO      src.etl.awards  Awards player [157/528] pid=1630581 source=cache added_rows=5 cumulative_rows=669 cached=64 fetched=93 failed=0
+03:09:41  INFO      src.etl.awards  Awards player [158/528] pid=1628983 source=cache added_rows=26 cumulative_rows=695 cached=65 fetched=93 failed=0
+03:09:44  INFO      src.etl.awards  Awards player [159/528] pid=1630264 source=api added_rows=0 cumulative_rows=695 cached=65 fetched=94 failed=0
+03:09:48  INFO      src.etl.awards  Awards player [160/528] pid=1631221 source=api added_rows=0 cumulative_rows=695 cached=65 fetched=95 failed=0
+03:09:48  INFO      src.etl.awards  Awards progress: 160/528 players processed (cached=65 fetched=95 failed=0 rows_buffered=695)
+03:09:48  INFO      src.etl.awards  Awards player [161/528] pid=203497 source=cache added_rows=22 cumulative_rows=717 cached=66 fetched=95 failed=0
+03:09:51  INFO      src.etl.awards  Awards player [162/528] pid=1642884 source=api added_rows=0 cumulative_rows=717 cached=66 fetched=96 failed=0
+03:09:54  INFO      src.etl.awards  Awards player [163/528] pid=1642864 source=api added_rows=0 cumulative_rows=717 cached=66 fetched=97 failed=0
+03:09:57  INFO      src.etl.awards  Awards player [164/528] pid=1630692 source=api added_rows=0 cumulative_rows=717 cached=66 fetched=98 failed=0
+03:09:57  INFO      src.etl.awards  Awards player [165/528] pid=203932 source=cache added_rows=1 cumulative_rows=718 cached=67 fetched=98 failed=0
+03:09:57  INFO      src.etl.awards  Awards player [166/528] pid=203924 source=cache added_rows=1 cumulative_rows=719 cached=68 fetched=98 failed=0
+03:10:00  INFO      src.etl.awards  Awards player [167/528] pid=1631260 source=api added_rows=0 cumulative_rows=719 cached=68 fetched=99 failed=0
+03:10:00  INFO      src.etl.awards  Awards player [168/528] pid=203110 source=cache added_rows=24 cumulative_rows=743 cached=69 fetched=99 failed=0
+03:10:00  INFO      src.etl.awards  Awards player [169/528] pid=1630224 source=cache added_rows=5 cumulative_rows=748 cached=70 fetched=99 failed=0
+03:10:03  INFO      src.etl.awards  Awards player [170/528] pid=1629750 source=api added_rows=0 cumulative_rows=748 cached=70 fetched=100 failed=0
+03:10:03  INFO      src.etl.awards  Awards progress: 170/528 players processed (cached=70 fetched=100 failed=0 rows_buffered=748)
+03:10:03  INFO      src.etl.awards  Awards player [171/528] pid=201145 source=cache added_rows=2 cumulative_rows=750 cached=71 fetched=100 failed=0
+03:10:06  INFO      src.etl.awards  Awards player [172/528] pid=1630182 source=api added_rows=0 cumulative_rows=750 cached=71 fetched=101 failed=0
+03:10:09  INFO      src.etl.awards  Awards player [173/528] pid=1629656 source=api added_rows=0 cumulative_rows=750 cached=71 fetched=102 failed=0
+03:10:13  INFO      src.etl.awards  Awards player [174/528] pid=1631243 source=api added_rows=0 cumulative_rows=750 cached=71 fetched=103 failed=0
+03:10:13  INFO      src.etl.awards  Awards player [175/528] pid=1629060 source=cache added_rows=1 cumulative_rows=751 cached=72 fetched=103 failed=0
+03:10:13  INFO      src.etl.awards  Awards player [176/528] pid=1630169 source=cache added_rows=11 cumulative_rows=762 cached=73 fetched=103 failed=0
+03:10:16  INFO      src.etl.awards  Awards player [177/528] pid=1641790 source=api added_rows=0 cumulative_rows=762 cached=73 fetched=104 failed=0
+03:10:16  INFO      src.etl.awards  Awards player [178/528] pid=203501 source=cache added_rows=1 cumulative_rows=763 cached=74 fetched=104 failed=0
+03:10:16  INFO      src.etl.awards  Awards player [179/528] pid=201935 source=cache added_rows=71 cumulative_rows=834 cached=75 fetched=104 failed=0
+03:10:19  INFO      src.etl.awards  Awards player [180/528] pid=1630702 source=api added_rows=0 cumulative_rows=834 cached=75 fetched=105 failed=0
+03:10:19  INFO      src.etl.awards  Awards progress: 180/528 players processed (cached=75 fetched=105 failed=0 rows_buffered=834)
+03:10:22  INFO      src.etl.awards  Awards player [181/528] pid=1641989 source=api added_rows=0 cumulative_rows=834 cached=75 fetched=106 failed=0
+03:10:26  INFO      src.etl.awards  Awards player [182/528] pid=1642844 source=api added_rows=0 cumulative_rows=834 cached=75 fetched=107 failed=0
+03:10:29  INFO      src.etl.awards  Awards player [183/528] pid=1631199 source=api added_rows=0 cumulative_rows=834 cached=75 fetched=108 failed=0
+03:10:32  INFO      src.etl.awards  Awards player [184/528] pid=203914 source=api added_rows=0 cumulative_rows=834 cached=75 fetched=109 failed=0
+03:10:32  INFO      src.etl.awards  Awards player [185/528] pid=202699 source=cache added_rows=4 cumulative_rows=838 cached=76 fetched=109 failed=0
+03:10:35  INFO      src.etl.awards  Awards player [186/528] pid=1628404 source=api added_rows=0 cumulative_rows=838 cached=76 fetched=110 failed=0
+03:10:35  INFO      src.etl.awards  Awards player [187/528] pid=1628392 source=cache added_rows=1 cumulative_rows=839 cached=77 fetched=110 failed=0
+03:10:35  INFO      src.etl.awards  Awards player [188/528] pid=1630573 source=cache added_rows=1 cumulative_rows=840 cached=78 fetched=110 failed=0
+03:10:38  INFO      src.etl.awards  Awards player [189/528] pid=1641722 source=api added_rows=0 cumulative_rows=840 cached=78 fetched=111 failed=0
+03:10:42  INFO      src.etl.awards  Awards player [190/528] pid=1629637 source=api added_rows=0 cumulative_rows=840 cached=78 fetched=112 failed=0
+03:10:42  INFO      src.etl.awards  Awards progress: 190/528 players processed (cached=78 fetched=112 failed=0 rows_buffered=840)
+03:10:45  INFO      src.etl.awards  Awards player [191/528] pid=1630703 source=api added_rows=0 cumulative_rows=840 cached=78 fetched=113 failed=0
+03:10:48  INFO      src.etl.awards  Awards player [192/528] pid=1641707 source=api added_rows=0 cumulative_rows=840 cached=78 fetched=114 failed=0
+03:10:51  INFO      src.etl.awards  Awards player [193/528] pid=1642935 source=api added_rows=0 cumulative_rows=840 cached=78 fetched=115 failed=0
+03:10:51  INFO      src.etl.awards  Awards player [194/528] pid=1629639 source=cache added_rows=4 cumulative_rows=844 cached=79 fetched=115 failed=0
+03:10:51  INFO      src.etl.awards  Awards player [195/528] pid=1627741 source=cache added_rows=3 cumulative_rows=847 cached=80 fetched=115 failed=0
+03:10:55  INFO      src.etl.awards  Awards player [196/528] pid=1629312 source=api added_rows=0 cumulative_rows=847 cached=80 fetched=116 failed=0
+03:10:58  INFO      src.etl.awards  Awards player [197/528] pid=1642396 source=api added_rows=0 cumulative_rows=847 cached=80 fetched=117 failed=0
+03:11:01  INFO      src.etl.awards  Awards player [198/528] pid=1628988 source=api added_rows=0 cumulative_rows=847 cached=80 fetched=118 failed=0
+03:11:01  INFO      src.etl.awards  Awards player [199/528] pid=201950 source=cache added_rows=14 cumulative_rows=861 cached=81 fetched=118 failed=0
+03:11:05  INFO      src.etl.awards  Awards player [200/528] pid=1641842 source=api added_rows=0 cumulative_rows=861 cached=81 fetched=119 failed=0
+03:11:05  INFO      src.etl.awards  Awards progress: 200/528 players processed (cached=81 fetched=119 failed=0 rows_buffered=861)
+03:11:08  INFO      src.etl.awards  Awards player [201/528] pid=1641747 source=api added_rows=0 cumulative_rows=861 cached=81 fetched=120 failed=0
+03:11:08  INFO      src.etl.awards  Awards player [202/528] pid=1631096 source=cache added_rows=6 cumulative_rows=867 cached=82 fetched=120 failed=0
+03:11:08  INFO      src.etl.awards  Awards player [203/528] pid=201143 source=cache added_rows=17 cumulative_rows=884 cached=83 fetched=120 failed=0
+03:11:11  INFO      src.etl.awards  Awards player [204/528] pid=1631216 source=api added_rows=0 cumulative_rows=884 cached=83 fetched=121 failed=0
+03:11:14  INFO      src.etl.awards  Awards player [205/528] pid=1641724 source=api added_rows=0 cumulative_rows=884 cached=83 fetched=122 failed=0
+03:11:14  INFO      src.etl.awards  Awards player [206/528] pid=1628989 source=cache added_rows=1 cumulative_rows=885 cached=84 fetched=122 failed=0
+03:11:17  INFO      src.etl.awards  Awards player [207/528] pid=1630643 source=api added_rows=0 cumulative_rows=885 cached=84 fetched=123 failed=0
+03:11:20  INFO      src.etl.awards  Awards player [208/528] pid=1630574 source=api added_rows=0 cumulative_rows=885 cached=84 fetched=124 failed=0
+03:11:24  INFO      src.etl.awards  Awards player [209/528] pid=1629631 source=api added_rows=0 cumulative_rows=885 cached=84 fetched=125 failed=0
+03:11:24  INFO      src.etl.awards  Awards player [210/528] pid=1630538 source=cache added_rows=1 cumulative_rows=886 cached=85 fetched=125 failed=0
+03:11:24  INFO      src.etl.awards  Awards progress: 210/528 players processed (cached=85 fetched=125 failed=0 rows_buffered=886)
+03:11:27  INFO      src.etl.awards  Awards player [211/528] pid=1642345 source=api added_rows=0 cumulative_rows=886 cached=85 fetched=126 failed=0
+03:11:30  INFO      src.etl.awards  Awards player [212/528] pid=204060 source=api added_rows=0 cumulative_rows=886 cached=85 fetched=127 failed=0
+03:11:30  INFO      src.etl.awards  Awards player [213/528] pid=1627742 source=cache added_rows=8 cumulative_rows=894 cached=86 fetched=127 failed=0
+03:11:33  INFO      src.etl.awards  Awards player [214/528] pid=1631127 source=api added_rows=0 cumulative_rows=894 cached=86 fetched=128 failed=0
+03:11:33  INFO      src.etl.awards  Awards player [215/528] pid=202681 source=cache added_rows=25 cumulative_rows=919 cached=87 fetched=128 failed=0
+03:11:37  INFO      src.etl.awards  Awards player [216/528] pid=1628371 source=api added_rows=0 cumulative_rows=919 cached=87 fetched=129 failed=0
+03:11:37  INFO      src.etl.awards  Awards player [217/528] pid=1631093 source=cache added_rows=1 cumulative_rows=920 cached=88 fetched=129 failed=0
+03:11:37  INFO      src.etl.awards  Awards player [218/528] pid=1641713 source=cache added_rows=1 cumulative_rows=921 cached=89 fetched=129 failed=0
+03:11:40  INFO      src.etl.awards  Awards player [219/528] pid=1630543 source=api added_rows=0 cumulative_rows=921 cached=89 fetched=130 failed=0
+03:11:44  INFO      src.etl.awards  Awards player [220/528] pid=1631245 source=api added_rows=0 cumulative_rows=921 cached=89 fetched=131 failed=0
+03:11:44  INFO      src.etl.awards  Awards progress: 220/528 players processed (cached=89 fetched=131 failed=0 rows_buffered=921)
+03:11:47  INFO      src.etl.awards  Awards player [221/528] pid=1641748 source=api added_rows=0 cumulative_rows=921 cached=89 fetched=132 failed=0
+03:11:47  INFO      src.etl.awards  Awards player [222/528] pid=1628991 source=cache added_rows=10 cumulative_rows=931 cached=90 fetched=132 failed=0
+03:11:50  INFO      src.etl.awards  Awards player [223/528] pid=1631218 source=api added_rows=0 cumulative_rows=931 cached=90 fetched=133 failed=0
+03:11:53  INFO      src.etl.awards  Awards player [224/528] pid=1642857 source=api added_rows=0 cumulative_rows=931 cached=90 fetched=134 failed=0
+03:11:56  INFO      src.etl.awards  Awards player [225/528] pid=1642355 source=api added_rows=0 cumulative_rows=931 cached=90 fetched=135 failed=0
+03:11:56  INFO      src.etl.awards  Awards player [226/528] pid=2544 source=cache added_rows=188 cumulative_rows=1119 cached=91 fetched=135 failed=0
+03:11:59  INFO      src.etl.awards  Awards player [227/528] pid=1642883 source=api added_rows=0 cumulative_rows=1119 cached=91 fetched=136 failed=0
+03:11:59  INFO      src.etl.awards  Awards player [228/528] pid=1631170 source=cache added_rows=3 cumulative_rows=1122 cached=92 fetched=136 failed=0
+03:12:03  INFO      src.etl.awards  Awards player [229/528] pid=1641998 source=api added_rows=0 cumulative_rows=1122 cached=92 fetched=137 failed=0
+03:12:06  INFO      src.etl.awards  Awards player [230/528] pid=1642450 source=api added_rows=0 cumulative_rows=1122 cached=92 fetched=138 failed=0
+03:12:06  INFO      src.etl.awards  Awards progress: 230/528 players processed (cached=92 fetched=138 failed=0 rows_buffered=1122)
+03:12:09  INFO      src.etl.awards  Awards player [231/528] pid=1629660 source=api added_rows=0 cumulative_rows=1122 cached=92 fetched=139 failed=0
+03:12:09  INFO      src.etl.awards  Awards player [232/528] pid=1630198 source=cache added_rows=1 cumulative_rows=1123 cached=93 fetched=139 failed=0
+03:12:12  INFO      src.etl.awards  Awards player [233/528] pid=1642358 source=api added_rows=0 cumulative_rows=1123 cached=93 fetched=140 failed=0
+03:12:15  INFO      src.etl.awards  Awards player [234/528] pid=1629661 source=api added_rows=0 cumulative_rows=1123 cached=93 fetched=141 failed=0
+03:12:20  INFO      src.etl.awards  Awards player [235/528] pid=1643052 source=api added_rows=0 cumulative_rows=1123 cached=93 fetched=142 failed=0
+03:12:20  INFO      src.etl.awards  Awards player [236/528] pid=1630552 source=cache added_rows=2 cumulative_rows=1125 cached=94 fetched=142 failed=0
+03:12:20  INFO      src.etl.awards  Awards player [237/528] pid=1629640 source=cache added_rows=1 cumulative_rows=1126 cached=95 fetched=142 failed=0
+03:12:23  INFO      src.etl.awards  Awards player [238/528] pid=1642352 source=api added_rows=0 cumulative_rows=1126 cached=95 fetched=143 failed=0
+03:12:26  INFO      src.etl.awards  Awards player [239/528] pid=1642848 source=api added_rows=0 cumulative_rows=1126 cached=95 fetched=144 failed=0
+03:12:26  INFO      src.etl.awards  Awards player [240/528] pid=203999 source=cache added_rows=50 cumulative_rows=1176 cached=96 fetched=144 failed=0
+03:12:26  INFO      src.etl.awards  Awards progress: 240/528 players processed (cached=96 fetched=144 failed=0 rows_buffered=1176)
+03:12:30  INFO      src.etl.awards  Awards player [241/528] pid=1642938 source=api added_rows=0 cumulative_rows=1176 cached=96 fetched=145 failed=0
+03:12:30  INFO      src.etl.awards  Awards player [242/528] pid=1641794 source=cache added_rows=1 cumulative_rows=1177 cached=97 fetched=145 failed=0
+03:12:30  INFO      src.etl.awards  Awards player [243/528] pid=1630529 source=cache added_rows=2 cumulative_rows=1179 cached=98 fetched=145 failed=0
+03:12:33  INFO      src.etl.awards  Awards player [244/528] pid=1642403 source=api added_rows=0 cumulative_rows=1179 cached=98 fetched=146 failed=0
+03:12:36  INFO      src.etl.awards  Awards player [245/528] pid=1642880 source=api added_rows=0 cumulative_rows=1179 cached=98 fetched=147 failed=0
+03:12:39  INFO      src.etl.awards  Awards player [246/528] pid=1642461 source=api added_rows=0 cumulative_rows=1179 cached=98 fetched=148 failed=0
+03:12:43  INFO      src.etl.awards  Awards player [247/528] pid=1630200 source=api added_rows=0 cumulative_rows=1179 cached=98 fetched=149 failed=0
+03:12:46  INFO      src.etl.awards  Awards player [248/528] pid=1626145 source=api added_rows=0 cumulative_rows=1179 cached=98 fetched=150 failed=0
+03:12:49  INFO      src.etl.awards  Awards player [249/528] pid=1642357 source=api added_rows=0 cumulative_rows=1179 cached=98 fetched=151 failed=0
+03:12:52  INFO      src.etl.awards  Awards player [250/528] pid=1627884 source=api added_rows=0 cumulative_rows=1179 cached=98 fetched=152 failed=0
+03:12:52  INFO      src.etl.awards  Awards progress: 250/528 players processed (cached=98 fetched=152 failed=0 rows_buffered=1179)
+03:12:52  INFO      src.etl.awards  Awards player [251/528] pid=201599 source=cache added_rows=8 cumulative_rows=1187 cached=99 fetched=152 failed=0
+03:12:52  INFO      src.etl.awards  Awards player [252/528] pid=1631107 source=cache added_rows=1 cumulative_rows=1188 cached=100 fetched=152 failed=0
+03:12:55  INFO      src.etl.awards  Awards player [253/528] pid=1641750 source=api added_rows=0 cumulative_rows=1188 cached=100 fetched=153 failed=0
+03:12:59  INFO      src.etl.awards  Awards player [254/528] pid=1642530 source=api added_rows=0 cumulative_rows=1188 cached=100 fetched=154 failed=0
+03:13:02  INFO      src.etl.awards  Awards player [255/528] pid=1631211 source=api added_rows=0 cumulative_rows=1188 cached=100 fetched=155 failed=0
+03:13:05  INFO      src.etl.awards  Awards player [256/528] pid=1642939 source=api added_rows=0 cumulative_rows=1188 cached=100 fetched=156 failed=0
+03:13:08  INFO      src.etl.awards  Awards player [257/528] pid=1628379 source=api added_rows=0 cumulative_rows=1188 cached=100 fetched=157 failed=0
+03:13:08  INFO      src.etl.awards  Awards player [258/528] pid=1631117 source=cache added_rows=2 cumulative_rows=1190 cached=101 fetched=157 failed=0
+03:13:12  INFO      src.etl.awards  Awards player [259/528] pid=1630557 source=api added_rows=0 cumulative_rows=1190 cached=101 fetched=158 failed=0
+03:13:15  INFO      src.etl.awards  Awards player [260/528] pid=1628467 source=api added_rows=0 cumulative_rows=1190 cached=101 fetched=159 failed=0
+03:13:15  INFO      src.etl.awards  Awards progress: 260/528 players processed (cached=101 fetched=159 failed=0 rows_buffered=1190)
+03:13:18  INFO      src.etl.awards  Awards player [261/528] pid=1641752 source=api added_rows=0 cumulative_rows=1190 cached=101 fetched=160 failed=0
+03:13:21  INFO      src.etl.awards  Awards player [262/528] pid=1642261 source=api added_rows=0 cumulative_rows=1190 cached=101 fetched=161 failed=0
+03:13:25  INFO      src.etl.awards  Awards player [263/528] pid=1642851 source=api added_rows=3 cumulative_rows=1193 cached=101 fetched=162 failed=0
+03:13:28  INFO      src.etl.awards  Awards player [264/528] pid=1642278 source=api added_rows=0 cumulative_rows=1193 cached=101 fetched=163 failed=0
+03:13:31  INFO      src.etl.awards  Awards player [265/528] pid=1631132 source=api added_rows=0 cumulative_rows=1193 cached=101 fetched=164 failed=0
+03:13:34  INFO      src.etl.awards  Awards player [266/528] pid=1629723 source=api added_rows=0 cumulative_rows=1193 cached=101 fetched=165 failed=0
+03:13:34  INFO      src.etl.awards  Awards player [267/528] pid=1628436 source=cache added_rows=1 cumulative_rows=1194 cached=102 fetched=165 failed=0
+03:13:37  INFO      src.etl.awards  Awards player [268/528] pid=1630249 source=api added_rows=0 cumulative_rows=1194 cached=102 fetched=166 failed=0
+03:13:38  INFO      src.etl.awards  Awards player [269/528] pid=1630228 source=cache added_rows=1 cumulative_rows=1195 cached=103 fetched=166 failed=0
+03:13:38  INFO      src.etl.awards  Awards player [270/528] pid=1628398 source=cache added_rows=3 cumulative_rows=1198 cached=104 fetched=166 failed=0
+03:13:38  INFO      src.etl.awards  Awards progress: 270/528 players processed (cached=104 fetched=166 failed=0 rows_buffered=1198)
+03:13:41  INFO      src.etl.awards  Awards player [271/528] pid=1631222 source=api added_rows=0 cumulative_rows=1198 cached=104 fetched=167 failed=0
+03:13:41  INFO      src.etl.awards  Awards player [272/528] pid=203897 source=cache added_rows=5 cumulative_rows=1203 cached=105 fetched=167 failed=0
+03:13:44  INFO      src.etl.awards  Awards player [273/528] pid=1629111 source=api added_rows=0 cumulative_rows=1203 cached=105 fetched=168 failed=0
+03:13:48  INFO      src.etl.awards  Awards player [274/528] pid=1642404 source=api added_rows=0 cumulative_rows=1203 cached=105 fetched=169 failed=0
+03:13:51  INFO      src.etl.awards  Awards player [275/528] pid=1641796 source=api added_rows=0 cumulative_rows=1203 cached=105 fetched=170 failed=0
+03:13:54  INFO      src.etl.awards  Awards player [276/528] pid=1630639 source=api added_rows=0 cumulative_rows=1203 cached=105 fetched=171 failed=0
+03:13:57  INFO      src.etl.awards  Awards player [277/528] pid=1627747 source=api added_rows=0 cumulative_rows=1203 cached=105 fetched=172 failed=0
+03:13:57  INFO      src.etl.awards  Awards player [278/528] pid=202695 source=cache added_rows=39 cumulative_rows=1242 cached=106 fetched=172 failed=0
+03:14:00  INFO      src.etl.awards  Awards player [279/528] pid=1642502 source=api added_rows=0 cumulative_rows=1242 cached=106 fetched=173 failed=0
+03:14:03  INFO      src.etl.awards  Awards player [280/528] pid=1630604 source=api added_rows=0 cumulative_rows=1242 cached=106 fetched=174 failed=0
+03:14:03  INFO      src.etl.awards  Awards progress: 280/528 players processed (cached=106 fetched=174 failed=0 rows_buffered=1242)
+03:14:03  INFO      src.etl.awards  Awards player [281/528] pid=203081 source=cache added_rows=43 cumulative_rows=1285 cached=107 fetched=174 failed=0
+03:14:03  INFO      src.etl.awards  Awards player [282/528] pid=1641726 source=cache added_rows=1 cumulative_rows=1286 cached=108 fetched=174 failed=0
+03:14:07  INFO      src.etl.awards  Awards player [283/528] pid=1630587 source=api added_rows=0 cumulative_rows=1286 cached=108 fetched=175 failed=0
+03:14:07  INFO      src.etl.awards  Awards player [284/528] pid=1626172 source=cache added_rows=2 cumulative_rows=1288 cached=109 fetched=175 failed=0
+03:14:07  INFO      src.etl.awards  Awards player [285/528] pid=201572 source=cache added_rows=10 cumulative_rows=1298 cached=110 fetched=175 failed=0
+03:14:10  INFO      src.etl.awards  Awards player [286/528] pid=1631126 source=api added_rows=0 cumulative_rows=1298 cached=110 fetched=176 failed=0
+03:14:11  INFO      src.etl.awards  Awards player [287/528] pid=201567 source=cache added_rows=15 cumulative_rows=1313 cached=111 fetched=176 failed=0
+03:14:14  INFO      src.etl.awards  Awards player [288/528] pid=1643133 source=api added_rows=0 cumulative_rows=1313 cached=111 fetched=177 failed=0
+03:14:14  INFO      src.etl.awards  Awards player [289/528] pid=200768 source=cache added_rows=16 cumulative_rows=1329 cached=112 fetched=177 failed=0
+03:14:17  INFO      src.etl.awards  Awards player [290/528] pid=1642863 source=api added_rows=0 cumulative_rows=1329 cached=112 fetched=178 failed=0
+03:14:17  INFO      src.etl.awards  Awards progress: 290/528 players processed (cached=112 fetched=178 failed=0 rows_buffered=1329)
+03:14:20  INFO      src.etl.awards  Awards player [291/528] pid=1630572 source=api added_rows=0 cumulative_rows=1329 cached=112 fetched=179 failed=0
+03:14:23  INFO      src.etl.awards  Awards player [292/528] pid=1629611 source=api added_rows=0 cumulative_rows=1329 cached=112 fetched=180 failed=0
+03:14:27  INFO      src.etl.awards  Awards player [293/528] pid=1630544 source=api added_rows=0 cumulative_rows=1329 cached=112 fetched=181 failed=0
+03:14:27  INFO      src.etl.awards  Awards player [294/528] pid=1628374 source=cache added_rows=4 cumulative_rows=1333 cached=113 fetched=181 failed=0
+03:14:30  INFO      src.etl.awards  Awards player [295/528] pid=1630230 source=api added_rows=0 cumulative_rows=1333 cached=113 fetched=182 failed=0
+03:14:34  INFO      src.etl.awards  Awards player [296/528] pid=1642918 source=api added_rows=0 cumulative_rows=1333 cached=113 fetched=183 failed=0
+03:14:37  INFO      src.etl.awards  Awards player [297/528] pid=1628997 source=api added_rows=0 cumulative_rows=1333 cached=113 fetched=184 failed=0
+03:14:40  INFO      src.etl.awards  Awards player [298/528] pid=1631213 source=api added_rows=0 cumulative_rows=1333 cached=113 fetched=185 failed=0
+03:14:43  INFO      src.etl.awards  Awards player [299/528] pid=1642942 source=api added_rows=0 cumulative_rows=1333 cached=113 fetched=186 failed=0
+03:14:43  INFO      src.etl.awards  Awards player [300/528] pid=1631097 source=cache added_rows=2 cumulative_rows=1335 cached=114 fetched=186 failed=0
+03:14:43  INFO      src.etl.awards  Awards progress: 300/528 players processed (cached=114 fetched=186 failed=0 rows_buffered=1335)
+03:14:46  INFO      src.etl.awards  Awards player [301/528] pid=1631255 source=api added_rows=0 cumulative_rows=1335 cached=114 fetched=187 failed=0
+03:14:46  INFO      src.etl.awards  Awards player [302/528] pid=1630178 source=cache added_rows=7 cumulative_rows=1342 cached=115 fetched=187 failed=0
+03:14:50  INFO      src.etl.awards  Awards player [303/528] pid=1643024 source=api added_rows=0 cumulative_rows=1342 cached=115 fetched=188 failed=0
+03:14:53  INFO      src.etl.awards  Awards player [304/528] pid=1630540 source=api added_rows=0 cumulative_rows=1342 cached=115 fetched=189 failed=0
+03:14:53  INFO      src.etl.awards  Awards player [305/528] pid=1642272 source=cache added_rows=1 cumulative_rows=1343 cached=116 fetched=189 failed=0
+03:14:56  INFO      src.etl.awards  Awards player [306/528] pid=1630644 source=api added_rows=0 cumulative_rows=1343 cached=116 fetched=190 failed=0
+03:14:56  INFO      src.etl.awards  Awards player [307/528] pid=203468 source=cache added_rows=2 cumulative_rows=1345 cached=117 fetched=190 failed=0
+03:14:59  INFO      src.etl.awards  Awards player [308/528] pid=204456 source=api added_rows=0 cumulative_rows=1345 cached=117 fetched=191 failed=0
+03:15:02  INFO      src.etl.awards  Awards player [309/528] pid=1641755 source=api added_rows=0 cumulative_rows=1345 cached=117 fetched=192 failed=0
+03:15:02  INFO      src.etl.awards  Awards player [310/528] pid=1630183 source=cache added_rows=1 cumulative_rows=1346 cached=118 fetched=192 failed=0
+03:15:02  INFO      src.etl.awards  Awards progress: 310/528 players processed (cached=118 fetched=192 failed=0 rows_buffered=1346)
+03:15:05  INFO      src.etl.awards  Awards player [311/528] pid=203926 source=api added_rows=0 cumulative_rows=1346 cached=118 fetched=193 failed=0
+03:15:09  INFO      src.etl.awards  Awards player [312/528] pid=1631121 source=api added_rows=0 cumulative_rows=1346 cached=118 fetched=194 failed=0
+03:15:12  INFO      src.etl.awards  Awards player [313/528] pid=1629162 source=api added_rows=0 cumulative_rows=1346 cached=118 fetched=195 failed=0
+03:15:15  INFO      src.etl.awards  Awards player [314/528] pid=1642862 source=api added_rows=0 cumulative_rows=1346 cached=118 fetched=196 failed=0
+03:15:19  INFO      src.etl.awards  Awards player [315/528] pid=1629001 source=api added_rows=0 cumulative_rows=1346 cached=118 fetched=197 failed=0
+03:15:19  INFO      src.etl.awards  Awards player [316/528] pid=1630241 source=cache added_rows=1 cumulative_rows=1347 cached=119 fetched=197 failed=0
+03:15:19  INFO      src.etl.awards  Awards player [317/528] pid=203114 source=cache added_rows=6 cumulative_rows=1353 cached=120 fetched=197 failed=0
+03:15:19  INFO      src.etl.awards  Awards player [318/528] pid=1641706 source=cache added_rows=5 cumulative_rows=1358 cached=121 fetched=197 failed=0
+03:15:23  INFO      src.etl.awards  Awards player [319/528] pid=1641801 source=api added_rows=0 cumulative_rows=1358 cached=121 fetched=198 failed=0
+03:15:27  INFO      src.etl.awards  Awards player [320/528] pid=1641757 source=api added_rows=0 cumulative_rows=1358 cached=121 fetched=199 failed=0
+03:15:27  INFO      src.etl.awards  Awards progress: 320/528 players processed (cached=121 fetched=199 failed=0 rows_buffered=1358)
+03:15:30  INFO      src.etl.awards  Awards player [321/528] pid=1631159 source=api added_rows=0 cumulative_rows=1358 cached=121 fetched=200 failed=0
+03:15:33  INFO      src.etl.awards  Awards player [322/528] pid=1642434 source=api added_rows=0 cumulative_rows=1358 cached=121 fetched=201 failed=0
+03:15:36  INFO      src.etl.awards  Awards player [323/528] pid=1631169 source=api added_rows=0 cumulative_rows=1358 cached=121 fetched=202 failed=0
+03:15:36  INFO      src.etl.awards  Awards player [324/528] pid=1642274 source=cache added_rows=2 cumulative_rows=1360 cached=122 fetched=202 failed=0
+03:15:36  INFO      src.etl.awards  Awards player [325/528] pid=1642349 source=cache added_rows=1 cumulative_rows=1361 cached=123 fetched=202 failed=0
+03:15:39  INFO      src.etl.awards  Awards player [326/528] pid=1630558 source=api added_rows=0 cumulative_rows=1361 cached=123 fetched=203 failed=0
+03:15:39  INFO      src.etl.awards  Awards player [327/528] pid=1628378 source=cache added_rows=27 cumulative_rows=1388 cached=124 fetched=203 failed=0
+03:15:39  INFO      src.etl.awards  Awards player [328/528] pid=1630596 source=cache added_rows=9 cumulative_rows=1397 cached=125 fetched=203 failed=0
+03:15:42  INFO      src.etl.awards  Awards player [329/528] pid=1642367 source=api added_rows=0 cumulative_rows=1397 cached=125 fetched=204 failed=0
+03:15:45  INFO      src.etl.awards  Awards player [330/528] pid=1628370 source=api added_rows=0 cumulative_rows=1397 cached=125 fetched=205 failed=0
+03:15:45  INFO      src.etl.awards  Awards progress: 330/528 players processed (cached=125 fetched=205 failed=0 rows_buffered=1397)
+03:15:45  INFO      src.etl.awards  Awards player [331/528] pid=1630541 source=cache added_rows=1 cumulative_rows=1398 cached=126 fetched=205 failed=0
+03:15:49  INFO      src.etl.awards  Awards player [332/528] pid=1631111 source=api added_rows=0 cumulative_rows=1398 cached=126 fetched=206 failed=0
+03:15:53  INFO      src.etl.awards  Awards player [333/528] pid=1631457 source=api added_rows=0 cumulative_rows=1398 cached=126 fetched=207 failed=0
+03:15:53  INFO      src.etl.awards  Awards player [334/528] pid=1629630 source=cache added_rows=12 cumulative_rows=1410 cached=127 fetched=207 failed=0
+03:15:58  INFO      src.etl.awards  Awards player [335/528] pid=1630530 source=api added_rows=0 cumulative_rows=1410 cached=127 fetched=208 failed=0
+03:15:58  INFO      src.etl.awards  Awards player [336/528] pid=1627749 source=cache added_rows=3 cumulative_rows=1413 cached=128 fetched=208 failed=0
+03:15:58  INFO      src.etl.awards  Awards player [337/528] pid=1627750 source=cache added_rows=5 cumulative_rows=1418 cached=129 fetched=208 failed=0
+03:15:58  INFO      src.etl.awards  Awards player [338/528] pid=1631099 source=cache added_rows=3 cumulative_rows=1421 cached=130 fetched=208 failed=0
+03:16:01  INFO      src.etl.awards  Awards player [339/528] pid=1631200 source=api added_rows=0 cumulative_rows=1421 cached=130 fetched=209 failed=0
+03:16:04  INFO      src.etl.awards  Awards player [340/528] pid=1642867 source=api added_rows=0 cumulative_rows=1421 cached=130 fetched=210 failed=0
+03:16:04  INFO      src.etl.awards  Awards progress: 340/528 players processed (cached=130 fetched=210 failed=0 rows_buffered=1421)
+03:16:04  INFO      src.etl.awards  Awards player [341/528] pid=1629004 source=cache added_rows=1 cumulative_rows=1422 cached=131 fetched=210 failed=0
+03:16:07  INFO      src.etl.awards  Awards player [342/528] pid=1631250 source=api added_rows=0 cumulative_rows=1422 cached=131 fetched=211 failed=0
+03:16:10  INFO      src.etl.awards  Awards player [343/528] pid=1626204 source=api added_rows=0 cumulative_rows=1422 cached=131 fetched=212 failed=0
+03:16:10  INFO      src.etl.awards  Awards player [344/528] pid=1629614 source=cache added_rows=1 cumulative_rows=1423 cached=132 fetched=212 failed=0
+03:16:14  INFO      src.etl.awards  Awards player [345/528] pid=1642948 source=api added_rows=0 cumulative_rows=1423 cached=132 fetched=213 failed=0
+03:16:17  INFO      src.etl.awards  Awards player [346/528] pid=1630174 source=api added_rows=0 cumulative_rows=1423 cached=132 fetched=214 failed=0
+03:16:20  INFO      src.etl.awards  Awards player [347/528] pid=1642854 source=api added_rows=0 cumulative_rows=1423 cached=132 fetched=215 failed=0
+03:16:23  INFO      src.etl.awards  Awards player [348/528] pid=1641803 source=api added_rows=0 cumulative_rows=1423 cached=132 fetched=216 failed=0
+03:16:28  INFO      src.etl.awards  Awards player [349/528] pid=1642949 source=api added_rows=0 cumulative_rows=1423 cached=132 fetched=217 failed=0
+03:16:28  INFO      src.etl.awards  Awards player [350/528] pid=1630192 source=cache added_rows=1 cumulative_rows=1424 cached=133 fetched=217 failed=0
+03:16:28  INFO      src.etl.awards  Awards progress: 350/528 players processed (cached=133 fetched=217 failed=0 rows_buffered=1424)
+03:16:28  INFO      src.etl.awards  Awards player [351/528] pid=203994 source=cache added_rows=1 cumulative_rows=1425 cached=134 fetched=217 failed=0
+03:16:31  INFO      src.etl.awards  Awards player [352/528] pid=1626220 source=api added_rows=0 cumulative_rows=1425 cached=134 fetched=218 failed=0
+03:16:34  INFO      src.etl.awards  Awards player [353/528] pid=1629006 source=api added_rows=0 cumulative_rows=1425 cached=134 fetched=219 failed=0
+03:16:37  INFO      src.etl.awards  Awards player [354/528] pid=1630168 source=api added_rows=0 cumulative_rows=1425 cached=134 fetched=220 failed=0
+03:16:37  INFO      src.etl.awards  Awards player [355/528] pid=1630171 source=cache added_rows=1 cumulative_rows=1426 cached=135 fetched=220 failed=0
+03:16:40  INFO      src.etl.awards  Awards player [356/528] pid=1642950 source=api added_rows=0 cumulative_rows=1426 cached=135 fetched=221 failed=0
+03:16:40  INFO      src.etl.awards  Awards player [357/528] pid=203482 source=cache added_rows=1 cumulative_rows=1427 cached=136 fetched=221 failed=0
+03:16:44  INFO      src.etl.awards  Awards player [358/528] pid=1641807 source=api added_rows=0 cumulative_rows=1427 cached=136 fetched=222 failed=0
+03:16:47  INFO      src.etl.awards  Awards player [359/528] pid=1626162 source=api added_rows=0 cumulative_rows=1427 cached=136 fetched=223 failed=0
+03:16:51  INFO      src.etl.awards  Awards player [360/528] pid=1626166 source=api added_rows=0 cumulative_rows=1427 cached=136 fetched=224 failed=0
+03:16:51  INFO      src.etl.awards  Awards progress: 360/528 players processed (cached=136 fetched=224 failed=0 rows_buffered=1427)
+03:16:51  INFO      src.etl.awards  Awards player [361/528] pid=1627780 source=cache added_rows=1 cumulative_rows=1428 cached=137 fetched=224 failed=0
+03:16:54  INFO      src.etl.awards  Awards player [362/528] pid=1642877 source=api added_rows=0 cumulative_rows=1428 cached=137 fetched=225 failed=0
+03:16:57  INFO      src.etl.awards  Awards player [363/528] pid=1642951 source=api added_rows=0 cumulative_rows=1428 cached=137 fetched=226 failed=0
+03:17:01  INFO      src.etl.awards  Awards player [364/528] pid=1642869 source=api added_rows=0 cumulative_rows=1428 cached=137 fetched=227 failed=0
+03:17:04  INFO      src.etl.awards  Awards player [365/528] pid=1643007 source=api added_rows=0 cumulative_rows=1428 cached=137 fetched=228 failed=0
+03:17:07  INFO      src.etl.awards  Awards player [366/528] pid=1641763 source=api added_rows=0 cumulative_rows=1428 cached=137 fetched=229 failed=0
+03:17:11  INFO      src.etl.awards  Awards player [367/528] pid=1629618 source=api added_rows=0 cumulative_rows=1428 cached=137 fetched=230 failed=0
+03:17:14  INFO      src.etl.awards  Awards player [368/528] pid=1630590 source=api added_rows=0 cumulative_rows=1428 cached=137 fetched=231 failed=0
+03:17:17  INFO      src.etl.awards  Awards player [369/528] pid=1631342 source=api added_rows=0 cumulative_rows=1428 cached=137 fetched=232 failed=0
+03:17:17  INFO      src.etl.awards  Awards player [370/528] pid=203486 source=cache added_rows=1 cumulative_rows=1429 cached=138 fetched=232 failed=0
+03:17:17  INFO      src.etl.awards  Awards progress: 370/528 players processed (cached=138 fetched=232 failed=0 rows_buffered=1429)
+03:17:17  INFO      src.etl.awards  Awards player [371/528] pid=1641764 source=cache added_rows=1 cumulative_rows=1430 cached=139 fetched=232 failed=0
+03:17:21  INFO      src.etl.awards  Awards player [372/528] pid=1627751 source=api added_rows=0 cumulative_rows=1430 cached=139 fetched=233 failed=0
+03:17:21  INFO      src.etl.awards  Awards player [373/528] pid=1629673 source=cache added_rows=1 cumulative_rows=1431 cached=140 fetched=233 failed=0
+03:17:24  INFO      src.etl.awards  Awards player [374/528] pid=1641854 source=api added_rows=0 cumulative_rows=1431 cached=140 fetched=234 failed=0
+03:17:27  INFO      src.etl.awards  Awards player [375/528] pid=1629645 source=api added_rows=0 cumulative_rows=1431 cached=140 fetched=235 failed=0
+03:17:27  INFO      src.etl.awards  Awards player [376/528] pid=1629008 source=cache added_rows=1 cumulative_rows=1432 cached=141 fetched=235 failed=0
+03:17:27  INFO      src.etl.awards  Awards player [377/528] pid=1626171 source=cache added_rows=2 cumulative_rows=1434 cached=142 fetched=235 failed=0
+03:17:27  INFO      src.etl.awards  Awards player [378/528] pid=204001 source=cache added_rows=10 cumulative_rows=1444 cached=143 fetched=235 failed=0
+03:17:30  INFO      src.etl.awards  Awards player [379/528] pid=1642366 source=api added_rows=0 cumulative_rows=1444 cached=143 fetched=236 failed=0
+03:17:34  INFO      src.etl.awards  Awards player [380/528] pid=1630695 source=api added_rows=0 cumulative_rows=1444 cached=143 fetched=237 failed=0
+03:17:34  INFO      src.etl.awards  Awards progress: 380/528 players processed (cached=143 fetched=237 failed=0 rows_buffered=1444)
+03:17:37  INFO      src.etl.awards  Awards player [381/528] pid=1642962 source=api added_rows=0 cumulative_rows=1444 cached=143 fetched=238 failed=0
+03:17:40  INFO      src.etl.awards  Awards player [382/528] pid=203939 source=api added_rows=0 cumulative_rows=1444 cached=143 fetched=239 failed=0
+03:17:40  INFO      src.etl.awards  Awards player [383/528] pid=1626181 source=cache added_rows=4 cumulative_rows=1448 cached=144 fetched=239 failed=0
+03:17:43  INFO      src.etl.awards  Awards player [384/528] pid=1627752 source=api added_rows=0 cumulative_rows=1448 cached=144 fetched=240 failed=0
+03:17:43  INFO      src.etl.awards  Awards player [385/528] pid=1630202 source=cache added_rows=2 cumulative_rows=1450 cached=145 fetched=240 failed=0
+03:17:47  INFO      src.etl.awards  Awards player [386/528] pid=1642878 source=api added_rows=0 cumulative_rows=1450 cached=145 fetched=241 failed=0
+03:17:50  INFO      src.etl.awards  Awards player [387/528] pid=1641765 source=api added_rows=0 cumulative_rows=1450 cached=145 fetched=242 failed=0
+03:17:54  INFO      src.etl.awards  Awards player [388/528] pid=1642852 source=api added_rows=0 cumulative_rows=1450 cached=145 fetched=243 failed=0
+03:17:54  INFO      src.etl.awards  Awards player [389/528] pid=1629674 source=cache added_rows=1 cumulative_rows=1451 cached=146 fetched=243 failed=0
+03:17:54  INFO      src.etl.awards  Awards player [390/528] pid=1630193 source=cache added_rows=2 cumulative_rows=1453 cached=147 fetched=243 failed=0
+03:17:54  INFO      src.etl.awards  Awards progress: 390/528 players processed (cached=147 fetched=243 failed=0 rows_buffered=1453)
+03:17:54  INFO      src.etl.awards  Awards player [391/528] pid=203944 source=cache added_rows=10 cumulative_rows=1463 cached=148 fetched=243 failed=0
+03:17:57  INFO      src.etl.awards  Awards player [392/528] pid=1642875 source=api added_rows=0 cumulative_rows=1463 cached=148 fetched=244 failed=0
+03:18:01  INFO      src.etl.awards  Awards player [393/528] pid=1630559 source=api added_rows=0 cumulative_rows=1463 cached=148 fetched=245 failed=0
+03:18:04  INFO      src.etl.awards  Awards player [394/528] pid=1630194 source=api added_rows=0 cumulative_rows=1463 cached=148 fetched=246 failed=0
+03:18:07  INFO      src.etl.awards  Awards player [395/528] pid=1641810 source=api added_rows=0 cumulative_rows=1463 cached=148 fetched=247 failed=0
+03:18:07  INFO      src.etl.awards  Awards player [396/528] pid=1629675 source=cache added_rows=1 cumulative_rows=1464 cached=149 fetched=247 failed=0
+03:18:10  INFO      src.etl.awards  Awards player [397/528] pid=1642954 source=api added_rows=0 cumulative_rows=1464 cached=149 fetched=248 failed=0
+03:18:14  INFO      src.etl.awards  Awards player [398/528] pid=1630208 source=api added_rows=0 cumulative_rows=1464 cached=149 fetched=249 failed=0
+03:18:17  INFO      src.etl.awards  Awards player [399/528] pid=1642859 source=api added_rows=0 cumulative_rows=1464 cached=149 fetched=250 failed=0
+03:18:20  INFO      src.etl.awards  Awards player [400/528] pid=1642955 source=api added_rows=0 cumulative_rows=1464 cached=149 fetched=251 failed=0
+03:18:20  INFO      src.etl.awards  Awards progress: 400/528 players processed (cached=149 fetched=251 failed=0 rows_buffered=1464)
+03:18:23  INFO      src.etl.awards  Awards player [401/528] pid=1642860 source=api added_rows=0 cumulative_rows=1464 cached=149 fetched=252 failed=0
+03:18:23  INFO      src.etl.awards  Awards player [402/528] pid=1642258 source=cache added_rows=3 cumulative_rows=1467 cached=150 fetched=252 failed=0
+03:18:27  INFO      src.etl.awards  Awards player [403/528] pid=1629130 source=api added_rows=0 cumulative_rows=1467 cached=150 fetched=253 failed=0
+03:18:27  INFO      src.etl.awards  Awards player [404/528] pid=1629011 source=cache added_rows=1 cumulative_rows=1468 cached=151 fetched=253 failed=0
+03:18:30  INFO      src.etl.awards  Awards player [405/528] pid=1631157 source=api added_rows=0 cumulative_rows=1468 cached=151 fetched=254 failed=0
+03:18:30  INFO      src.etl.awards  Awards player [406/528] pid=1626179 source=cache added_rows=1 cumulative_rows=1469 cached=152 fetched=254 failed=0
+03:18:33  INFO      src.etl.awards  Awards player [407/528] pid=1641712 source=api added_rows=0 cumulative_rows=1469 cached=152 fetched=255 failed=0
+03:18:33  INFO      src.etl.awards  Awards player [408/528] pid=1626156 source=cache added_rows=3 cumulative_rows=1472 cached=153 fetched=255 failed=0
+03:18:33  INFO      src.etl.awards  Awards player [409/528] pid=1627734 source=cache added_rows=11 cumulative_rows=1483 cached=154 fetched=255 failed=0
+03:18:37  INFO      src.etl.awards  Awards player [410/528] pid=1642275 source=api added_rows=0 cumulative_rows=1483 cached=154 fetched=256 failed=0
+03:18:37  INFO      src.etl.awards  Awards progress: 410/528 players processed (cached=154 fetched=256 failed=0 rows_buffered=1483)
+03:18:41  INFO      src.etl.awards  Awards player [411/528] pid=1642920 source=api added_rows=0 cumulative_rows=1483 cached=154 fetched=257 failed=0
+03:18:47  INFO      src.etl.awards  Awards player [412/528] pid=1630611 source=api added_rows=0 cumulative_rows=1483 cached=154 fetched=258 failed=0
+03:18:51  INFO      src.etl.awards  Awards player [413/528] pid=1642879 source=api added_rows=0 cumulative_rows=1483 cached=154 fetched=259 failed=0
+03:18:51  INFO      src.etl.awards  Awards player [414/528] pid=1642259 source=cache added_rows=2 cumulative_rows=1485 cached=155 fetched=259 failed=0
+03:18:55  INFO      src.etl.awards  Awards player [415/528] pid=1631204 source=api added_rows=0 cumulative_rows=1485 cached=155 fetched=260 failed=0
+03:18:58  INFO      src.etl.awards  Awards player [416/528] pid=1631248 source=api added_rows=0 cumulative_rows=1485 cached=155 fetched=261 failed=0
+03:18:58  INFO      src.etl.awards  Awards player [417/528] pid=203471 source=cache added_rows=1 cumulative_rows=1486 cached=156 fetched=261 failed=0
+03:18:58  INFO      src.etl.awards  Awards player [418/528] pid=1630578 source=cache added_rows=4 cumulative_rows=1490 cached=157 fetched=261 failed=0
+03:19:01  INFO      src.etl.awards  Awards player [419/528] pid=1641729 source=api added_rows=0 cumulative_rows=1490 cached=157 fetched=262 failed=0
+03:19:01  INFO      src.etl.awards  Awards player [420/528] pid=1629012 source=cache added_rows=1 cumulative_rows=1491 cached=158 fetched=262 failed=0
+03:19:01  INFO      src.etl.awards  Awards progress: 420/528 players processed (cached=158 fetched=262 failed=0 rows_buffered=1491)
+03:19:01  INFO      src.etl.awards  Awards player [421/528] pid=1629013 source=cache added_rows=1 cumulative_rows=1492 cached=159 fetched=262 failed=0
+03:19:05  INFO      src.etl.awards  Awards player [422/528] pid=1630545 source=api added_rows=0 cumulative_rows=1492 cached=159 fetched=263 failed=0
+03:19:08  INFO      src.etl.awards  Awards player [423/528] pid=1630549 source=api added_rows=0 cumulative_rows=1492 cached=159 fetched=264 failed=0
+03:19:11  INFO      src.etl.awards  Awards player [424/528] pid=1631101 source=api added_rows=0 cumulative_rows=1492 cached=159 fetched=265 failed=0
+03:19:14  INFO      src.etl.awards  Awards player [425/528] pid=1642347 source=api added_rows=0 cumulative_rows=1492 cached=159 fetched=266 failed=0
+03:19:17  INFO      src.etl.awards  Awards player [426/528] pid=1641767 source=api added_rows=0 cumulative_rows=1492 cached=159 fetched=267 failed=0
+03:19:20  INFO      src.etl.awards  Awards player [427/528] pid=1642263 source=api added_rows=0 cumulative_rows=1492 cached=159 fetched=268 failed=0
+03:19:25  INFO      src.etl.awards  Awards player [428/528] pid=1642917 source=api added_rows=0 cumulative_rows=1492 cached=159 fetched=269 failed=0
+03:19:25  INFO      src.etl.awards  Awards player [429/528] pid=1627783 source=cache added_rows=13 cumulative_rows=1505 cached=160 fetched=269 failed=0
+03:19:28  INFO      src.etl.awards  Awards player [430/528] pid=1629014 source=api added_rows=0 cumulative_rows=1505 cached=160 fetched=270 failed=0
+03:19:28  INFO      src.etl.awards  Awards progress: 430/528 players processed (cached=160 fetched=270 failed=0 rows_buffered=1505)
+03:19:31  INFO      src.etl.awards  Awards player [431/528] pid=1642354 source=api added_rows=0 cumulative_rows=1505 cached=160 fetched=271 failed=0
+03:19:35  INFO      src.etl.awards  Awards player [432/528] pid=1630579 source=api added_rows=0 cumulative_rows=1505 cached=160 fetched=272 failed=0
+03:19:38  INFO      src.etl.awards  Awards player [433/528] pid=1642914 source=api added_rows=0 cumulative_rows=1505 cached=160 fetched=273 failed=0
+03:19:38  INFO      src.etl.awards  Awards player [434/528] pid=203935 source=cache added_rows=6 cumulative_rows=1511 cached=161 fetched=273 failed=0
+03:19:41  INFO      src.etl.awards  Awards player [435/528] pid=1630696 source=api added_rows=0 cumulative_rows=1511 cached=161 fetched=274 failed=0
+03:19:44  INFO      src.etl.awards  Awards player [436/528] pid=1630188 source=api added_rows=0 cumulative_rows=1511 cached=161 fetched=275 failed=0
+03:19:47  INFO      src.etl.awards  Awards player [437/528] pid=1642449 source=api added_rows=0 cumulative_rows=1511 cached=161 fetched=276 failed=0
+03:19:47  INFO      src.etl.awards  Awards player [438/528] pid=1631095 source=cache added_rows=1 cumulative_rows=1512 cached=162 fetched=276 failed=0
+03:19:50  INFO      src.etl.awards  Awards player [439/528] pid=1641733 source=api added_rows=0 cumulative_rows=1512 cached=162 fetched=277 failed=0
+03:19:50  INFO      src.etl.awards  Awards player [440/528] pid=1631110 source=cache added_rows=1 cumulative_rows=1513 cached=163 fetched=277 failed=0
+03:19:50  INFO      src.etl.awards  Awards progress: 440/528 players processed (cached=163 fetched=277 failed=0 rows_buffered=1513)
+03:19:53  INFO      src.etl.awards  Awards player [441/528] pid=1642850 source=api added_rows=0 cumulative_rows=1513 cached=163 fetched=278 failed=0
+03:19:57  INFO      src.etl.awards  Awards player [442/528] pid=1642285 source=api added_rows=0 cumulative_rows=1513 cached=163 fetched=279 failed=0
+03:20:00  INFO      src.etl.awards  Awards player [443/528] pid=1630311 source=api added_rows=0 cumulative_rows=1513 cached=163 fetched=280 failed=0
+03:20:03  INFO      src.etl.awards  Awards player [444/528] pid=1641815 source=api added_rows=0 cumulative_rows=1513 cached=163 fetched=281 failed=0
+03:20:03  INFO      src.etl.awards  Awards player [445/528] pid=1630191 source=cache added_rows=2 cumulative_rows=1515 cached=164 fetched=281 failed=0
+03:20:06  INFO      src.etl.awards  Awards player [446/528] pid=1631124 source=api added_rows=0 cumulative_rows=1515 cached=164 fetched=282 failed=0
+03:20:09  INFO      src.etl.awards  Awards player [447/528] pid=1629622 source=api added_rows=0 cumulative_rows=1515 cached=164 fetched=283 failed=0
+03:20:09  INFO      src.etl.awards  Awards player [448/528] pid=1630591 source=cache added_rows=1 cumulative_rows=1516 cached=165 fetched=283 failed=0
+03:20:09  INFO      src.etl.awards  Awards player [449/528] pid=1630256 source=cache added_rows=1 cumulative_rows=1517 cached=166 fetched=283 failed=0
+03:20:09  INFO      src.etl.awards  Awards player [450/528] pid=1628369 source=cache added_rows=34 cumulative_rows=1551 cached=167 fetched=283 failed=0
+03:20:09  INFO      src.etl.awards  Awards progress: 450/528 players processed (cached=167 fetched=283 failed=0 rows_buffered=1551)
+03:20:12  INFO      src.etl.awards  Awards player [451/528] pid=202066 source=api added_rows=0 cumulative_rows=1551 cached=167 fetched=284 failed=0
+03:20:15  INFO      src.etl.awards  Awards player [452/528] pid=1631207 source=api added_rows=0 cumulative_rows=1551 cached=167 fetched=285 failed=0
+03:20:19  INFO      src.etl.awards  Awards player [453/528] pid=1642876 source=api added_rows=0 cumulative_rows=1551 cached=167 fetched=286 failed=0
+03:20:22  INFO      src.etl.awards  Awards player [454/528] pid=1630560 source=api added_rows=0 cumulative_rows=1551 cached=167 fetched=287 failed=0
+03:20:22  INFO      src.etl.awards  Awards player [455/528] pid=1641708 source=cache added_rows=3 cumulative_rows=1554 cached=168 fetched=287 failed=0
+03:20:22  INFO      src.etl.awards  Awards player [456/528] pid=1641709 source=cache added_rows=1 cumulative_rows=1555 cached=169 fetched=287 failed=0
+03:20:26  INFO      src.etl.awards  Awards player [457/528] pid=1630679 source=api added_rows=0 cumulative_rows=1555 cached=169 fetched=288 failed=0
+03:20:26  INFO      src.etl.awards  Awards player [458/528] pid=202691 source=cache added_rows=18 cumulative_rows=1573 cached=170 fetched=288 failed=0
+03:20:26  INFO      src.etl.awards  Awards player [459/528] pid=1629680 source=cache added_rows=2 cumulative_rows=1575 cached=171 fetched=288 failed=0
+03:20:26  INFO      src.etl.awards  Awards player [460/528] pid=1630214 source=cache added_rows=1 cumulative_rows=1576 cached=172 fetched=288 failed=0
+03:20:26  INFO      src.etl.awards  Awards progress: 460/528 players processed (cached=172 fetched=288 failed=0 rows_buffered=1576)
+03:20:29  INFO      src.etl.awards  Awards player [461/528] pid=1631166 source=api added_rows=0 cumulative_rows=1576 cached=172 fetched=289 failed=0
+03:20:32  INFO      src.etl.awards  Awards player [462/528] pid=1641772 source=api added_rows=0 cumulative_rows=1576 cached=172 fetched=290 failed=0
+03:20:35  INFO      src.etl.awards  Awards player [463/528] pid=1642910 source=api added_rows=0 cumulative_rows=1576 cached=172 fetched=291 failed=0
+03:20:35  INFO      src.etl.awards  Awards player [464/528] pid=1642260 source=cache added_rows=1 cumulative_rows=1577 cached=173 fetched=291 failed=0
+03:20:38  INFO      src.etl.awards  Awards player [465/528] pid=1630167 source=api added_rows=0 cumulative_rows=1577 cached=173 fetched=292 failed=0
+03:20:38  INFO      src.etl.awards  Awards player [466/528] pid=1626157 source=cache added_rows=25 cumulative_rows=1602 cached=174 fetched=292 failed=0
+03:20:42  INFO      src.etl.awards  Awards player [467/528] pid=1642849 source=api added_rows=0 cumulative_rows=1602 cached=174 fetched=293 failed=0
+03:20:45  INFO      src.etl.awards  Awards player [468/528] pid=1629018 source=api added_rows=0 cumulative_rows=1602 cached=174 fetched=294 failed=0
+03:20:48  INFO      src.etl.awards  Awards player [469/528] pid=1631131 source=api added_rows=0 cumulative_rows=1602 cached=174 fetched=295 failed=0
+03:20:48  INFO      src.etl.awards  Awards player [470/528] pid=1626167 source=cache added_rows=2 cumulative_rows=1604 cached=175 fetched=295 failed=0
+03:20:48  INFO      src.etl.awards  Awards progress: 470/528 players processed (cached=175 fetched=295 failed=0 rows_buffered=1604)
+03:20:51  INFO      src.etl.awards  Awards player [471/528] pid=1642281 source=api added_rows=0 cumulative_rows=1604 cached=175 fetched=296 failed=0
+03:20:54  INFO      src.etl.awards  Awards player [472/528] pid=1630649 source=api added_rows=0 cumulative_rows=1604 cached=175 fetched=297 failed=0
+03:20:54  INFO      src.etl.awards  Awards player [473/528] pid=202685 source=cache added_rows=3 cumulative_rows=1607 cached=176 fetched=297 failed=0
+03:20:54  INFO      src.etl.awards  Awards player [474/528] pid=1627832 source=cache added_rows=3 cumulative_rows=1610 cached=177 fetched=297 failed=0
+03:20:57  INFO      src.etl.awards  Awards player [475/528] pid=1629020 source=api added_rows=0 cumulative_rows=1610 cached=177 fetched=298 failed=0
+03:21:00  INFO      src.etl.awards  Awards player [476/528] pid=1630170 source=api added_rows=0 cumulative_rows=1610 cached=177 fetched=299 failed=0
+03:21:04  INFO      src.etl.awards  Awards player [477/528] pid=1629216 source=api added_rows=0 cumulative_rows=1610 cached=177 fetched=300 failed=0
+03:21:07  INFO      src.etl.awards  Awards player [478/528] pid=1641774 source=api added_rows=0 cumulative_rows=1610 cached=177 fetched=301 failed=0
+03:21:07  INFO      src.etl.awards  Awards player [479/528] pid=202696 source=cache added_rows=5 cumulative_rows=1615 cached=178 fetched=301 failed=0
+03:21:10  INFO      src.etl.awards  Awards player [480/528] pid=1629731 source=api added_rows=0 cumulative_rows=1615 cached=178 fetched=302 failed=0
+03:21:10  INFO      src.etl.awards  Awards progress: 480/528 players processed (cached=178 fetched=302 failed=0 rows_buffered=1615)
+03:21:10  INFO      src.etl.awards  Awards player [481/528] pid=1630532 source=cache added_rows=3 cumulative_rows=1618 cached=179 fetched=302 failed=0
+03:21:13  INFO      src.etl.awards  Awards player [482/528] pid=1629021 source=api added_rows=0 cumulative_rows=1618 cached=179 fetched=303 failed=0
+03:21:16  INFO      src.etl.awards  Awards player [483/528] pid=1631133 source=api added_rows=0 cumulative_rows=1618 cached=179 fetched=304 failed=0
+03:21:19  INFO      src.etl.awards  Awards player [484/528] pid=1641716 source=api added_rows=0 cumulative_rows=1618 cached=179 fetched=305 failed=0
+03:21:19  INFO      src.etl.awards  Awards player [485/528] pid=1641717 source=cache added_rows=3 cumulative_rows=1621 cached=180 fetched=305 failed=0
+03:21:22  INFO      src.etl.awards  Awards player [486/528] pid=1630811 source=api added_rows=0 cumulative_rows=1621 cached=180 fetched=306 failed=0
+03:21:22  INFO      src.etl.awards  Awards player [487/528] pid=1641775 source=cache added_rows=1 cumulative_rows=1622 cached=181 fetched=306 failed=0
+03:21:26  INFO      src.etl.awards  Awards player [488/528] pid=1642266 source=api added_rows=0 cumulative_rows=1622 cached=181 fetched=307 failed=0
+03:21:26  INFO      src.etl.awards  Awards player [489/528] pid=1642276 source=cache added_rows=2 cumulative_rows=1624 cached=182 fetched=307 failed=0
+03:21:26  INFO      src.etl.awards  Awards player [490/528] pid=1629023 source=cache added_rows=1 cumulative_rows=1625 cached=183 fetched=307 failed=0
+03:21:26  INFO      src.etl.awards  Awards progress: 490/528 players processed (cached=183 fetched=307 failed=0 rows_buffered=1625)
+03:21:29  INFO      src.etl.awards  Awards player [491/528] pid=1631102 source=api added_rows=0 cumulative_rows=1625 cached=183 fetched=308 failed=0
+03:21:32  INFO      src.etl.awards  Awards player [492/528] pid=1630322 source=api added_rows=0 cumulative_rows=1625 cached=183 fetched=309 failed=0
+03:21:36  INFO      src.etl.awards  Awards player [493/528] pid=1630570 source=api added_rows=0 cumulative_rows=1625 cached=183 fetched=310 failed=0
+03:21:39  INFO      src.etl.awards  Awards player [494/528] pid=1642364 source=api added_rows=0 cumulative_rows=1625 cached=183 fetched=311 failed=0
+03:21:39  INFO      src.etl.awards  Awards player [495/528] pid=1631212 source=cache added_rows=2 cumulative_rows=1627 cached=184 fetched=311 failed=0
+03:21:39  INFO      src.etl.awards  Awards player [496/528] pid=1642377 source=cache added_rows=2 cumulative_rows=1629 cached=185 fetched=311 failed=0
+03:21:39  INFO      src.etl.awards  Awards player [497/528] pid=1641705 source=cache added_rows=13 cumulative_rows=1642 cached=186 fetched=311 failed=0
+03:21:42  INFO      src.etl.awards  Awards player [498/528] pid=1631104 source=api added_rows=0 cumulative_rows=1642 cached=186 fetched=312 failed=0
+03:21:42  INFO      src.etl.awards  Awards player [499/528] pid=201566 source=cache added_rows=53 cumulative_rows=1695 cached=187 fetched=312 failed=0
+03:21:42  INFO      src.etl.awards  Awards player [500/528] pid=1629632 source=cache added_rows=5 cumulative_rows=1700 cached=188 fetched=312 failed=0
+03:21:42  INFO      src.etl.awards  Awards progress: 500/528 players processed (cached=188 fetched=312 failed=0 rows_buffered=1700)
+03:21:42  INFO      src.etl.awards  Awards player [501/528] pid=1628401 source=cache added_rows=6 cumulative_rows=1706 cached=189 fetched=312 failed=0
+03:21:45  INFO      src.etl.awards  Awards player [502/528] pid=1641715 source=api added_rows=0 cumulative_rows=1706 cached=189 fetched=313 failed=0
+03:21:45  INFO      src.etl.awards  Awards player [503/528] pid=1630598 source=cache added_rows=1 cumulative_rows=1707 cached=190 fetched=313 failed=0
+03:21:45  INFO      src.etl.awards  Awards player [504/528] pid=203952 source=cache added_rows=7 cumulative_rows=1714 cached=191 fetched=313 failed=0
+03:21:48  INFO      src.etl.awards  Awards player [505/528] pid=1631214 source=api added_rows=0 cumulative_rows=1714 cached=191 fetched=314 failed=0
+03:21:52  INFO      src.etl.awards  Awards player [506/528] pid=1642873 source=api added_rows=0 cumulative_rows=1714 cached=191 fetched=315 failed=0
+03:21:55  INFO      src.etl.awards  Awards player [507/528] pid=1630314 source=api added_rows=0 cumulative_rows=1714 cached=191 fetched=316 failed=0
+03:21:58  INFO      src.etl.awards  Awards player [508/528] pid=1642262 source=api added_rows=0 cumulative_rows=1714 cached=191 fetched=317 failed=0
+03:22:02  INFO      src.etl.awards  Awards player [509/528] pid=1629684 source=api added_rows=0 cumulative_rows=1714 cached=191 fetched=318 failed=0
+03:22:02  INFO      src.etl.awards  Awards player [510/528] pid=1631114 source=cache added_rows=7 cumulative_rows=1721 cached=192 fetched=318 failed=0
+03:22:02  INFO      src.etl.awards  Awards progress: 510/528 players processed (cached=192 fetched=318 failed=0 rows_buffered=1721)
+03:22:02  INFO      src.etl.awards  Awards player [511/528] pid=1631119 source=cache added_rows=1 cumulative_rows=1722 cached=193 fetched=318 failed=0
+03:22:02  INFO      src.etl.awards  Awards player [512/528] pid=1629026 source=cache added_rows=1 cumulative_rows=1723 cached=194 fetched=318 failed=0
+03:22:05  INFO      src.etl.awards  Awards player [513/528] pid=1631109 source=api added_rows=0 cumulative_rows=1723 cached=194 fetched=319 failed=0
+03:22:08  INFO      src.etl.awards  Awards player [514/528] pid=1631466 source=api added_rows=0 cumulative_rows=1723 cached=194 fetched=320 failed=0
+03:22:08  INFO      src.etl.awards  Awards player [515/528] pid=1630172 source=cache added_rows=1 cumulative_rows=1724 cached=195 fetched=320 failed=0
+03:22:11  INFO      src.etl.awards  Awards player [516/528] pid=1630533 source=api added_rows=0 cumulative_rows=1724 cached=195 fetched=321 failed=0
+03:22:11  INFO      src.etl.awards  Awards player [517/528] pid=1629057 source=cache added_rows=1 cumulative_rows=1725 cached=196 fetched=321 failed=0
+03:22:14  INFO      src.etl.awards  Awards player [518/528] pid=1631246 source=api added_rows=0 cumulative_rows=1725 cached=196 fetched=322 failed=0
+03:22:14  INFO      src.etl.awards  Awards player [519/528] pid=1629627 source=cache added_rows=5 cumulative_rows=1730 cached=197 fetched=322 failed=0
+03:22:17  INFO      src.etl.awards  Awards player [520/528] pid=1630592 source=api added_rows=0 cumulative_rows=1730 cached=197 fetched=323 failed=0
+03:22:17  INFO      src.etl.awards  Awards progress: 520/528 players processed (cached=197 fetched=323 failed=0 rows_buffered=1730)
+03:22:20  INFO      src.etl.awards  Awards player [521/528] pid=1642874 source=api added_rows=0 cumulative_rows=1730 cached=197 fetched=324 failed=0
+03:22:20  INFO      src.etl.awards  Awards player [522/528] pid=1627824 source=cache added_rows=1 cumulative_rows=1731 cached=198 fetched=324 failed=0
+03:22:23  INFO      src.etl.awards  Awards player [523/528] pid=1642905 source=api added_rows=0 cumulative_rows=1731 cached=198 fetched=325 failed=0
+03:22:27  INFO      src.etl.awards  Awards player [524/528] pid=1642443 source=api added_rows=0 cumulative_rows=1731 cached=198 fetched=326 failed=0
+03:22:27  INFO      src.etl.awards  Awards player [525/528] pid=1629027 source=cache added_rows=20 cumulative_rows=1751 cached=199 fetched=326 failed=0
+03:22:30  INFO      src.etl.awards  Awards player [526/528] pid=1642911 source=api added_rows=0 cumulative_rows=1751 cached=199 fetched=327 failed=0
+03:22:30  INFO      src.etl.awards  Awards player [527/528] pid=1627826 source=cache added_rows=1 cumulative_rows=1752 cached=200 fetched=327 failed=0
+03:22:33  INFO      src.etl.awards  Awards player [528/528] pid=1641783 source=api added_rows=0 cumulative_rows=1752 cached=200 fetched=328 failed=0
+03:22:33  INFO      src.etl.awards  Awards progress: 528/528 players processed (cached=200 fetched=328 failed=0 rows_buffered=1752)
+03:22:33  INFO      src.etl.awards  Awards row filter: kept=1700 skipped_missing_player=0 skipped_missing_season=52
+03:22:33  INFO      src.etl.awards  fact_player_award: 65 rows upserted from 1700 filtered rows.
+03:22:33  INFO      ingest.awards_refresh  Incremental awards refresh complete: inserted=65

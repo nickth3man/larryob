@@ -1,0 +1,108 @@
+08:02:00  INFO      ingest  Ingest arguments: seasons=['2014-15', '2015-16', '2016-17', '2017-18', '2018-19', '2019-20', '2020-21', '2021-22', '2022-23'] dims_only=True enrich_bio=False awards=False salaries=False rosters=True include_playoffs=False pbp_limit=0 skip_reconciliation=False reconciliation_warn_only=False raw_backfill=False raw_dir=None raw_backfill_fail_fast=False analytics_view=None analytics_limit=20 analytics_output=None analytics_only=False metrics=False metrics_summary=False metrics_export_endpoint=None log_level=INFO log_file=logs\ingest_rosters_2014_2023_closeout.log
+08:02:00  INFO      ingest  Initialising database schema...
+08:02:00  INFO      ingest  Loading dimension tables...
+08:02:00  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+08:02:00  INFO      src.etl.dimensions  Skipping dim_team (already loaded)
+08:02:00  INFO      src.etl.dimensions  Skipping dim_player static (already loaded)
+08:02:00  INFO      ingest  Stage dimensions elapsed=0.00s
+08:02:00  INFO      ingest  Checkpoint post-dimensions: etl_run_log status counts={'empty': 12, 'ok': 526} delta={'empty': 12, 'ok': 526} elapsed_since_previous=n/a
+08:02:00  INFO      ingest  Checkpoint post-dimensions: table=dim_season row_count=80 delta=n/a previous=n/a
+08:02:00  INFO      ingest  Checkpoint post-dimensions: table=dim_team row_count=30 delta=n/a previous=n/a
+08:02:00  INFO      ingest  Checkpoint post-dimensions: table=dim_player row_count=5115 delta=n/a previous=n/a
+08:02:00  INFO      ingest  Checkpoint post-dimensions: etl_run_log tail (latest 12 rows)
+08:02:00  INFO      ingest  Checkpoint post-dimensions: runlog id=538 table=fact_roster season=2012-13 loader=roster.load_season_rosters status=ok row_count=446 started=2026-02-21T12:37:35.253394+00:00 finished=2026-02-21T12:38:16.085098+00:00
+08:02:00  INFO      ingest  Checkpoint post-dimensions: runlog id=537 table=fact_roster season=2011-12 loader=roster.load_season_rosters status=ok row_count=442 started=2026-02-21T12:35:27.062379+00:00 finished=2026-02-21T12:37:35.253138+00:00
+08:02:00  INFO      ingest  Checkpoint post-dimensions: runlog id=536 table=fact_roster season=2010-11 loader=roster.load_season_rosters status=ok row_count=437 started=2026-02-21T12:33:05.106230+00:00 finished=2026-02-21T12:35:27.062119+00:00
+08:02:00  INFO      ingest  Checkpoint post-dimensions: runlog id=535 table=fact_roster season=2009-10 loader=roster.load_season_rosters status=ok row_count=345 started=2026-02-21T12:14:08.587188+00:00 finished=2026-02-21T12:33:05.106172+00:00
+08:02:00  INFO      ingest  Checkpoint post-dimensions: runlog id=534 table=fact_roster season=2008-09 loader=roster.load_season_rosters status=ok row_count=435 started=2026-02-21T12:11:35.564043+00:00 finished=2026-02-21T12:14:08.586948+00:00
+08:02:00  INFO      ingest  Checkpoint post-dimensions: runlog id=533 table=fact_roster season=2007-08 loader=roster.load_season_rosters status=ok row_count=430 started=2026-02-21T12:09:02.383740+00:00 finished=2026-02-21T12:11:35.563802+00:00
+08:02:00  INFO      ingest  Checkpoint post-dimensions: runlog id=532 table=fact_roster season=2006-07 loader=roster.load_season_rosters status=ok row_count=436 started=2026-02-21T12:06:35.316585+00:00 finished=2026-02-21T12:09:02.383400+00:00
+08:02:00  INFO      ingest  Checkpoint post-dimensions: runlog id=531 table=fact_roster season=2005-06 loader=roster.load_season_rosters status=ok row_count=413 started=2026-02-21T12:04:25.900444+00:00 finished=2026-02-21T12:06:35.316348+00:00
+08:02:00  INFO      ingest  Checkpoint post-dimensions: runlog id=530 table=fact_roster season=2004-05 loader=roster.load_season_rosters status=ok row_count=378 started=2026-02-21T12:02:14.377339+00:00 finished=2026-02-21T12:04:25.900165+00:00
+08:02:00  INFO      ingest  Checkpoint post-dimensions: runlog id=529 table=fact_roster season=2003-04 loader=roster.load_season_rosters status=ok row_count=416 started=2026-02-21T11:59:21.303207+00:00 finished=2026-02-21T12:02:14.377022+00:00
+08:02:00  INFO      ingest  Checkpoint post-dimensions: runlog id=528 table=fact_roster season=2002-03 loader=roster.load_season_rosters status=ok row_count=467 started=2026-02-21T11:57:35.957244+00:00 finished=2026-02-21T11:59:21.302842+00:00
+08:02:00  INFO      ingest  Checkpoint post-dimensions: runlog id=527 table=fact_roster season=2001-02 loader=roster.load_season_rosters status=ok row_count=367 started=2026-02-21T11:55:40.786601+00:00 finished=2026-02-21T11:57:35.956992+00:00
+08:02:00  INFO      ingest  Loading rosters...
+08:02:01  INFO      src.etl.roster  Roster: 5/30 teams processed for 2014-15.
+08:02:02  INFO      src.etl.roster  Roster: 10/30 teams processed for 2014-15.
+08:02:03  INFO      src.etl.roster  Roster: 15/30 teams processed for 2014-15.
+08:02:34  WARNING   src.etl.api_client  Attempt 1/5 failed for 'CommonTeamRoster(1610612753,2014-15)': HTTPSConnectionPool(host='stats.nba.com', port=443): Read timed out. (read timeout=30) — retrying in 0s
+08:02:34  INFO      src.etl.roster  Roster: 20/30 teams processed for 2014-15.
+08:02:41  INFO      src.etl.roster  Roster: 25/30 teams processed for 2014-15.
+08:02:59  INFO      src.etl.roster  Roster: 30/30 teams processed for 2014-15.
+08:02:59  INFO      src.etl.roster  fact_roster: 450 total rows for 2014-15.
+08:03:20  INFO      src.etl.roster  Roster: 5/30 teams processed for 2015-16.
+08:03:36  INFO      src.etl.roster  Roster: 10/30 teams processed for 2015-16.
+08:03:53  INFO      src.etl.roster  Roster: 15/30 teams processed for 2015-16.
+08:04:08  INFO      src.etl.roster  Roster: 20/30 teams processed for 2015-16.
+08:04:22  INFO      src.etl.roster  Roster: 25/30 teams processed for 2015-16.
+08:04:36  INFO      src.etl.roster  Roster: 30/30 teams processed for 2015-16.
+08:04:36  INFO      src.etl.roster  fact_roster: 451 total rows for 2015-16.
+08:04:52  INFO      src.etl.roster  Roster: 5/30 teams processed for 2016-17.
+08:05:08  INFO      src.etl.roster  Roster: 10/30 teams processed for 2016-17.
+08:05:22  INFO      src.etl.roster  Roster: 15/30 teams processed for 2016-17.
+08:05:37  INFO      src.etl.roster  Roster: 20/30 teams processed for 2016-17.
+08:05:53  INFO      src.etl.roster  Roster: 25/30 teams processed for 2016-17.
+08:06:11  INFO      src.etl.roster  Roster: 30/30 teams processed for 2016-17.
+08:06:11  INFO      src.etl.roster  fact_roster: 451 total rows for 2016-17.
+08:06:28  INFO      src.etl.roster  Roster: 5/30 teams processed for 2017-18.
+08:06:46  INFO      src.etl.roster  Roster: 10/30 teams processed for 2017-18.
+08:07:04  INFO      src.etl.roster  Roster: 15/30 teams processed for 2017-18.
+08:07:21  INFO      src.etl.roster  Roster: 20/30 teams processed for 2017-18.
+08:07:35  INFO      src.etl.roster  Roster: 25/30 teams processed for 2017-18.
+08:07:53  INFO      src.etl.roster  Roster: 30/30 teams processed for 2017-18.
+08:07:53  INFO      src.etl.roster  fact_roster: 502 total rows for 2017-18.
+08:08:18  INFO      src.etl.roster  Roster: 5/30 teams processed for 2018-19.
+08:08:57  INFO      src.etl.roster  Roster: 10/30 teams processed for 2018-19.
+08:09:23  INFO      src.etl.roster  Roster: 15/30 teams processed for 2018-19.
+08:09:44  INFO      src.etl.roster  Roster: 20/30 teams processed for 2018-19.
+08:10:03  INFO      src.etl.roster  Roster: 25/30 teams processed for 2018-19.
+08:10:21  INFO      src.etl.roster  Roster: 30/30 teams processed for 2018-19.
+08:10:21  INFO      src.etl.roster  fact_roster: 497 total rows for 2018-19.
+08:10:40  INFO      src.etl.roster  Roster: 5/30 teams processed for 2019-20.
+08:11:00  INFO      src.etl.roster  Roster: 10/30 teams processed for 2019-20.
+08:11:19  INFO      src.etl.roster  Roster: 15/30 teams processed for 2019-20.
+08:11:41  INFO      src.etl.roster  Roster: 20/30 teams processed for 2019-20.
+08:12:04  INFO      src.etl.roster  Roster: 25/30 teams processed for 2019-20.
+08:12:28  INFO      src.etl.roster  Roster: 30/30 teams processed for 2019-20.
+08:12:28  INFO      src.etl.roster  fact_roster: 510 total rows for 2019-20.
+08:13:08  INFO      src.etl.roster  Roster: 5/30 teams processed for 2020-21.
+08:13:38  INFO      src.etl.roster  Roster: 10/30 teams processed for 2020-21.
+08:14:02  INFO      src.etl.roster  Roster: 15/30 teams processed for 2020-21.
+08:14:19  INFO      src.etl.roster  Roster: 20/30 teams processed for 2020-21.
+08:14:45  INFO      src.etl.roster  Roster: 25/30 teams processed for 2020-21.
+08:15:06  INFO      src.etl.roster  Roster: 30/30 teams processed for 2020-21.
+08:15:06  INFO      src.etl.roster  fact_roster: 503 total rows for 2020-21.
+08:15:26  INFO      src.etl.roster  Roster: 5/30 teams processed for 2021-22.
+08:15:45  INFO      src.etl.roster  Roster: 10/30 teams processed for 2021-22.
+08:16:04  INFO      src.etl.roster  Roster: 15/30 teams processed for 2021-22.
+08:16:29  INFO      src.etl.roster  Roster: 20/30 teams processed for 2021-22.
+08:16:44  INFO      src.etl.roster  Roster: 25/30 teams processed for 2021-22.
+08:16:58  INFO      src.etl.roster  Roster: 30/30 teams processed for 2021-22.
+08:16:58  INFO      src.etl.roster  fact_roster: 506 total rows for 2021-22.
+08:17:18  INFO      src.etl.roster  Roster: 5/30 teams processed for 2022-23.
+08:17:37  INFO      src.etl.roster  Roster: 10/30 teams processed for 2022-23.
+08:17:51  INFO      src.etl.roster  Roster: 15/30 teams processed for 2022-23.
+08:18:08  INFO      src.etl.roster  Roster: 20/30 teams processed for 2022-23.
+08:18:21  INFO      src.etl.roster  Roster: 25/30 teams processed for 2022-23.
+08:18:36  INFO      src.etl.roster  Roster: 30/30 teams processed for 2022-23.
+08:18:36  INFO      src.etl.roster  fact_roster: 508 total rows for 2022-23.
+08:18:36  INFO      ingest  Stage rosters elapsed=995.83s
+08:18:36  INFO      ingest  Checkpoint post-rosters: etl_run_log status counts={'empty': 12, 'ok': 535} delta={'ok': 9} elapsed_since_previous=995.83s
+08:18:36  INFO      ingest  Checkpoint post-rosters: table=fact_roster row_count=23428 delta=n/a previous=n/a
+08:18:36  INFO      ingest  Checkpoint post-rosters: etl_run_log tail (latest 12 rows)
+08:18:36  INFO      ingest  Checkpoint post-rosters: runlog id=547 table=fact_roster season=2022-23 loader=roster.load_season_rosters status=ok row_count=508 started=2026-02-21T13:16:58.132031+00:00 finished=2026-02-21T13:18:36.313791+00:00
+08:18:36  INFO      ingest  Checkpoint post-rosters: runlog id=546 table=fact_roster season=2021-22 loader=roster.load_season_rosters status=ok row_count=506 started=2026-02-21T13:15:06.563649+00:00 finished=2026-02-21T13:16:58.131770+00:00
+08:18:36  INFO      ingest  Checkpoint post-rosters: runlog id=545 table=fact_roster season=2020-21 loader=roster.load_season_rosters status=ok row_count=503 started=2026-02-21T13:12:28.061425+00:00 finished=2026-02-21T13:15:06.563414+00:00
+08:18:36  INFO      ingest  Checkpoint post-rosters: runlog id=544 table=fact_roster season=2019-20 loader=roster.load_season_rosters status=ok row_count=510 started=2026-02-21T13:10:21.943898+00:00 finished=2026-02-21T13:12:28.061179+00:00
+08:18:36  INFO      ingest  Checkpoint post-rosters: runlog id=543 table=fact_roster season=2018-19 loader=roster.load_season_rosters status=ok row_count=497 started=2026-02-21T13:07:53.120018+00:00 finished=2026-02-21T13:10:21.943652+00:00
+08:18:36  INFO      ingest  Checkpoint post-rosters: runlog id=542 table=fact_roster season=2017-18 loader=roster.load_season_rosters status=ok row_count=502 started=2026-02-21T13:06:11.738342+00:00 finished=2026-02-21T13:07:53.119781+00:00
+08:18:36  INFO      ingest  Checkpoint post-rosters: runlog id=541 table=fact_roster season=2016-17 loader=roster.load_season_rosters status=ok row_count=451 started=2026-02-21T13:04:36.266734+00:00 finished=2026-02-21T13:06:11.738089+00:00
+08:18:36  INFO      ingest  Checkpoint post-rosters: runlog id=540 table=fact_roster season=2015-16 loader=roster.load_season_rosters status=ok row_count=451 started=2026-02-21T13:02:59.679801+00:00 finished=2026-02-21T13:04:36.266479+00:00
+08:18:36  INFO      ingest  Checkpoint post-rosters: runlog id=539 table=fact_roster season=2014-15 loader=roster.load_season_rosters status=ok row_count=450 started=2026-02-21T13:02:00.489065+00:00 finished=2026-02-21T13:02:59.679714+00:00
+08:18:36  INFO      ingest  Checkpoint post-rosters: runlog id=538 table=fact_roster season=2012-13 loader=roster.load_season_rosters status=ok row_count=446 started=2026-02-21T12:37:35.253394+00:00 finished=2026-02-21T12:38:16.085098+00:00
+08:18:36  INFO      ingest  Checkpoint post-rosters: runlog id=537 table=fact_roster season=2011-12 loader=roster.load_season_rosters status=ok row_count=442 started=2026-02-21T12:35:27.062379+00:00 finished=2026-02-21T12:37:35.253138+00:00
+08:18:36  INFO      ingest  Checkpoint post-rosters: runlog id=536 table=fact_roster season=2010-11 loader=roster.load_season_rosters status=ok row_count=437 started=2026-02-21T12:33:05.106230+00:00 finished=2026-02-21T12:35:27.062119+00:00
+08:18:36  INFO      ingest  --dims-only set; skipping box scores.
+08:18:36  INFO      ingest  Ingest total elapsed=995.83s
+08:18:36  INFO      ingest  Ingest complete.

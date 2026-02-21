@@ -1,0 +1,49 @@
+08:18:53  INFO      ingest  Ingest arguments: seasons=['2022-23'] dims_only=True enrich_bio=False awards=False salaries=True rosters=False include_playoffs=False pbp_limit=0 skip_reconciliation=False reconciliation_warn_only=False raw_backfill=False raw_dir=None raw_backfill_fail_fast=False analytics_view=None analytics_limit=20 analytics_output=None analytics_only=False metrics=False metrics_summary=False metrics_export_endpoint=None log_level=INFO log_file=logs\ingest_salary_2022_23_probe.log
+08:18:53  INFO      ingest  Initialising database schema...
+08:18:53  INFO      ingest  Loading dimension tables...
+08:18:53  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+08:18:53  INFO      src.etl.dimensions  Skipping dim_team (already loaded)
+08:18:53  INFO      src.etl.dimensions  Skipping dim_player static (already loaded)
+08:18:53  INFO      ingest  Stage dimensions elapsed=0.00s
+08:18:53  INFO      ingest  Checkpoint post-dimensions: etl_run_log status counts={'empty': 12, 'ok': 535} delta={'empty': 12, 'ok': 535} elapsed_since_previous=n/a
+08:18:53  INFO      ingest  Checkpoint post-dimensions: table=dim_season row_count=80 delta=n/a previous=n/a
+08:18:53  INFO      ingest  Checkpoint post-dimensions: table=dim_team row_count=30 delta=n/a previous=n/a
+08:18:53  INFO      ingest  Checkpoint post-dimensions: table=dim_player row_count=5115 delta=n/a previous=n/a
+08:18:53  INFO      ingest  Checkpoint post-dimensions: etl_run_log tail (latest 12 rows)
+08:18:53  INFO      ingest  Checkpoint post-dimensions: runlog id=547 table=fact_roster season=2022-23 loader=roster.load_season_rosters status=ok row_count=508 started=2026-02-21T13:16:58.132031+00:00 finished=2026-02-21T13:18:36.313791+00:00
+08:18:53  INFO      ingest  Checkpoint post-dimensions: runlog id=546 table=fact_roster season=2021-22 loader=roster.load_season_rosters status=ok row_count=506 started=2026-02-21T13:15:06.563649+00:00 finished=2026-02-21T13:16:58.131770+00:00
+08:18:53  INFO      ingest  Checkpoint post-dimensions: runlog id=545 table=fact_roster season=2020-21 loader=roster.load_season_rosters status=ok row_count=503 started=2026-02-21T13:12:28.061425+00:00 finished=2026-02-21T13:15:06.563414+00:00
+08:18:53  INFO      ingest  Checkpoint post-dimensions: runlog id=544 table=fact_roster season=2019-20 loader=roster.load_season_rosters status=ok row_count=510 started=2026-02-21T13:10:21.943898+00:00 finished=2026-02-21T13:12:28.061179+00:00
+08:18:53  INFO      ingest  Checkpoint post-dimensions: runlog id=543 table=fact_roster season=2018-19 loader=roster.load_season_rosters status=ok row_count=497 started=2026-02-21T13:07:53.120018+00:00 finished=2026-02-21T13:10:21.943652+00:00
+08:18:53  INFO      ingest  Checkpoint post-dimensions: runlog id=542 table=fact_roster season=2017-18 loader=roster.load_season_rosters status=ok row_count=502 started=2026-02-21T13:06:11.738342+00:00 finished=2026-02-21T13:07:53.119781+00:00
+08:18:53  INFO      ingest  Checkpoint post-dimensions: runlog id=541 table=fact_roster season=2016-17 loader=roster.load_season_rosters status=ok row_count=451 started=2026-02-21T13:04:36.266734+00:00 finished=2026-02-21T13:06:11.738089+00:00
+08:18:53  INFO      ingest  Checkpoint post-dimensions: runlog id=540 table=fact_roster season=2015-16 loader=roster.load_season_rosters status=ok row_count=451 started=2026-02-21T13:02:59.679801+00:00 finished=2026-02-21T13:04:36.266479+00:00
+08:18:53  INFO      ingest  Checkpoint post-dimensions: runlog id=539 table=fact_roster season=2014-15 loader=roster.load_season_rosters status=ok row_count=450 started=2026-02-21T13:02:00.489065+00:00 finished=2026-02-21T13:02:59.679714+00:00
+08:18:53  INFO      ingest  Checkpoint post-dimensions: runlog id=538 table=fact_roster season=2012-13 loader=roster.load_season_rosters status=ok row_count=446 started=2026-02-21T12:37:35.253394+00:00 finished=2026-02-21T12:38:16.085098+00:00
+08:18:53  INFO      ingest  Checkpoint post-dimensions: runlog id=537 table=fact_roster season=2011-12 loader=roster.load_season_rosters status=ok row_count=442 started=2026-02-21T12:35:27.062379+00:00 finished=2026-02-21T12:37:35.253138+00:00
+08:18:53  INFO      ingest  Checkpoint post-dimensions: runlog id=536 table=fact_roster season=2010-11 loader=roster.load_season_rosters status=ok row_count=437 started=2026-02-21T12:33:05.106230+00:00 finished=2026-02-21T12:35:27.062119+00:00
+08:18:53  INFO      ingest  Loading salary cap and player salaries...
+08:18:53  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+08:18:53  INFO      src.etl.salaries  dim_salary_cap: 41 rows upserted.
+08:18:53  INFO      src.etl.dimensions  dim_season: 0 rows upserted.
+08:19:00  INFO      src.etl.salaries  fact_salary (2022-23): 543 rows upserted.
+08:19:02  INFO      ingest  Stage salaries elapsed=8.51s
+08:19:02  INFO      ingest  Checkpoint post-salaries: etl_run_log status counts={'empty': 12, 'ok': 537} delta={'ok': 2} elapsed_since_previous=8.52s
+08:19:02  INFO      ingest  Checkpoint post-salaries: table=dim_salary_cap row_count=41 delta=n/a previous=n/a
+08:19:02  INFO      ingest  Checkpoint post-salaries: table=fact_salary row_count=1997 delta=n/a previous=n/a
+08:19:02  INFO      ingest  Checkpoint post-salaries: etl_run_log tail (latest 12 rows)
+08:19:02  INFO      ingest  Checkpoint post-salaries: runlog id=549 table=fact_salary season=2022-23 loader=salaries.load_player_salaries status=ok row_count=543 started=2026-02-21T13:18:53.961420+00:00 finished=2026-02-21T13:19:00.474534+00:00
+08:19:02  INFO      ingest  Checkpoint post-salaries: runlog id=548 table=dim_season season=- loader=dimensions.load_seasons.2022 status=ok row_count=0 started=2026-02-21T13:18:53.961440+00:00 finished=2026-02-21T13:18:53.963775+00:00
+08:19:02  INFO      ingest  Checkpoint post-salaries: runlog id=547 table=fact_roster season=2022-23 loader=roster.load_season_rosters status=ok row_count=508 started=2026-02-21T13:16:58.132031+00:00 finished=2026-02-21T13:18:36.313791+00:00
+08:19:02  INFO      ingest  Checkpoint post-salaries: runlog id=546 table=fact_roster season=2021-22 loader=roster.load_season_rosters status=ok row_count=506 started=2026-02-21T13:15:06.563649+00:00 finished=2026-02-21T13:16:58.131770+00:00
+08:19:02  INFO      ingest  Checkpoint post-salaries: runlog id=545 table=fact_roster season=2020-21 loader=roster.load_season_rosters status=ok row_count=503 started=2026-02-21T13:12:28.061425+00:00 finished=2026-02-21T13:15:06.563414+00:00
+08:19:02  INFO      ingest  Checkpoint post-salaries: runlog id=544 table=fact_roster season=2019-20 loader=roster.load_season_rosters status=ok row_count=510 started=2026-02-21T13:10:21.943898+00:00 finished=2026-02-21T13:12:28.061179+00:00
+08:19:02  INFO      ingest  Checkpoint post-salaries: runlog id=543 table=fact_roster season=2018-19 loader=roster.load_season_rosters status=ok row_count=497 started=2026-02-21T13:07:53.120018+00:00 finished=2026-02-21T13:10:21.943652+00:00
+08:19:02  INFO      ingest  Checkpoint post-salaries: runlog id=542 table=fact_roster season=2017-18 loader=roster.load_season_rosters status=ok row_count=502 started=2026-02-21T13:06:11.738342+00:00 finished=2026-02-21T13:07:53.119781+00:00
+08:19:02  INFO      ingest  Checkpoint post-salaries: runlog id=541 table=fact_roster season=2016-17 loader=roster.load_season_rosters status=ok row_count=451 started=2026-02-21T13:04:36.266734+00:00 finished=2026-02-21T13:06:11.738089+00:00
+08:19:02  INFO      ingest  Checkpoint post-salaries: runlog id=540 table=fact_roster season=2015-16 loader=roster.load_season_rosters status=ok row_count=451 started=2026-02-21T13:02:59.679801+00:00 finished=2026-02-21T13:04:36.266479+00:00
+08:19:02  INFO      ingest  Checkpoint post-salaries: runlog id=539 table=fact_roster season=2014-15 loader=roster.load_season_rosters status=ok row_count=450 started=2026-02-21T13:02:00.489065+00:00 finished=2026-02-21T13:02:59.679714+00:00
+08:19:02  INFO      ingest  Checkpoint post-salaries: runlog id=538 table=fact_roster season=2012-13 loader=roster.load_season_rosters status=ok row_count=446 started=2026-02-21T12:37:35.253394+00:00 finished=2026-02-21T12:38:16.085098+00:00
+08:19:02  INFO      ingest  --dims-only set; skipping box scores.
+08:19:02  INFO      ingest  Ingest total elapsed=8.52s
+08:19:02  INFO      ingest  Ingest complete.

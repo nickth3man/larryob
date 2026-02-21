@@ -1,0 +1,35 @@
+16:22:58  INFO      ingest  Ingest arguments: seasons=['2014-15'] dims_only=True enrich_bio=False awards=False salaries=True rosters=False include_playoffs=False pbp_limit=0 skip_reconciliation=False reconciliation_warn_only=False raw_backfill=False raw_dir=None raw_backfill_fail_fast=False analytics_view=None analytics_limit=20 analytics_output=None analytics_only=False metrics=False metrics_summary=False metrics_export_endpoint=None log_level=INFO log_file=logs\ingest_auto_rate_only.log runlog_tail=4
+16:22:58  INFO      ingest  Initialising database schema...
+16:22:58  INFO      ingest  Loading dimension tables...
+16:22:58  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:22:58  INFO      src.etl.dimensions  Skipping dim_team (already loaded)
+16:22:58  INFO      src.etl.dimensions  Skipping dim_player static (already loaded)
+16:22:58  INFO      ingest  Stage dimensions elapsed=0.00s
+16:22:58  INFO      ingest  Checkpoint post-dimensions: etl_run_log status counts={'empty': 12, 'ok': 748, 'rate_limited': 2} delta={'empty': 12, 'ok': 748, 'rate_limited': 2} elapsed_since_previous=n/a
+16:22:58  INFO      ingest  Checkpoint post-dimensions: table=dim_season row_count=80 delta=n/a previous=n/a
+16:22:58  INFO      ingest  Checkpoint post-dimensions: table=dim_team row_count=30 delta=n/a previous=n/a
+16:22:58  INFO      ingest  Checkpoint post-dimensions: table=dim_player row_count=5115 delta=n/a previous=n/a
+16:22:58  INFO      ingest  Checkpoint post-dimensions: etl_run_log tail (latest 4 rows)
+16:22:58  INFO      ingest  Checkpoint post-dimensions: runlog id=762 table=fact_salary season=2004-05 loader=salaries.load_player_salaries.v2 status=ok row_count=0 started=2026-02-21T21:22:10.415345+00:00 finished=2026-02-21T21:22:53.268390+00:00
+16:22:58  INFO      ingest  Checkpoint post-dimensions: runlog id=761 table=fact_salary season=2003-04 loader=salaries.load_player_salaries.v2 status=ok row_count=0 started=2026-02-21T21:21:27.288337+00:00 finished=2026-02-21T21:22:08.414751+00:00
+16:22:58  INFO      ingest  Checkpoint post-dimensions: runlog id=760 table=fact_salary season=2013-14 loader=salaries.load_player_salaries.v2 status=rate_limited row_count=0 started=2026-02-21T21:21:37.008853+00:00 finished=2026-02-21T21:21:37.120386+00:00
+16:22:58  INFO      ingest  Checkpoint post-dimensions: runlog id=759 table=fact_salary season=2002-03 loader=salaries.load_player_salaries.v2 status=ok row_count=0 started=2026-02-21T21:20:44.054434+00:00 finished=2026-02-21T21:21:25.287768+00:00
+16:22:58  INFO      ingest  Loading salary cap and player salaries...
+16:22:58  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:22:58  INFO      src.etl.salaries  dim_salary_cap: 41 rows upserted.
+16:22:58  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+16:22:58  INFO      src.etl.salaries  fact_salary (2014-15): team_map_source=fact_team_season teams=26
+16:22:58  WARNING   src.etl.salaries  fact_salary (2014-15): stopping early due rate-limit url=https://www.basketball-reference.com/teams/ATL/2015.html retry_after=2286s max_allowed=300s
+16:22:58  INFO      src.etl.salaries  fact_salary (2014-15): team_pages fetched=0 cached=0 candidate_rows=0 unmatched_names=0
+16:22:58  INFO      ingest  Stage salaries elapsed=0.11s
+16:22:58  INFO      ingest  Checkpoint post-salaries: etl_run_log status counts={'empty': 12, 'ok': 748, 'rate_limited': 3} delta={'rate_limited': 1} elapsed_since_previous=0.11s
+16:22:58  INFO      ingest  Checkpoint post-salaries: table=dim_salary_cap row_count=41 delta=n/a previous=n/a
+16:22:58  INFO      ingest  Checkpoint post-salaries: table=fact_salary row_count=2743 delta=n/a previous=n/a
+16:22:58  INFO      ingest  Checkpoint post-salaries: etl_run_log tail (latest 4 rows)
+16:22:58  INFO      ingest  Checkpoint post-salaries: runlog id=763 table=fact_salary season=2014-15 loader=salaries.load_player_salaries.v2 status=rate_limited row_count=0 started=2026-02-21T21:22:58.545751+00:00 finished=2026-02-21T21:22:58.648034+00:00
+16:22:58  INFO      ingest  Checkpoint post-salaries: runlog id=762 table=fact_salary season=2004-05 loader=salaries.load_player_salaries.v2 status=ok row_count=0 started=2026-02-21T21:22:10.415345+00:00 finished=2026-02-21T21:22:53.268390+00:00
+16:22:58  INFO      ingest  Checkpoint post-salaries: runlog id=761 table=fact_salary season=2003-04 loader=salaries.load_player_salaries.v2 status=ok row_count=0 started=2026-02-21T21:21:27.288337+00:00 finished=2026-02-21T21:22:08.414751+00:00
+16:22:58  INFO      ingest  Checkpoint post-salaries: runlog id=760 table=fact_salary season=2013-14 loader=salaries.load_player_salaries.v2 status=rate_limited row_count=0 started=2026-02-21T21:21:37.008853+00:00 finished=2026-02-21T21:21:37.120386+00:00
+16:22:58  INFO      ingest  --dims-only set; skipping box scores.
+16:22:58  INFO      ingest  Ingest total elapsed=0.11s
+16:22:58  INFO      ingest  Ingest complete.

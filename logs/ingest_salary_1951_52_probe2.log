@@ -1,0 +1,77 @@
+10:30:17  INFO      ingest  Ingest arguments: seasons=['1951-52'] dims_only=True enrich_bio=False awards=False salaries=True rosters=False include_playoffs=False pbp_limit=0 skip_reconciliation=False reconciliation_warn_only=False raw_backfill=False raw_dir=None raw_backfill_fail_fast=False analytics_view=None analytics_limit=20 analytics_output=None analytics_only=False metrics=False metrics_summary=False metrics_export_endpoint=None log_level=INFO log_file=logs\ingest_salary_1951_52_probe2.log
+10:30:17  INFO      ingest  Initialising database schema...
+10:30:17  INFO      ingest  Loading dimension tables...
+10:30:17  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+10:30:17  INFO      src.etl.dimensions  Skipping dim_team (already loaded)
+10:30:17  INFO      src.etl.dimensions  Skipping dim_player static (already loaded)
+10:30:17  INFO      ingest  Stage dimensions elapsed=0.00s
+10:30:17  INFO      ingest  Checkpoint post-dimensions: etl_run_log status counts={'empty': 12, 'ok': 548} delta={'empty': 12, 'ok': 548} elapsed_since_previous=n/a
+10:30:17  INFO      ingest  Checkpoint post-dimensions: table=dim_season row_count=80 delta=n/a previous=n/a
+10:30:17  INFO      ingest  Checkpoint post-dimensions: table=dim_team row_count=30 delta=n/a previous=n/a
+10:30:17  INFO      ingest  Checkpoint post-dimensions: table=dim_player row_count=5115 delta=n/a previous=n/a
+10:30:17  INFO      ingest  Checkpoint post-dimensions: etl_run_log tail (latest 12 rows)
+10:30:17  INFO      ingest  Checkpoint post-dimensions: runlog id=560 table=dim_season season=- loader=dimensions.load_seasons.1951 status=ok row_count=0 started=2026-02-21T15:05:10.660055+00:00 finished=2026-02-21T15:05:10.660274+00:00
+10:30:17  INFO      ingest  Checkpoint post-dimensions: runlog id=559 table=fact_salary season=1950-51 loader=salaries.load_player_salaries status=ok row_count=0 started=2026-02-21T14:43:58.558062+00:00 finished=2026-02-21T15:05:08.659546+00:00
+10:30:17  INFO      ingest  Checkpoint post-dimensions: runlog id=558 table=dim_season season=- loader=dimensions.load_seasons.1950 status=ok row_count=0 started=2026-02-21T14:43:58.558106+00:00 finished=2026-02-21T14:43:58.558279+00:00
+10:30:17  INFO      ingest  Checkpoint post-dimensions: runlog id=557 table=fact_salary season=1949-50 loader=salaries.load_player_salaries status=ok row_count=0 started=2026-02-21T14:22:46.790547+00:00 finished=2026-02-21T14:43:56.557275+00:00
+10:30:17  INFO      ingest  Checkpoint post-dimensions: runlog id=556 table=dim_season season=- loader=dimensions.load_seasons.1949 status=ok row_count=0 started=2026-02-21T14:22:46.790592+00:00 finished=2026-02-21T14:22:46.790766+00:00
+10:30:17  INFO      ingest  Checkpoint post-dimensions: runlog id=555 table=fact_salary season=1948-49 loader=salaries.load_player_salaries status=ok row_count=0 started=2026-02-21T14:01:34.976031+00:00 finished=2026-02-21T14:22:44.789685+00:00
+10:30:17  INFO      ingest  Checkpoint post-dimensions: runlog id=554 table=dim_season season=- loader=dimensions.load_seasons.1948 status=ok row_count=0 started=2026-02-21T14:01:34.976075+00:00 finished=2026-02-21T14:01:34.976252+00:00
+10:30:17  INFO      ingest  Checkpoint post-dimensions: runlog id=553 table=fact_salary season=1947-48 loader=salaries.load_player_salaries status=ok row_count=0 started=2026-02-21T13:40:23.264235+00:00 finished=2026-02-21T14:01:32.975569+00:00
+10:30:17  INFO      ingest  Checkpoint post-dimensions: runlog id=552 table=dim_season season=- loader=dimensions.load_seasons.1947 status=ok row_count=0 started=2026-02-21T13:40:23.264289+00:00 finished=2026-02-21T13:40:23.264509+00:00
+10:30:17  INFO      ingest  Checkpoint post-dimensions: runlog id=551 table=fact_salary season=1946-47 loader=salaries.load_player_salaries status=ok row_count=0 started=2026-02-21T13:19:11.326825+00:00 finished=2026-02-21T13:40:21.263684+00:00
+10:30:17  INFO      ingest  Checkpoint post-dimensions: runlog id=550 table=dim_season season=- loader=dimensions.load_seasons.1946 status=ok row_count=0 started=2026-02-21T13:19:11.326858+00:00 finished=2026-02-21T13:19:11.326939+00:00
+10:30:17  INFO      ingest  Checkpoint post-dimensions: runlog id=549 table=fact_salary season=2022-23 loader=salaries.load_player_salaries status=ok row_count=543 started=2026-02-21T13:18:53.961420+00:00 finished=2026-02-21T13:19:00.474534+00:00
+10:30:17  INFO      ingest  Loading salary cap and player salaries...
+10:30:17  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+10:30:17  INFO      src.etl.salaries  dim_salary_cap: 41 rows upserted.
+10:30:17  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+10:30:17  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ATL/1952.html) with Retry-After=2976s; skipping page.
+10:30:17  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CLE/1952.html) with Retry-After=2975s; skipping page.
+10:30:17  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/NOP/1952.html) with Retry-After=2975s; skipping page.
+10:30:18  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHI/1952.html) with Retry-After=2975s; skipping page.
+10:30:18  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DAL/1952.html) with Retry-After=2975s; skipping page.
+10:30:18  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DEN/1952.html) with Retry-After=2975s; skipping page.
+10:30:18  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/GSW/1952.html) with Retry-After=2975s; skipping page.
+10:30:18  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/HOU/1952.html) with Retry-After=2974s; skipping page.
+10:30:18  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAC/1952.html) with Retry-After=2974s; skipping page.
+10:30:19  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/LAL/1952.html) with Retry-After=2974s; skipping page.
+10:30:19  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIA/1952.html) with Retry-After=2974s; skipping page.
+10:30:19  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIL/1952.html) with Retry-After=2974s; skipping page.
+10:30:19  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MIN/1952.html) with Retry-After=2973s; skipping page.
+10:30:19  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/BRK/1952.html) with Retry-After=2973s; skipping page.
+10:30:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/ORL/1952.html) with Retry-After=2973s; skipping page.
+10:30:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/IND/1952.html) with Retry-After=2973s; skipping page.
+10:30:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHI/1952.html) with Retry-After=2973s; skipping page.
+10:30:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/PHO/1952.html) with Retry-After=2973s; skipping page.
+10:30:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/POR/1952.html) with Retry-After=2972s; skipping page.
+10:30:20  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAC/1952.html) with Retry-After=2972s; skipping page.
+10:30:21  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/SAS/1952.html) with Retry-After=2972s; skipping page.
+10:30:21  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/OKC/1952.html) with Retry-After=2972s; skipping page.
+10:30:21  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/TOR/1952.html) with Retry-After=2972s; skipping page.
+10:30:21  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/UTA/1952.html) with Retry-After=2971s; skipping page.
+10:30:21  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/MEM/1952.html) with Retry-After=2971s; skipping page.
+10:30:22  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/WAS/1952.html) with Retry-After=2971s; skipping page.
+10:30:22  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/DET/1952.html) with Retry-After=2971s; skipping page.
+10:30:22  WARNING   src.etl.salaries  BBref rate-limited (https://www.basketball-reference.com/teams/CHO/1952.html) with Retry-After=2971s; skipping page.
+10:30:22  WARNING   src.etl.salaries  fact_salary (1951-52): no rows to insert.
+10:30:24  INFO      ingest  Stage salaries elapsed=7.40s
+10:30:24  INFO      ingest  Checkpoint post-salaries: etl_run_log status counts={'empty': 12, 'ok': 549} delta={'ok': 1} elapsed_since_previous=7.41s
+10:30:24  INFO      ingest  Checkpoint post-salaries: table=dim_salary_cap row_count=41 delta=n/a previous=n/a
+10:30:24  INFO      ingest  Checkpoint post-salaries: table=fact_salary row_count=1997 delta=n/a previous=n/a
+10:30:24  INFO      ingest  Checkpoint post-salaries: etl_run_log tail (latest 12 rows)
+10:30:24  INFO      ingest  Checkpoint post-salaries: runlog id=561 table=fact_salary season=1951-52 loader=salaries.load_player_salaries status=ok row_count=0 started=2026-02-21T15:30:17.253101+00:00 finished=2026-02-21T15:30:22.655852+00:00
+10:30:24  INFO      ingest  Checkpoint post-salaries: runlog id=560 table=dim_season season=- loader=dimensions.load_seasons.1951 status=ok row_count=0 started=2026-02-21T15:05:10.660055+00:00 finished=2026-02-21T15:05:10.660274+00:00
+10:30:24  INFO      ingest  Checkpoint post-salaries: runlog id=559 table=fact_salary season=1950-51 loader=salaries.load_player_salaries status=ok row_count=0 started=2026-02-21T14:43:58.558062+00:00 finished=2026-02-21T15:05:08.659546+00:00
+10:30:24  INFO      ingest  Checkpoint post-salaries: runlog id=558 table=dim_season season=- loader=dimensions.load_seasons.1950 status=ok row_count=0 started=2026-02-21T14:43:58.558106+00:00 finished=2026-02-21T14:43:58.558279+00:00
+10:30:24  INFO      ingest  Checkpoint post-salaries: runlog id=557 table=fact_salary season=1949-50 loader=salaries.load_player_salaries status=ok row_count=0 started=2026-02-21T14:22:46.790547+00:00 finished=2026-02-21T14:43:56.557275+00:00
+10:30:24  INFO      ingest  Checkpoint post-salaries: runlog id=556 table=dim_season season=- loader=dimensions.load_seasons.1949 status=ok row_count=0 started=2026-02-21T14:22:46.790592+00:00 finished=2026-02-21T14:22:46.790766+00:00
+10:30:24  INFO      ingest  Checkpoint post-salaries: runlog id=555 table=fact_salary season=1948-49 loader=salaries.load_player_salaries status=ok row_count=0 started=2026-02-21T14:01:34.976031+00:00 finished=2026-02-21T14:22:44.789685+00:00
+10:30:24  INFO      ingest  Checkpoint post-salaries: runlog id=554 table=dim_season season=- loader=dimensions.load_seasons.1948 status=ok row_count=0 started=2026-02-21T14:01:34.976075+00:00 finished=2026-02-21T14:01:34.976252+00:00
+10:30:24  INFO      ingest  Checkpoint post-salaries: runlog id=553 table=fact_salary season=1947-48 loader=salaries.load_player_salaries status=ok row_count=0 started=2026-02-21T13:40:23.264235+00:00 finished=2026-02-21T14:01:32.975569+00:00
+10:30:24  INFO      ingest  Checkpoint post-salaries: runlog id=552 table=dim_season season=- loader=dimensions.load_seasons.1947 status=ok row_count=0 started=2026-02-21T13:40:23.264289+00:00 finished=2026-02-21T13:40:23.264509+00:00
+10:30:24  INFO      ingest  Checkpoint post-salaries: runlog id=551 table=fact_salary season=1946-47 loader=salaries.load_player_salaries status=ok row_count=0 started=2026-02-21T13:19:11.326825+00:00 finished=2026-02-21T13:40:21.263684+00:00
+10:30:24  INFO      ingest  Checkpoint post-salaries: runlog id=550 table=dim_season season=- loader=dimensions.load_seasons.1946 status=ok row_count=0 started=2026-02-21T13:19:11.326858+00:00 finished=2026-02-21T13:19:11.326939+00:00
+10:30:24  INFO      ingest  --dims-only set; skipping box scores.
+10:30:24  INFO      ingest  Ingest total elapsed=7.41s
+10:30:24  INFO      ingest  Ingest complete.

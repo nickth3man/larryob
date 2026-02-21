@@ -18,10 +18,16 @@ def load_team_history(con: sqlite3.Connection, raw_dir: Path = RAW_DIR) -> None:
         return
 
     df = pd.read_csv(path)
+    valid_team_ids = {r[0] for r in con.execute("SELECT team_id FROM dim_team")}
     rows = []
+    skipped = 0
     for row in df.to_dict("records"):
+        team_id = str(int(row["teamId"]))
+        if team_id not in valid_team_ids:
+            skipped += 1
+            continue
         rows.append({
-            "team_id":            str(int(row["teamId"])),
+            "team_id":            team_id,
             "team_city":          str(row["teamCity"]).strip(),
             "team_name":          str(row["teamName"]).strip(),
             "team_abbrev":        str(row["teamAbbrev"]).strip(),
@@ -31,7 +37,7 @@ def load_team_history(con: sqlite3.Connection, raw_dir: Path = RAW_DIR) -> None:
         })
 
     inserted = upsert_rows(con, "dim_team_history", rows)
-    logger.info("dim_team_history: %d rows inserted/ignored", inserted)
+    logger.info("dim_team_history: %d rows inserted/ignored, %d skipped", inserted, skipped)
 
 def enrich_dim_team(con: sqlite3.Connection, raw_dir: Path = RAW_DIR) -> None:
     path = raw_dir / "Team Abbrev.csv"

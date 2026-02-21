@@ -1,0 +1,29 @@
+00:22:14  INFO      ingest  Initialising database schema...
+00:22:14  INFO      ingest  Loading dimension tables...
+00:22:14  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+00:22:14  INFO      src.etl.dimensions  Skipping dim_team (already loaded)
+00:22:14  INFO      src.etl.dimensions  Skipping dim_player static (already loaded)
+00:22:14  INFO      ingest  Loading salary cap and player salaries...
+00:22:14  INFO      src.etl.dimensions  dim_season: 1 rows upserted.
+00:22:14  INFO      src.etl.salaries  dim_salary_cap: 41 rows upserted.
+00:22:14  INFO      src.etl.dimensions  dim_season: 0 rows upserted.
+00:24:17  INFO      src.etl.salaries  fact_salary (2023-24): 544 rows upserted.
+00:24:19  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+00:26:23  INFO      src.etl.salaries  fact_salary (2024-25): 529 rows upserted.
+00:26:25  INFO      ingest  Loading rosters...
+00:27:09  INFO      src.etl.roster  Roster: 5/30 teams processed for 2023-24.
+00:28:03  INFO      src.etl.roster  Roster: 10/30 teams processed for 2023-24.
+00:28:46  INFO      src.etl.roster  Roster: 15/30 teams processed for 2023-24.
+00:29:47  INFO      src.etl.roster  Roster: 20/30 teams processed for 2023-24.
+00:30:32  INFO      src.etl.roster  Roster: 25/30 teams processed for 2023-24.
+00:31:34  INFO      src.etl.roster  Roster: 30/30 teams processed for 2023-24.
+00:31:36  INFO      src.etl.roster  fact_roster: 532 total rows for 2023-24.
+00:32:38  INFO      src.etl.roster  Roster: 5/30 teams processed for 2024-25.
+00:33:26  INFO      src.etl.roster  Roster: 10/30 teams processed for 2024-25.
+00:34:15  INFO      src.etl.roster  Roster: 15/30 teams processed for 2024-25.
+00:35:24  INFO      src.etl.roster  Roster: 20/30 teams processed for 2024-25.
+00:36:03  INFO      src.etl.roster  Roster: 25/30 teams processed for 2024-25.
+00:36:44  INFO      src.etl.roster  Roster: 30/30 teams processed for 2024-25.
+00:36:46  INFO      src.etl.roster  fact_roster: 534 total rows for 2024-25.
+00:36:46  INFO      ingest  --dims-only set; skipping box scores.
+00:36:46  INFO      ingest  Ingest complete.

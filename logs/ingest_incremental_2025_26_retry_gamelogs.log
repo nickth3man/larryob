@@ -1,0 +1,123 @@
+03:01:26  INFO      ingest  Ingest arguments: seasons=['2025-26'] dims_only=False enrich_bio=False awards=False salaries=False rosters=False include_playoffs=True pbp_limit=0 skip_reconciliation=False reconciliation_warn_only=True raw_backfill=False raw_dir=None raw_backfill_fail_fast=False analytics_view=None analytics_limit=20 analytics_output=None analytics_only=False metrics=False metrics_summary=False metrics_export_endpoint=None log_level=INFO log_file=logs\ingest_incremental_2025_26_retry_gamelogs.log
+03:01:26  INFO      ingest  Initialising database schema...
+03:01:26  INFO      ingest  Loading dimension tables...
+03:01:26  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+03:01:26  INFO      src.etl.dimensions  Skipping dim_team (already loaded)
+03:01:26  INFO      src.etl.dimensions  Skipping dim_player static (already loaded)
+03:01:26  INFO      src.etl.dimensions  Skipping dim_player full (already loaded)
+03:01:26  INFO      ingest  Stage dimensions elapsed=0.00s
+03:01:26  INFO      ingest  Checkpoint post-dimensions: etl_run_log status counts={'empty': 3, 'ok': 38} delta={'empty': 3, 'ok': 38} elapsed_since_previous=n/a
+03:01:26  INFO      ingest  Checkpoint post-dimensions: table=dim_season row_count=80 delta=n/a previous=n/a
+03:01:26  INFO      ingest  Checkpoint post-dimensions: table=dim_team row_count=30 delta=n/a previous=n/a
+03:01:26  INFO      ingest  Checkpoint post-dimensions: table=dim_player row_count=5115 delta=n/a previous=n/a
+03:01:26  INFO      ingest  Checkpoint post-dimensions: etl_run_log tail (latest 12 rows)
+03:01:26  INFO      ingest  Checkpoint post-dimensions: runlog id=41 table=dim_player season=- loader=dimensions.load_players_full.2025-26 status=ok row_count=5111 started=2026-02-21T08:01:18.349718+00:00 finished=2026-02-21T08:01:21.729174+00:00
+03:01:26  INFO      ingest  Checkpoint post-dimensions: runlog id=40 table=team_game_log season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:00:58.265790+00:00 finished=2026-02-21T08:01:01.376831+00:00
+03:01:26  INFO      ingest  Checkpoint post-dimensions: runlog id=39 table=player_game_log season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:00:58.265790+00:00 finished=2026-02-21T08:01:01.376810+00:00
+03:01:26  INFO      ingest  Checkpoint post-dimensions: runlog id=38 table=fact_game season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:00:58.265790+00:00 finished=2026-02-21T08:01:01.376734+00:00
+03:01:26  INFO      ingest  Checkpoint post-dimensions: runlog id=37 table=fact_roster season=2025-26 loader=roster.load_season_rosters status=ok row_count=524 started=2026-02-21T07:57:58.098908+00:00 finished=2026-02-21T08:00:51.333859+00:00
+03:01:26  INFO      ingest  Checkpoint post-dimensions: runlog id=36 table=fact_salary season=2025-26 loader=salaries.load_player_salaries status=ok row_count=457 started=2026-02-21T07:55:52.923122+00:00 finished=2026-02-21T07:57:56.097519+00:00
+03:01:26  INFO      ingest  Checkpoint post-dimensions: runlog id=35 table=team_game_log season=2024-25 loader=game_logs.load_season.Regular Season status=ok row_count=12 started=2026-02-21T07:47:54.328013+00:00 finished=2026-02-21T07:47:59.715289+00:00
+03:01:26  INFO      ingest  Checkpoint post-dimensions: runlog id=34 table=player_game_log season=2024-25 loader=game_logs.load_season.Regular Season status=ok row_count=144 started=2026-02-21T07:47:54.328013+00:00 finished=2026-02-21T07:47:59.715253+00:00
+03:01:26  INFO      ingest  Checkpoint post-dimensions: runlog id=33 table=fact_game season=2024-25 loader=game_logs.load_season.Regular Season status=ok row_count=0 started=2026-02-21T07:47:54.328013+00:00 finished=2026-02-21T07:47:59.715206+00:00
+03:01:26  INFO      ingest  Checkpoint post-dimensions: runlog id=32 table=team_game_log season=2023-24 loader=game_logs.load_season.Playoffs status=ok row_count=0 started=2026-02-21T07:47:48.918879+00:00 finished=2026-02-21T07:47:52.324042+00:00
+03:01:26  INFO      ingest  Checkpoint post-dimensions: runlog id=31 table=player_game_log season=2023-24 loader=game_logs.load_season.Playoffs status=ok row_count=0 started=2026-02-21T07:47:48.918879+00:00 finished=2026-02-21T07:47:52.324024+00:00
+03:01:26  INFO      ingest  Checkpoint post-dimensions: runlog id=30 table=fact_game season=2023-24 loader=game_logs.load_season.Playoffs status=ok row_count=0 started=2026-02-21T07:47:48.918879+00:00 finished=2026-02-21T07:47:52.323981+00:00
+03:01:26  INFO      ingest  Loading box scores for seasons: ['2025-26']
+03:01:26  INFO      src.etl.game_logs  Game logs [1/2] starting season=2025-26 season_type=Regular Season
+03:01:27  INFO      src.etl.game_logs  player_game_logs: loaded from cache for 2025-26 Regular Season (rows=18161).
+03:01:27  INFO      src.etl.game_logs  Season 2025-26 Regular Season fetch summary: fetched_player_game_rows=18161
+03:01:27  INFO      src.etl.game_logs  Season 2025-26 Regular Season transform summary: raw={'fact_game': 837, 'player_game_log': 18161, 'team_game_log': 1674} validated={'fact_game': 837, 'player_game_log': 18161, 'team_game_log': 1674} dropped={'fact_game': 0, 'player_game_log': 0, 'team_game_log': 0}
+03:01:27  ERROR     src.etl.game_logs  Game logs [1/2] failed season=2025-26 season_type=Regular Season: FOREIGN KEY constraint failed
+03:01:29  INFO      src.etl.game_logs  Game logs [2/2] starting season=2025-26 season_type=Playoffs
+03:01:33  INFO      src.etl.game_logs  player_game_logs: fetched 0 rows for 2025-26.
+03:01:33  INFO      src.etl.game_logs  Season 2025-26 Playoffs fetch summary: fetched_player_game_rows=0
+03:01:33  WARNING   src.etl.game_logs  No data returned for 2025-26 Playoffs.
+03:01:33  INFO      src.etl.game_logs  Game logs [2/2] completed season=2025-26 season_type=Playoffs with no new rows
+03:01:35  INFO      ingest  Stage game_logs elapsed=8.30s
+03:01:35  INFO      ingest  Checkpoint post-game-logs: etl_run_log status counts={'empty': 6, 'ok': 38} delta={'empty': 3} elapsed_since_previous=8.30s
+03:01:35  INFO      ingest  Checkpoint post-game-logs: table=fact_game row_count=71884 delta=n/a previous=n/a
+03:01:35  INFO      ingest  Checkpoint post-game-logs: table=player_game_log row_count=1380538 delta=n/a previous=n/a
+03:01:35  INFO      ingest  Checkpoint post-game-logs: table=team_game_log row_count=143656 delta=n/a previous=n/a
+03:01:35  INFO      ingest  Checkpoint post-game-logs: etl_run_log tail (latest 12 rows)
+03:01:35  INFO      ingest  Checkpoint post-game-logs: runlog id=44 table=team_game_log season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:01:29.929060+00:00 finished=2026-02-21T08:01:33.182361+00:00
+03:01:35  INFO      ingest  Checkpoint post-game-logs: runlog id=43 table=player_game_log season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:01:29.929060+00:00 finished=2026-02-21T08:01:33.182312+00:00
+03:01:35  INFO      ingest  Checkpoint post-game-logs: runlog id=42 table=fact_game season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:01:29.929060+00:00 finished=2026-02-21T08:01:33.179923+00:00
+03:01:35  INFO      ingest  Checkpoint post-game-logs: runlog id=41 table=dim_player season=- loader=dimensions.load_players_full.2025-26 status=ok row_count=5111 started=2026-02-21T08:01:18.349718+00:00 finished=2026-02-21T08:01:21.729174+00:00
+03:01:35  INFO      ingest  Checkpoint post-game-logs: runlog id=40 table=team_game_log season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:00:58.265790+00:00 finished=2026-02-21T08:01:01.376831+00:00
+03:01:35  INFO      ingest  Checkpoint post-game-logs: runlog id=39 table=player_game_log season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:00:58.265790+00:00 finished=2026-02-21T08:01:01.376810+00:00
+03:01:35  INFO      ingest  Checkpoint post-game-logs: runlog id=38 table=fact_game season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:00:58.265790+00:00 finished=2026-02-21T08:01:01.376734+00:00
+03:01:35  INFO      ingest  Checkpoint post-game-logs: runlog id=37 table=fact_roster season=2025-26 loader=roster.load_season_rosters status=ok row_count=524 started=2026-02-21T07:57:58.098908+00:00 finished=2026-02-21T08:00:51.333859+00:00
+03:01:35  INFO      ingest  Checkpoint post-game-logs: runlog id=36 table=fact_salary season=2025-26 loader=salaries.load_player_salaries status=ok row_count=457 started=2026-02-21T07:55:52.923122+00:00 finished=2026-02-21T07:57:56.097519+00:00
+03:01:35  INFO      ingest  Checkpoint post-game-logs: runlog id=35 table=team_game_log season=2024-25 loader=game_logs.load_season.Regular Season status=ok row_count=12 started=2026-02-21T07:47:54.328013+00:00 finished=2026-02-21T07:47:59.715289+00:00
+03:01:35  INFO      ingest  Checkpoint post-game-logs: runlog id=34 table=player_game_log season=2024-25 loader=game_logs.load_season.Regular Season status=ok row_count=144 started=2026-02-21T07:47:54.328013+00:00 finished=2026-02-21T07:47:59.715253+00:00
+03:01:35  INFO      ingest  Checkpoint post-game-logs: runlog id=33 table=fact_game season=2024-25 loader=game_logs.load_season.Regular Season status=ok row_count=0 started=2026-02-21T07:47:54.328013+00:00 finished=2026-02-21T07:47:59.715206+00:00
+03:01:35  INFO      ingest  Running reconciliation checks for season 2025-26...
+03:01:35  INFO      src.etl.validate  Consistency check passed for season 2025-26 (0 games)
+03:01:35  INFO      ingest  Reconciliation season=2025-26 warnings=0 elapsed=0.00s running_total_warnings=0
+03:01:35  INFO      ingest  Ingest total elapsed=8.33s
+03:01:35  INFO      ingest  Ingest complete.
+03:03:41  INFO      ingest  Ingest arguments: seasons=['2025-26'] dims_only=False enrich_bio=False awards=False salaries=False rosters=False include_playoffs=True pbp_limit=0 skip_reconciliation=False reconciliation_warn_only=True raw_backfill=False raw_dir=None raw_backfill_fail_fast=False analytics_view=None analytics_limit=20 analytics_output=None analytics_only=False metrics=False metrics_summary=False metrics_export_endpoint=None log_level=INFO log_file=logs\ingest_incremental_2025_26_retry_gamelogs.log
+03:03:41  INFO      ingest  Initialising database schema...
+03:03:41  INFO      ingest  Loading dimension tables...
+03:03:41  INFO      src.etl.dimensions  Skipping dim_season (already loaded)
+03:03:41  INFO      src.etl.dimensions  Skipping dim_team (already loaded)
+03:03:41  INFO      src.etl.dimensions  Skipping dim_player static (already loaded)
+03:03:41  INFO      src.etl.dimensions  Skipping dim_player full (already loaded)
+03:03:41  INFO      ingest  Stage dimensions elapsed=0.00s
+03:03:41  INFO      ingest  Checkpoint post-dimensions: etl_run_log status counts={'empty': 6, 'ok': 38} delta={'empty': 6, 'ok': 38} elapsed_since_previous=n/a
+03:03:41  INFO      ingest  Checkpoint post-dimensions: table=dim_season row_count=80 delta=n/a previous=n/a
+03:03:41  INFO      ingest  Checkpoint post-dimensions: table=dim_team row_count=30 delta=n/a previous=n/a
+03:03:41  INFO      ingest  Checkpoint post-dimensions: table=dim_player row_count=5115 delta=n/a previous=n/a
+03:03:41  INFO      ingest  Checkpoint post-dimensions: etl_run_log tail (latest 12 rows)
+03:03:41  INFO      ingest  Checkpoint post-dimensions: runlog id=44 table=team_game_log season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:01:29.929060+00:00 finished=2026-02-21T08:01:33.182361+00:00
+03:03:41  INFO      ingest  Checkpoint post-dimensions: runlog id=43 table=player_game_log season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:01:29.929060+00:00 finished=2026-02-21T08:01:33.182312+00:00
+03:03:41  INFO      ingest  Checkpoint post-dimensions: runlog id=42 table=fact_game season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:01:29.929060+00:00 finished=2026-02-21T08:01:33.179923+00:00
+03:03:41  INFO      ingest  Checkpoint post-dimensions: runlog id=41 table=dim_player season=- loader=dimensions.load_players_full.2025-26 status=ok row_count=5111 started=2026-02-21T08:01:18.349718+00:00 finished=2026-02-21T08:01:21.729174+00:00
+03:03:41  INFO      ingest  Checkpoint post-dimensions: runlog id=40 table=team_game_log season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:00:58.265790+00:00 finished=2026-02-21T08:01:01.376831+00:00
+03:03:41  INFO      ingest  Checkpoint post-dimensions: runlog id=39 table=player_game_log season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:00:58.265790+00:00 finished=2026-02-21T08:01:01.376810+00:00
+03:03:41  INFO      ingest  Checkpoint post-dimensions: runlog id=38 table=fact_game season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:00:58.265790+00:00 finished=2026-02-21T08:01:01.376734+00:00
+03:03:41  INFO      ingest  Checkpoint post-dimensions: runlog id=37 table=fact_roster season=2025-26 loader=roster.load_season_rosters status=ok row_count=524 started=2026-02-21T07:57:58.098908+00:00 finished=2026-02-21T08:00:51.333859+00:00
+03:03:41  INFO      ingest  Checkpoint post-dimensions: runlog id=36 table=fact_salary season=2025-26 loader=salaries.load_player_salaries status=ok row_count=457 started=2026-02-21T07:55:52.923122+00:00 finished=2026-02-21T07:57:56.097519+00:00
+03:03:41  INFO      ingest  Checkpoint post-dimensions: runlog id=35 table=team_game_log season=2024-25 loader=game_logs.load_season.Regular Season status=ok row_count=12 started=2026-02-21T07:47:54.328013+00:00 finished=2026-02-21T07:47:59.715289+00:00
+03:03:41  INFO      ingest  Checkpoint post-dimensions: runlog id=34 table=player_game_log season=2024-25 loader=game_logs.load_season.Regular Season status=ok row_count=144 started=2026-02-21T07:47:54.328013+00:00 finished=2026-02-21T07:47:59.715253+00:00
+03:03:41  INFO      ingest  Checkpoint post-dimensions: runlog id=33 table=fact_game season=2024-25 loader=game_logs.load_season.Regular Season status=ok row_count=0 started=2026-02-21T07:47:54.328013+00:00 finished=2026-02-21T07:47:59.715206+00:00
+03:03:41  INFO      ingest  Loading box scores for seasons: ['2025-26']
+03:03:41  INFO      src.etl.game_logs  Game logs [1/2] starting season=2025-26 season_type=Regular Season
+03:03:41  INFO      src.etl.game_logs  player_game_logs: loaded from cache for 2025-26 Regular Season (rows=18161).
+03:03:41  INFO      src.etl.game_logs  Season 2025-26 Regular Season fetch summary: fetched_player_game_rows=18161
+03:03:42  INFO      src.etl.game_logs  Season 2025-26 Regular Season transform summary: raw={'fact_game': 837, 'player_game_log': 18161, 'team_game_log': 1674} validated={'fact_game': 837, 'player_game_log': 18161, 'team_game_log': 1674} dropped={'fact_game': 0, 'player_game_log': 0, 'team_game_log': 0}
+03:03:42  INFO      src.etl.game_logs  Season 2025-26 Regular Season FK prefilter: valid_games=837 player_rows_kept=18161/18161 team_rows_kept=1674/1674
+03:03:43  INFO      src.etl.game_logs  Season 2025-26 Regular Season load summary: candidates={'fact_game': 837, 'player_game_log': 18161, 'team_game_log': 1674} inserted={fact_game:837,player_game_log:18161,team_game_log:1674} elapsed=1.99s
+03:03:43  INFO      src.etl.utils  Table fact_game (season 2025-26) loaded 837 rows
+03:03:43  INFO      src.etl.utils  Table player_game_log (season 2025-26) loaded 18,161 rows
+03:03:43  INFO      src.etl.utils  Table team_game_log (season 2025-26) loaded 1,674 rows
+03:03:43  INFO      src.etl.game_logs  Game logs [1/2] completed season=2025-26 season_type=Regular Season counts={'fact_game': 837, 'player_game_log': 18161, 'team_game_log': 1674}
+03:03:45  INFO      src.etl.game_logs  Game logs [2/2] starting season=2025-26 season_type=Playoffs
+03:03:48  INFO      src.etl.game_logs  player_game_logs: fetched 0 rows for 2025-26.
+03:03:48  INFO      src.etl.game_logs  Season 2025-26 Playoffs fetch summary: fetched_player_game_rows=0
+03:03:48  WARNING   src.etl.game_logs  No data returned for 2025-26 Playoffs.
+03:03:48  INFO      src.etl.game_logs  Game logs [2/2] completed season=2025-26 season_type=Playoffs with no new rows
+03:03:50  INFO      ingest  Stage game_logs elapsed=9.09s
+03:03:50  INFO      ingest  Checkpoint post-game-logs: etl_run_log status counts={'empty': 9, 'ok': 41} delta={'empty': 3, 'ok': 3} elapsed_since_previous=9.10s
+03:03:50  INFO      ingest  Checkpoint post-game-logs: table=fact_game row_count=72721 delta=n/a previous=n/a
+03:03:50  INFO      ingest  Checkpoint post-game-logs: table=player_game_log row_count=1398699 delta=n/a previous=n/a
+03:03:50  INFO      ingest  Checkpoint post-game-logs: table=team_game_log row_count=145330 delta=n/a previous=n/a
+03:03:50  INFO      ingest  Checkpoint post-game-logs: etl_run_log tail (latest 12 rows)
+03:03:50  INFO      ingest  Checkpoint post-game-logs: runlog id=50 table=team_game_log season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:03:45.054407+00:00 finished=2026-02-21T08:03:48.143248+00:00
+03:03:50  INFO      ingest  Checkpoint post-game-logs: runlog id=49 table=player_game_log season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:03:45.054407+00:00 finished=2026-02-21T08:03:48.143227+00:00
+03:03:50  INFO      ingest  Checkpoint post-game-logs: runlog id=48 table=fact_game season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:03:45.054407+00:00 finished=2026-02-21T08:03:48.143156+00:00
+03:03:50  INFO      ingest  Checkpoint post-game-logs: runlog id=47 table=team_game_log season=2025-26 loader=game_logs.load_season.Regular Season status=ok row_count=1674 started=2026-02-21T08:03:41.048556+00:00 finished=2026-02-21T08:03:43.041165+00:00
+03:03:50  INFO      ingest  Checkpoint post-game-logs: runlog id=46 table=player_game_log season=2025-26 loader=game_logs.load_season.Regular Season status=ok row_count=18161 started=2026-02-21T08:03:41.048556+00:00 finished=2026-02-21T08:03:43.041124+00:00
+03:03:50  INFO      ingest  Checkpoint post-game-logs: runlog id=45 table=fact_game season=2025-26 loader=game_logs.load_season.Regular Season status=ok row_count=837 started=2026-02-21T08:03:41.048556+00:00 finished=2026-02-21T08:03:43.040736+00:00
+03:03:50  INFO      ingest  Checkpoint post-game-logs: runlog id=44 table=team_game_log season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:01:29.929060+00:00 finished=2026-02-21T08:01:33.182361+00:00
+03:03:50  INFO      ingest  Checkpoint post-game-logs: runlog id=43 table=player_game_log season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:01:29.929060+00:00 finished=2026-02-21T08:01:33.182312+00:00
+03:03:50  INFO      ingest  Checkpoint post-game-logs: runlog id=42 table=fact_game season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:01:29.929060+00:00 finished=2026-02-21T08:01:33.179923+00:00
+03:03:50  INFO      ingest  Checkpoint post-game-logs: runlog id=41 table=dim_player season=- loader=dimensions.load_players_full.2025-26 status=ok row_count=5111 started=2026-02-21T08:01:18.349718+00:00 finished=2026-02-21T08:01:21.729174+00:00
+03:03:50  INFO      ingest  Checkpoint post-game-logs: runlog id=40 table=team_game_log season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:00:58.265790+00:00 finished=2026-02-21T08:01:01.376831+00:00
+03:03:50  INFO      ingest  Checkpoint post-game-logs: runlog id=39 table=player_game_log season=2025-26 loader=game_logs.load_season.Playoffs status=empty row_count=0 started=2026-02-21T08:00:58.265790+00:00 finished=2026-02-21T08:01:01.376810+00:00
+03:03:50  INFO      ingest  Running reconciliation checks for season 2025-26...
+03:03:50  INFO      src.etl.validate  Consistency check passed for season 2025-26 (837 games)
+03:03:50  INFO      ingest  Reconciliation season=2025-26 warnings=0 elapsed=0.01s running_total_warnings=0
+03:03:50  INFO      ingest  Ingest total elapsed=9.14s
+03:03:50  INFO      ingest  Ingest complete.
