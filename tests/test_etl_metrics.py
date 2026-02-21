@@ -1,12 +1,15 @@
 """Tests for metrics collection (src.etl.metrics)."""
 
 import os
+from unittest.mock import MagicMock, patch
 
 import pytest
 
 from src.etl.metrics import (
     ETLTimer,
+    export_metrics,
     get_metrics_summary,
+    log_metrics_summary,
     record_api_call,
     record_api_latency,
     record_etl_duration,
@@ -200,3 +203,31 @@ class TestResetMetrics:
         assert len(summary["api_calls"]) == 0
 
         os.environ.pop("LARRYOB_METRICS_ENABLED")
+
+
+class TestMetricsExport:
+    """Test metrics summary/export lifecycle helpers."""
+
+    def test_export_metrics_returns_false_when_disabled(self) -> None:
+        os.environ.pop("LARRYOB_METRICS_ENABLED", None)
+        assert export_metrics("http://localhost:9999/metrics") is False
+
+    def test_export_metrics_posts_summary_when_enabled(self) -> None:
+        os.environ["LARRYOB_METRICS_ENABLED"] = "true"
+        os.environ["LARRYOB_METRICS_ENDPOINT"] = "http://localhost:9999/metrics"
+        record_etl_rows("player_game_log", "2023-24", 10)
+
+        with patch("requests.post") as post_mock:
+            response = MagicMock()
+            response.raise_for_status.return_value = None
+            post_mock.return_value = response
+            assert export_metrics() is True
+            post_mock.assert_called_once()
+
+        os.environ.pop("LARRYOB_METRICS_ENABLED")
+        os.environ.pop("LARRYOB_METRICS_ENDPOINT")
+
+    def test_log_metrics_summary_noop_when_disabled(self) -> None:
+        os.environ.pop("LARRYOB_METRICS_ENABLED", None)
+        # Should not raise even with no metrics enabled
+        log_metrics_summary()

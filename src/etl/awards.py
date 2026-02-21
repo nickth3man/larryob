@@ -10,11 +10,12 @@ Strategy
 
 import logging
 import sqlite3
+from datetime import UTC, datetime
 
 from nba_api.stats.endpoints import playerawards
 
 from .api_client import APICaller
-from .utils import load_cache, save_cache, upsert_rows
+from .utils import already_loaded, load_cache, record_run, save_cache, upsert_rows
 
 logger = logging.getLogger(__name__)
 
@@ -131,15 +132,29 @@ def load_all_awards(
     Load awards for all players in dim_player.
     Use active_only=True to limit to active players (fewer API calls).
     """
-    if active_only:
-        cur = con.execute("SELECT player_id FROM dim_player WHERE is_active = 1")
-    else:
-        cur = con.execute("SELECT player_id FROM dim_player")
-    player_ids = [r[0] for r in cur.fetchall()]
-    if not player_ids:
-        logger.warning("No players found in dim_player.")
+    loader_id = f"awards.load_all_awards.active_{active_only}"
+    if already_loaded(con, "fact_player_award", None, loader_id):
+        logger.info("Skipping fact_player_award (already loaded)")
         return 0
-    return load_player_awards(con, player_ids)
+
+    started_at = datetime.now(UTC).isoformat()
+    try:
+        if active_only:
+            cur = con.execute("SELECT player_id FROM dim_player WHERE is_active = 1")
+        else:
+            cur = con.execute("SELECT player_id FROM dim_player")
+        player_ids = [r[0] for r in cur.fetchall()]
+        if not player_ids:
+            logger.warning("No players found in dim_player.")
+            record_run(con, "fact_player_award", None, loader_id, 0, "ok", started_at)
+            return 0
+
+        inserted = load_player_awards(con, player_ids)
+        record_run(con, "fact_player_award", None, loader_id, inserted, "ok", started_at)
+        return inserted
+    except Exception:
+        record_run(con, "fact_player_award", None, loader_id, None, "error", started_at)
+        raise
 
 
 if __name__ == "__main__":  # pragma: no cover

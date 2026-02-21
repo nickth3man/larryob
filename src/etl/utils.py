@@ -1,5 +1,5 @@
 """
-Shared ETL utilities: rate-limit handling, JSON caching, logging.
+Shared ETL utilities: caching, upsert helpers, logging, and ETL run tracking.
 """
 
 import json
@@ -8,11 +8,12 @@ import re
 import sqlite3
 import sys
 import time
-from collections.abc import Callable
 from contextlib import contextmanager
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
+
+from .config import CacheConfig
 
 logger = logging.getLogger(__name__)
 
@@ -41,46 +42,12 @@ def setup_logging(
         fh.setFormatter(fmt)
         root.addHandler(fh)
 
-CACHE_DIR = Path(__file__).parent.parent.parent / ".cache"
+
+CACHE_DIR = CacheConfig.cache_dir()
 CACHE_DIR.mkdir(exist_ok=True)
 
+CACHE_VERSION = CacheConfig.CACHE_VERSION
 
-# --------------------------------------------------------------------------- #
-# Rate-limit safe caller with exponential back-off                            #
-# --------------------------------------------------------------------------- #
-
-def call_with_backoff(
-    fn: Callable[[], Any],
-    *,
-    base_sleep: float = 3.0,
-    max_retries: int = 5,
-    label: str = "",
-) -> Any:
-    """
-    Call *fn* (a zero-arg callable) retrying on any exception with
-    exponential back-off.  Suitable for nba_api rate-limit errors.
-    """
-    for attempt in range(1, max_retries + 1):
-        try:
-            result = fn()
-            time.sleep(base_sleep)
-            return result
-        except Exception as exc:
-            wait = base_sleep * (2 ** attempt)
-            logger.warning(
-                "Attempt %d/%d failed for %r: %s — retrying in %.0fs",
-                attempt, max_retries, label, exc, wait,
-            )
-            if attempt == max_retries:
-                raise
-            time.sleep(wait)
-
-
-# --------------------------------------------------------------------------- #
-# Simple JSON file cache keyed by an arbitrary string                         #
-# --------------------------------------------------------------------------- #
-
-CACHE_VERSION = 2  # bump when ETL output shape changes
 
 def cache_path(key: str) -> Path:
     return CACHE_DIR / f"{key}.json"
@@ -114,15 +81,13 @@ def save_cache(key: str, data: Any) -> None:
     cache_path(key).write_text(json.dumps(payload), encoding="utf-8")
 
 
-# --------------------------------------------------------------------------- #
-# Generic bulk-insert helper for SQLite                                       #
-# --------------------------------------------------------------------------- #
-
 _VALID_CONFLICT = frozenset({"IGNORE", "REPLACE", "ABORT", "ROLLBACK", "FAIL"})
+
 
 def _validate_identifier(name: str) -> None:
     if not re.fullmatch(r"^[a-zA-Z0-9_]+$", name):
         raise ValueError(f"Invalid SQL identifier: {name!r}")
+
 
 def upsert_rows(
     con: sqlite3.Connection,
@@ -163,16 +128,11 @@ def upsert_rows(
         raise
 
 
-# --------------------------------------------------------------------------- #
-# ETL Run Log & Auditing Helpers                                              #
-# --------------------------------------------------------------------------- #
-
-
 def already_loaded(
     con: sqlite3.Connection,
     table: str,
     season_id: str | None,
-    loader: str
+    loader: str,
 ) -> bool:
     """Check if an ETL run completed successfully for this table/season/loader combination."""
     try:
@@ -187,11 +147,11 @@ def already_loaded(
         cur = con.execute(sql, params)
         return cur.fetchone() is not None
     except sqlite3.OperationalError as e:
-        # Table might not exist yet during first-time bootstrap
         if "no such table" in str(e).lower():
             return False
         logger.debug("OperationalError in already_loaded: %s", e)
         return False
+
 
 def record_run(
     con: sqlite3.Connection,
@@ -200,7 +160,7 @@ def record_run(
     loader: str,
     row_count: int | None,
     status: str,
-    started_at: str | None = None
+    started_at: str | None = None,
 ) -> None:
     """Log an ETL run in the etl_run_log table."""
     try:
@@ -212,26 +172,25 @@ def record_run(
                 table_name, season_id, loader, started_at, finished_at, row_count, status
             ) VALUES (?, ?, ?, ?, ?, ?, ?)
             """,
-            (table, season_id, loader, start, now, row_count, status)
+            (table, season_id, loader, start, now, row_count, status),
         )
         con.commit()
     except sqlite3.OperationalError as e:
         if "no such table" in str(e).lower():
-            pass
-        else:
-            logger.debug("OperationalError in record_run: %s", e)
+            return
+        logger.debug("OperationalError in record_run: %s", e)
 
 
 def log_load_summary(
     con: sqlite3.Connection,
     table: str,
     season_id: str | None = None,
-    min_rows: int = 0
+    min_rows: int = 0,
 ) -> int:
     """Log actual row count for table (optionally filtered by season_id)."""
     _validate_identifier(table)
     sql = f"SELECT COUNT(*) FROM {table}"
-    params: list = []
+    params: list[Any] = []
     if season_id:
         cols = {row[1] for row in con.execute(f"PRAGMA table_info({table})").fetchall()}
         if "season_id" in cols:
@@ -258,11 +217,6 @@ def log_load_summary(
         logger.info(msg)
 
     return count
-
-
-# --------------------------------------------------------------------------- #
-# Transaction Context Manager                                                 #
-# --------------------------------------------------------------------------- #
 
 
 @contextmanager

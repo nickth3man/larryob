@@ -11,18 +11,19 @@ logger = logging.getLogger(__name__)
 RAW_DIR = Path("raw")
 
 _AWARD_MAP = {
-    "Most Valuable Player": "MVP",
-    "Rookie of the Year": "ROY",
-    "Defensive Player of the Year": "DPOY",
-    "Sixth Man of the Year": "SMOY",
-    "Most Improved Player": "MIP",
-    "Finals Most Valuable Player": "FMVP",
+    "most valuable player": ("MVP", "individual"),
+    "rookie of the year": ("ROY", "individual"),
+    "defensive player of the year": ("DPOY", "individual"),
+    "sixth man of the year": ("SMOY", "individual"),
+    "most improved player": ("MIP", "individual"),
+    "finals most valuable player": ("FMVP", "individual"),
 }
 
 def _eos_award_name(raw: str) -> str | None:
+    raw_lc = str(raw).lower()
     for k, v in _AWARD_MAP.items():
-        if k in raw:
-            return v
+        if k in raw_lc:
+            return v[0]
     return None
 
 def _bref_to_player_id(
@@ -54,9 +55,9 @@ def load_awards(con: sqlite3.Connection, raw_dir: Path = RAW_DIR) -> None:
             if not player_id:
                 continue
 
-            award_raw = str(row.get("award", "")).strip().lower()
+            award_raw = str(row.get("award", "")).strip()
             award_name, award_type = _AWARD_MAP.get(
-                award_raw, (award_raw.upper(), "individual")
+                award_raw.lower(), (award_raw.upper(), "individual")
             )
 
             rows.append({
@@ -102,7 +103,7 @@ def load_awards(con: sqlite3.Connection, raw_dir: Path = RAW_DIR) -> None:
     eos_voting_path = raw_dir / "End of Season Teams (Voting).csv"
     eos_path        = raw_dir / "End of Season Teams.csv"
 
-    def _eos_award_name(type_: str, number_tm: str) -> str:
+    def _format_eos_team_award_name(type_: str, number_tm: str) -> str:
         type_clean = str(type_).strip().replace("_", "-").title()
         return f"{type_clean} {str(number_tm).strip()}"
 
@@ -117,7 +118,7 @@ def load_awards(con: sqlite3.Connection, raw_dir: Path = RAW_DIR) -> None:
             player_id = bref_to_pid.get(bref_pid)
             if not player_id:
                 continue
-            award_name = _eos_award_name(row["type"], row["number_tm"])
+            award_name = _format_eos_team_award_name(row["type"], row["number_tm"])
             rows.append({
                 "player_id":      player_id,
                 "season_id":      season_id,
@@ -142,7 +143,7 @@ def load_awards(con: sqlite3.Connection, raw_dir: Path = RAW_DIR) -> None:
             player_id = bref_to_pid.get(bref_pid)
             if not player_id:
                 continue
-            award_name = _eos_award_name(row["type"], row["number_tm"])
+            award_name = _format_eos_team_award_name(row["type"], row["number_tm"])
             rows.append({
                 "player_id":      player_id,
                 "season_id":      season_id,

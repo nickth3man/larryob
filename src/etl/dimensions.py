@@ -21,7 +21,6 @@ from nba_api.stats.static import teams as nba_teams_static
 
 from .api_client import APICaller
 from .config import get_team_metadata
-from .metrics import record_etl_rows
 from .utils import (
     already_loaded,
     load_cache,
@@ -72,72 +71,6 @@ def load_seasons(con: sqlite3.Connection, up_to_start_year: int = 2024) -> int:
 # Teams                                                               #
 # ------------------------------------------------------------------ #
 
-# Static metadata for all 30 NBA franchises (conference, division, colors, arena).
-# Keyed by team_id (NBA numeric ID as string).
-_TEAM_METADATA: dict[str, dict] = {
-    "1610612737": {"conference": "East", "division": "Southeast", "arena_name": "State Farm Arena",
-                   "color_primary": "#E03A3E", "color_secondary": "#C1D32F", "founded_year": 1949},
-    "1610612738": {"conference": "East", "division": "Atlantic", "arena_name": "TD Garden",
-                   "color_primary": "#007A33", "color_secondary": "#BA9653", "founded_year": 1946},
-    "1610612739": {"conference": "East", "division": "Central", "arena_name": "Rocket Mortgage FieldHouse",
-                   "color_primary": "#860038", "color_secondary": "#FDBB30", "founded_year": 1970},
-    "1610612740": {"conference": "West", "division": "Southwest", "arena_name": "Smoothie King Center",
-                   "color_primary": "#0C2C56", "color_secondary": "#B4975A", "founded_year": 2002},
-    "1610612741": {"conference": "East", "division": "Central", "arena_name": "United Center",
-                   "color_primary": "#CE1141", "color_secondary": "#000000", "founded_year": 1966},
-    "1610612742": {"conference": "West", "division": "Southwest", "arena_name": "American Airlines Center",
-                   "color_primary": "#002B5C", "color_secondary": "#00471B", "founded_year": 1980},
-    "1610612743": {"conference": "West", "division": "Northwest", "arena_name": "Ball Arena",
-                   "color_primary": "#0E2240", "color_secondary": "#FEC524", "founded_year": 1976},
-    "1610612744": {"conference": "West", "division": "Pacific", "arena_name": "Chase Center",
-                   "color_primary": "#1D428A", "color_secondary": "#FFC52F", "founded_year": 1946},
-    "1610612745": {"conference": "West", "division": "Southwest", "arena_name": "Toyota Center",
-                   "color_primary": "#CE1141", "color_secondary": "#C4CED4", "founded_year": 1967},
-    "1610612746": {"conference": "West", "division": "Pacific", "arena_name": "Crypto.com Arena",
-                   "color_primary": "#C60C30", "color_secondary": "#EF3B24", "founded_year": 1970},
-    "1610612747": {"conference": "West", "division": "Pacific", "arena_name": "Crypto.com Arena",
-                   "color_primary": "#552582", "color_secondary": "#FDB927", "founded_year": 1948},
-    "1610612748": {"conference": "East", "division": "Southeast", "arena_name": "Kaseya Center",
-                   "color_primary": "#98002E", "color_secondary": "#000000", "founded_year": 1988},
-    "1610612749": {"conference": "East", "division": "Central", "arena_name": "Fiserv Forum",
-                   "color_primary": "#00471B", "color_secondary": "#EEE1C6", "founded_year": 1968},
-    "1610612750": {"conference": "West", "division": "Northwest", "arena_name": "Target Center",
-                   "color_primary": "#0C2340", "color_secondary": "#9EA2A2", "founded_year": 1989},
-    "1610612751": {"conference": "East", "division": "Atlantic", "arena_name": "Barclays Center",
-                   "color_primary": "#000000", "color_secondary": "#FFFFFF", "founded_year": 1976},
-    "1610612752": {"conference": "East", "division": "Atlantic", "arena_name": "Madison Square Garden",
-                   "color_primary": "#006BB6", "color_secondary": "#F58426", "founded_year": 1946},
-    "1610612753": {"conference": "East", "division": "Southeast", "arena_name": "Kia Center",
-                   "color_primary": "#0077C0", "color_secondary": "#000000", "founded_year": 1989},
-    "1610612754": {"conference": "East", "division": "Central", "arena_name": "Gainbridge Fieldhouse",
-                   "color_primary": "#002D62", "color_secondary": "#FDBB30", "founded_year": 1976},
-    "1610612755": {"conference": "East", "division": "Atlantic", "arena_name": "Wells Fargo Center",
-                   "color_primary": "#006BB6", "color_secondary": "#ED174C", "founded_year": 1949},
-    "1610612756": {"conference": "West", "division": "Pacific", "arena_name": "Footprint Center",
-                   "color_primary": "#1D1160", "color_secondary": "#E56020", "founded_year": 1968},
-    "1610612757": {"conference": "West", "division": "Northwest", "arena_name": "Moda Center",
-                   "color_primary": "#E03A3E", "color_secondary": "#000000", "founded_year": 1970},
-    "1610612758": {"conference": "West", "division": "Pacific", "arena_name": "Golden 1 Center",
-                   "color_primary": "#5A2D81", "color_secondary": "#888888", "founded_year": 1948},
-    "1610612759": {"conference": "West", "division": "Southwest", "arena_name": "Frost Bank Center",
-                   "color_primary": "#000000", "color_secondary": "#C4CED4", "founded_year": 1976},
-    "1610612760": {"conference": "West", "division": "Northwest", "arena_name": "Paycom Center",
-                   "color_primary": "#007AC1", "color_secondary": "#EF3B24", "founded_year": 2008},
-    "1610612761": {"conference": "East", "division": "Atlantic", "arena_name": "Scotiabank Arena",
-                   "color_primary": "#CE1141", "color_secondary": "#000000", "founded_year": 1995},
-    "1610612762": {"conference": "West", "division": "Northwest", "arena_name": "Delta Center",
-                   "color_primary": "#002B5C", "color_secondary": "#00471B", "founded_year": 1974},
-    "1610612763": {"conference": "West", "division": "Southwest", "arena_name": "FedExForum",
-                   "color_primary": "#12173F", "color_secondary": "#6ECEB2", "founded_year": 1995},
-    "1610612764": {"conference": "East", "division": "Southeast", "arena_name": "Capital One Arena",
-                   "color_primary": "#002B5C", "color_secondary": "#E31837", "founded_year": 1961},
-    "1610612765": {"conference": "East", "division": "Central", "arena_name": "Little Caesars Arena",
-                   "color_primary": "#C8102E", "color_secondary": "#1D42BA", "founded_year": 1948},
-    "1610612766": {"conference": "East", "division": "Southeast", "arena_name": "Spectrum Center",
-                   "color_primary": "#1D1160", "color_secondary": "#00788C", "founded_year": 1988},
-}
-
-
 def _map_nba_team(t: dict) -> dict:
     """Map nba_api static team dict → dim_team row."""
     team_id = str(t["id"])
@@ -148,7 +81,7 @@ def _map_nba_team(t: dict) -> dict:
         "city": t["city"],
         "nickname": t["nickname"],
     }
-    meta = _TEAM_METADATA.get(team_id, {})
+    meta = get_team_metadata(team_id) or {}
     base["conference"] = meta.get("conference")
     base["division"] = meta.get("division")
     base["color_primary"] = meta.get("color_primary")
@@ -435,7 +368,6 @@ def load_players_bio_enrichment(
         logger.info("Skipping dim_player bio enrichment (already loaded)")
         return 0
 
-    import time
     from datetime import datetime
     started_at = datetime.now(UTC).isoformat()
 

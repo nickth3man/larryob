@@ -261,6 +261,34 @@ def log_metrics_summary() -> None:
             )
 
 
+def export_metrics(endpoint: str | None = None, timeout_seconds: float = 5.0) -> bool:
+    """
+    Export metrics summary to an HTTP endpoint via POST JSON.
+
+    Returns True when a POST request is sent and succeeds with a 2xx status code.
+    Returns False when metrics are disabled, endpoint is not configured, or request fails.
+    """
+    if not _check_enabled():
+        return False
+
+    target = endpoint or MetricsConfig.export_endpoint()
+    if not target:
+        return False
+
+    payload = get_metrics_summary()
+    try:
+        import requests
+
+        response = requests.post(target, json=payload, timeout=timeout_seconds)
+        response.raise_for_status()
+    except Exception as exc:
+        logger.warning("Metrics export failed (%s): %s", target, exc)
+        return False
+
+    logger.info("Metrics exported to %s", target)
+    return True
+
+
 class ETLTimer:
     """
     Context manager for timing ETL operations.

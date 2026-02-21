@@ -11,12 +11,13 @@ Strategy
 
 import logging
 import sqlite3
+from datetime import UTC, datetime
 
 from nba_api.stats.endpoints import commonteamroster
 
 from .api_client import APICaller
 from .metrics import record_etl_rows
-from .utils import load_cache, save_cache, upsert_rows
+from .utils import already_loaded, load_cache, record_run, save_cache, upsert_rows
 
 logger = logging.getLogger(__name__)
 
@@ -110,26 +111,37 @@ def load_season_rosters(
     if api_caller is None:
         api_caller = APICaller()
 
-    cur = con.execute("SELECT team_id FROM dim_team")
-    team_ids = [r[0] for r in cur.fetchall()]
-    cur = con.execute("SELECT player_id FROM dim_player")
-    valid_players = {r[0] for r in cur.fetchall()}
-    cur = con.execute("SELECT team_id FROM dim_team")
-    valid_teams = {r[0] for r in cur.fetchall()}
-    total = 0
-    for i, tid in enumerate(team_ids):
-        total += load_team_roster(
-            con, tid, season_id,
-            valid_players=valid_players,
-            valid_teams=valid_teams,
-            api_caller=api_caller,
-        )
-        if (i + 1) % 5 == 0:
-            logger.info("Roster: %d/%d teams processed for %s.", i + 1, len(team_ids), season_id)
-        api_caller.sleep_between_calls()
-    logger.info("fact_roster: %d total rows for %s.", total, season_id)
-    record_etl_rows("fact_roster", season_id, total)
-    return total
+    loader_id = "roster.load_season_rosters"
+    if already_loaded(con, "fact_roster", season_id, loader_id):
+        logger.info("Skipping fact_roster for %s (already loaded)", season_id)
+        return 0
+
+    started_at = datetime.now(UTC).isoformat()
+    try:
+        cur = con.execute("SELECT team_id FROM dim_team")
+        team_ids = [r[0] for r in cur.fetchall()]
+        cur = con.execute("SELECT player_id FROM dim_player")
+        valid_players = {r[0] for r in cur.fetchall()}
+        cur = con.execute("SELECT team_id FROM dim_team")
+        valid_teams = {r[0] for r in cur.fetchall()}
+        total = 0
+        for i, tid in enumerate(team_ids):
+            total += load_team_roster(
+                con, tid, season_id,
+                valid_players=valid_players,
+                valid_teams=valid_teams,
+                api_caller=api_caller,
+            )
+            if (i + 1) % 5 == 0:
+                logger.info("Roster: %d/%d teams processed for %s.", i + 1, len(team_ids), season_id)
+            api_caller.sleep_between_calls()
+        logger.info("fact_roster: %d total rows for %s.", total, season_id)
+        record_etl_rows("fact_roster", season_id, total)
+        record_run(con, "fact_roster", season_id, loader_id, total, "ok", started_at)
+        return total
+    except Exception:
+        record_run(con, "fact_roster", season_id, loader_id, None, "error", started_at)
+        raise
 
 
 def load_rosters_for_seasons(

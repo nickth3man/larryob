@@ -2,8 +2,6 @@
 
 import os
 
-import pytest
-
 from src.etl.config import (
     APIConfig,
     CacheConfig,

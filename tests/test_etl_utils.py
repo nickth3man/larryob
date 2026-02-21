@@ -4,7 +4,6 @@ import json
 import logging
 import sqlite3
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -12,7 +11,6 @@ from src.etl.utils import (
     CACHE_VERSION,
     already_loaded,
     cache_path,
-    call_with_backoff,
     load_cache,
     log_load_summary,
     record_run,
@@ -148,41 +146,6 @@ def test_load_cache_returns_none_for_old_format_when_version_2(monkeypatch, tmp_
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
     (tmp_path / "oldformat.json").write_text(json.dumps({"key": "value"}), encoding="utf-8")
     assert load_cache("oldformat") is None
-
-
-# ------------------------------------------------------------------ #
-# call_with_backoff                                                   #
-# ------------------------------------------------------------------ #
-
-def test_call_with_backoff_returns_result_on_first_try() -> None:
-    fn = MagicMock(return_value=42)
-    with patch("src.etl.utils.time.sleep"):
-        result = call_with_backoff(fn, base_sleep=0.0, label="test")
-    assert result == 42
-    assert fn.call_count == 1
-
-
-def test_call_with_backoff_retries_on_exception() -> None:
-    fn = MagicMock(side_effect=[RuntimeError("fail"), RuntimeError("fail"), "ok"])
-    with patch("src.etl.utils.time.sleep"):
-        result = call_with_backoff(fn, base_sleep=0.0, max_retries=5)
-    assert result == "ok"
-    assert fn.call_count == 3
-
-
-def test_call_with_backoff_raises_after_max_retries() -> None:
-    fn = MagicMock(side_effect=ValueError("always fails"))
-    with patch("src.etl.utils.time.sleep"):
-        with pytest.raises(ValueError, match="always fails"):
-            call_with_backoff(fn, base_sleep=0.0, max_retries=3)
-    assert fn.call_count == 3
-
-
-def test_call_with_backoff_sleeps_after_success() -> None:
-    fn = MagicMock(return_value="done")
-    with patch("src.etl.utils.time.sleep") as mock_sleep:
-        call_with_backoff(fn, base_sleep=1.5)
-    mock_sleep.assert_called_once_with(1.5)
 
 
 # ------------------------------------------------------------------ #

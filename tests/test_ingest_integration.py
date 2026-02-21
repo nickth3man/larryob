@@ -130,3 +130,59 @@ def test_ingest_skip_reconciliation_bypasses_checks(tmp_path):
                     with patch("ingest.run_consistency_checks") as reconcile:
                         ingest.main()
                         reconcile.assert_not_called()
+
+
+def test_ingest_analytics_only_requires_view() -> None:
+    with patch("sys.argv", ["ingest.py", "--analytics-only"]):
+        with pytest.raises(SystemExit):
+            ingest.main()
+
+
+def test_ingest_analytics_only_runs_query_without_init_db() -> None:
+    with patch("sys.argv", ["ingest.py", "--analytics-only", "--analytics-view", "vw_team_standings"]):
+        with patch("ingest._run_analytics_view") as query_view:
+            with patch("ingest.init_db") as init_db_patch:
+                ingest.main()
+                query_view.assert_called_once()
+                init_db_patch.assert_not_called()
+
+
+def test_ingest_metrics_summary_and_export_hooks(tmp_path):
+    db_file = tmp_path / "test_ingest_metrics.db"
+    from src.db.schema import init_db
+
+    con = init_db(db_file)
+    args = [
+        "ingest.py",
+        "--dims-only",
+        "--metrics",
+        "--metrics-summary",
+        "--metrics-export-endpoint",
+        "http://localhost:9999/metrics",
+    ]
+
+    with patch("sys.argv", args):
+        with patch("ingest.init_db", return_value=con):
+            with patch("ingest.run_dimensions"):
+                with patch("ingest.log_metrics_summary") as log_summary:
+                    with patch("ingest.export_metrics") as export_metrics:
+                        ingest.main()
+                        log_summary.assert_called_once()
+                        export_metrics.assert_called_once_with("http://localhost:9999/metrics")
+
+
+def test_ingest_raw_backfill_fail_fast_raises(tmp_path):
+    db_file = tmp_path / "test_ingest_raw_backfill_fail_fast.db"
+    from src.db.schema import init_db
+
+    con = init_db(db_file)
+    args = ["ingest.py", "--raw-backfill", "--raw-backfill-fail-fast", "--seasons", "2023-24"]
+    with patch("sys.argv", args):
+        with patch("ingest.init_db", return_value=con):
+            with patch("ingest.run_dimensions"):
+                with patch(
+                    "ingest.run_raw_backfill",
+                    return_value={"ok": [], "skipped": [], "failed": ["games"], "details": []},
+                ):
+                    with pytest.raises(RuntimeError, match="Raw backfill failed in fail-fast mode"):
+                        ingest.main()

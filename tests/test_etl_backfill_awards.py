@@ -94,6 +94,32 @@ def test_load_awards_prefers_eos_voting_when_present(
     assert count == 3
 
 
+def test_load_awards_maps_award_share_name_to_canonical_short_code(
+    sqlite_con: sqlite3.Connection,
+    tmp_path: Path,
+) -> None:
+    _seed_award_context(sqlite_con)
+
+    pd.DataFrame(
+        [
+            {
+                "season": 2024,
+                "player_id": "jamesle01",
+                "award": "Most Valuable Player",
+                "pts_won": 700,
+                "pts_max": 1000,
+            }
+        ]
+    ).to_csv(tmp_path / "Player Award Shares.csv", index=False)
+
+    load_awards(sqlite_con, tmp_path)
+
+    award_name = sqlite_con.execute(
+        "SELECT award_name FROM fact_player_award"
+    ).fetchone()[0]
+    assert award_name == "MVP"
+
+
 def test_load_awards_uses_eos_fallback_when_voting_file_missing(
     sqlite_con: sqlite3.Connection,
     tmp_path: Path,

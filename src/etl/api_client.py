@@ -12,10 +12,10 @@ Provides a single APICaller class that:
 import logging
 import time
 from collections.abc import Callable
-from typing import Any, TypeVar
+from typing import TypeVar
 
 from .config import APIConfig
-from .metrics import record_api_call, record_retry
+from .metrics import record_api_call, record_api_latency, record_retry
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +88,9 @@ class APICaller:
 
         for attempt in range(1, self._max_retries + 1):
             try:
+                started = time.time()
                 result = fn()
+                record_api_latency(label, (time.time() - started) * 1000.0)
                 # Sleep after successful call to respect rate limits
                 time.sleep(sleep_time)
                 record_api_call(label, success=True, attempt=attempt)
@@ -142,7 +144,9 @@ class APICaller:
 
         for attempt in range(1, retries + 1):
             try:
+                started = time.time()
                 result = fn()
+                record_api_latency(label, (time.time() - started) * 1000.0)
                 time.sleep(base_sleep)
                 record_api_call(label, success=True, attempt=attempt)
                 return result
@@ -186,25 +190,3 @@ def get_api_caller() -> APICaller:
     if _default_api_caller is None:
         _default_api_caller = APICaller()
     return _default_api_caller
-
-
-# Backward compatibility functions for gradual migration
-def call_with_backoff(
-    fn: Callable[[], Any],
-    *,
-    base_sleep: float = 3.0,
-    max_retries: int = 5,
-    label: str = "",
-) -> Any:
-    """
-    Backward-compatible wrapper for existing call_with_backoff() usage.
-
-    This function maintains the same signature as the original in utils.py
-    but delegates to the new APICaller class. Existing code will continue to work.
-
-    .. deprecated::
-        Use APICaller.call_with_backoff() or get_api_caller() instead.
-        This function will be removed in a future version.
-    """
-    caller = APICaller(base_sleep=base_sleep, max_retries=max_retries)
-    return caller.call_with_backoff(fn, label=label, base_sleep=base_sleep)

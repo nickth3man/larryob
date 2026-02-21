@@ -226,18 +226,67 @@ def check_game_stat_consistency(con: sqlite3.Connection, game_id: str) -> list[s
 
 
 def run_consistency_checks(con: sqlite3.Connection, season_id: str) -> int:
-    """Run check_game_stat_consistency for all games in season_id, log warnings."""
-    games = con.execute("SELECT game_id FROM fact_game WHERE season_id = ?", (season_id,)).fetchall()
+    """Run reconciliation checks for all games in season_id using a set-based query."""
+    game_count = con.execute(
+        "SELECT COUNT(*) FROM fact_game WHERE season_id = ?",
+        (season_id,),
+    ).fetchone()[0]
+
+    sql = """
+    WITH p_agg AS (
+        SELECT
+            p.game_id,
+            p.team_id,
+            SUM(p.pts) AS p_pts,
+            SUM(p.reb) AS p_reb,
+            SUM(p.ast) AS p_ast
+        FROM player_game_log p
+        JOIN fact_game g ON g.game_id = p.game_id
+        WHERE g.season_id = ?
+        GROUP BY p.game_id, p.team_id
+    )
+    SELECT
+        t.game_id,
+        t.team_id,
+        t.pts, p.p_pts,
+        t.reb, p.p_reb,
+        t.ast, p.p_ast
+    FROM team_game_log t
+    JOIN fact_game g ON g.game_id = t.game_id
+    LEFT JOIN p_agg p ON p.game_id = t.game_id AND p.team_id = t.team_id
+    WHERE g.season_id = ?
+      AND (
+        (p.p_pts IS NOT NULL AND t.pts != p.p_pts)
+        OR (p.p_reb IS NOT NULL AND t.reb != p.p_reb)
+        OR (p.p_ast IS NOT NULL AND t.ast != p.p_ast)
+      )
+    ORDER BY t.game_id, t.team_id
+    """
+    mismatches = con.execute(sql, (season_id, season_id)).fetchall()
 
     total_warnings = 0
-    for (game_id,) in games:
-        warnings = check_game_stat_consistency(con, game_id)
-        for w in warnings:
-            logger.warning(w)
+    for game_id, team_id, t_pts, p_pts, t_reb, p_reb, t_ast, p_ast in mismatches:
+        if p_pts is not None and t_pts != p_pts:
+            logger.warning(
+                "PTS mismatch for team %s in game %s: Team=%s, Players=%s",
+                team_id, game_id, t_pts, p_pts,
+            )
+            total_warnings += 1
+        if p_reb is not None and t_reb != p_reb:
+            logger.warning(
+                "REB mismatch for team %s in game %s: Team=%s, Players=%s",
+                team_id, game_id, t_reb, p_reb,
+            )
+            total_warnings += 1
+        if p_ast is not None and t_ast != p_ast:
+            logger.warning(
+                "AST mismatch for team %s in game %s: Team=%s, Players=%s",
+                team_id, game_id, t_ast, p_ast,
+            )
             total_warnings += 1
 
     if total_warnings == 0:
-        logger.info("Consistency check passed for season %s (%d games)", season_id, len(games))
+        logger.info("Consistency check passed for season %s (%d games)", season_id, game_count)
     else:
         logger.warning("Consistency check found %d discrepancies in season %s", total_warnings, season_id)
 
