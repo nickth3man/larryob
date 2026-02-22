@@ -23,14 +23,16 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
 import re
 import sqlite3
 import time
+from collections.abc import Callable, Sequence
 from contextlib import suppress
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from src.db.analytics import get_duck_con
 from src.db.schema import init_db
@@ -43,6 +45,7 @@ from src.etl.play_by_play import load_season_pbp
 from src.etl.raw_backfill import RAW_DIR, run_raw_backfill
 from src.etl.roster import load_rosters_for_seasons
 from src.etl.salaries import load_salaries_for_seasons
+from src.etl.utils import _validate_identifier as _validate_sql_identifier
 from src.etl.utils import setup_logging
 from src.etl.validate import run_consistency_checks
 
@@ -52,9 +55,44 @@ if TYPE_CHECKING:
 logger = logging.getLogger("ingest")
 
 DEFAULT_SEASONS = ["2023-24", "2024-25"]
+_SEASON_ID_PATTERN = re.compile(r"^\d{4}-\d{2}$")
 
 # Pre-compiled regex for identifier validation
 _VALID_IDENTIFIER = re.compile(r"^[a-zA-Z_][a-zA-Z0-9_]*$")
+
+DIMENSIONS_TABLES = ["dim_season", "dim_team", "dim_player"]
+RAW_BACKFILL_TABLES = [
+    "dim_team_history",
+    "fact_game",
+    "player_game_log",
+    "team_game_log",
+    "fact_team_season",
+    "fact_player_season_stats",
+    "fact_player_advanced_season",
+    "fact_player_shooting_season",
+    "fact_player_pbp_season",
+]
+AWARDS_TABLES = ["fact_player_award"]
+SALARIES_TABLES = ["dim_salary_cap", "fact_salary"]
+ROSTERS_TABLES = ["fact_roster"]
+GAME_LOGS_TABLES = ["fact_game", "player_game_log", "team_game_log"]
+PBP_TABLES = ["fact_play_by_play"]
+
+
+StageFn = Callable[..., Any]
+
+
+def _normalize_seasons(raw_seasons: Sequence[str]) -> list[str]:
+    """Normalize seasons by trimming and de-duplicating while preserving order."""
+    normalized: list[str] = []
+    seen: set[str] = set()
+    for season in raw_seasons:
+        cleaned = season.strip()
+        if not cleaned or cleaned in seen:
+            continue
+        normalized.append(cleaned)
+        seen.add(cleaned)
+    return normalized
 
 
 class Stage(StrEnum):
@@ -100,9 +138,10 @@ class IngestConfig:
         """Create config from parsed arguments."""
         metrics_enabled = args.metrics or MetricsConfig.enabled()
         metrics_export = args.metrics_export_endpoint or MetricsConfig.export_endpoint()
+        seasons = _normalize_seasons(args.seasons)
 
         return cls(
-            seasons=args.seasons,
+            seasons=seasons,
             dims_only=args.dims_only,
             enrich_bio=args.enrich_bio,
             awards=args.awards,
@@ -169,6 +208,12 @@ class AnalyticsError(IngestError):
     pass
 
 
+class ValidationError(IngestError):
+    """Raised when ingest CLI arguments are invalid."""
+
+    pass
+
+
 def validate_view_name(name: str) -> str:
     """Validate and return a safe analytics view name.
 
@@ -183,7 +228,43 @@ def validate_view_name(name: str) -> str:
     """
     if not _VALID_IDENTIFIER.fullmatch(name):
         raise AnalyticsError(f"Invalid analytics view name: {name!r}")
+    _validate_sql_identifier(name)
     return name
+
+
+def _validate_log_level(level: str) -> str:
+    """Validate and normalize log level string."""
+    candidate = level.upper()
+    if candidate not in logging.getLevelNamesMapping():
+        raise ValidationError(
+            f"Invalid --log-level {level!r}. "
+            "Expected one of DEBUG, INFO, WARNING, ERROR, CRITICAL."
+        )
+    return candidate
+
+
+def _validate_analytics_output_path(path: Path) -> None:
+    """Validate analytics output extension early for friendlier CLI errors."""
+    suffix = path.suffix.lower()
+    if suffix not in {".csv", ".parquet", ".json"}:
+        raise ValidationError(
+            f"Unsupported analytics output format: {path} "
+            "(expected .csv, .parquet, or .json)"
+        )
+
+
+def _validate_seasons(seasons: Sequence[str]) -> list[str]:
+    """Validate normalized season IDs and return a cleaned copy."""
+    if not seasons:
+        raise ValidationError("At least one season must be provided via --seasons")
+
+    invalid = [s for s in seasons if not _SEASON_ID_PATTERN.fullmatch(s)]
+    if invalid:
+        raise ValidationError(
+            "Invalid --seasons values "
+            f"{invalid}. Expected format YYYY-YY (e.g. 2023-24)."
+        )
+    return list(seasons)
 
 
 def _safe_table_count(con: sqlite3.Connection, table_name: str) -> int | None:
@@ -199,8 +280,12 @@ def _safe_table_count(con: sqlite3.Connection, table_name: str) -> int | None:
     if not _VALID_IDENTIFIER.fullmatch(table_name):
         return None
     try:
-        return con.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()[0]
+        _validate_sql_identifier(table_name)
+        result = con.execute(f"SELECT COUNT(*) FROM {table_name}").fetchone()
+        return int(result[0]) if result else 0
     except sqlite3.OperationalError:
+        return None
+    except ValueError:
         return None
 
 
@@ -213,8 +298,13 @@ def _get_runlog_status_map(con: sqlite3.Connection) -> dict[str, int]:
     Returns:
         Dictionary mapping status to count.
     """
-    rows = con.execute("SELECT status, COUNT(*) FROM etl_run_log GROUP BY status").fetchall()
-    return dict(rows)
+    try:
+        rows = con.execute("SELECT status, COUNT(*) FROM etl_run_log GROUP BY status").fetchall()
+    except sqlite3.OperationalError as exc:
+        if "no such table" in str(exc).lower():
+            return {}
+        raise
+    return {status: int(count) for status, count in rows}
 
 
 def _compute_delta(previous: dict[str, int], current: dict[str, int]) -> dict[str, int]:
@@ -227,6 +317,9 @@ def _compute_delta(previous: dict[str, int], current: dict[str, int]) -> dict[st
     Returns:
         Dictionary of changed keys with their delta values.
     """
+    if previous is current:
+        return {}
+
     all_keys = set(previous) | set(current)
     return {
         key: current.get(key, 0) - previous.get(key, 0)
@@ -243,17 +336,23 @@ def _log_runlog_tail(con: sqlite3.Connection, checkpoint: str, limit: int) -> No
         checkpoint: Checkpoint name for logging context.
         limit: Maximum number of rows to log.
     """
-    rows = con.execute(
-        """
-        SELECT
-            id, table_name, COALESCE(season_id, '-'), loader, status,
-            COALESCE(row_count, -1), started_at, COALESCE(finished_at, '-')
-        FROM etl_run_log
-        ORDER BY id DESC
-        LIMIT ?
-        """,
-        (limit,),
-    ).fetchall()
+    try:
+        rows = con.execute(
+            """
+            SELECT
+                id, table_name, COALESCE(season_id, '-'), loader, status,
+                COALESCE(row_count, -1), started_at, COALESCE(finished_at, '-')
+            FROM etl_run_log
+            ORDER BY id DESC
+            LIMIT ?
+            """,
+            (limit,),
+        ).fetchall()
+    except sqlite3.OperationalError as exc:
+        if "no such table" in str(exc).lower():
+            logger.debug("Skipping etl_run_log tail at checkpoint=%s: etl_run_log missing", checkpoint)
+            return
+        raise
 
     logger.info("Checkpoint %s: etl_run_log tail (latest %d rows)", checkpoint, limit)
     for row in rows:
@@ -340,11 +439,18 @@ def _run_analytics_view(
     Raises:
         AnalyticsError: If the view name is invalid or export format unsupported.
     """
+    if limit <= 0:
+        raise AnalyticsError(f"analytics limit must be > 0, got {limit}")
+
     safe_view = validate_view_name(view_name)
     duck = get_duck_con(force_refresh=True)
 
     try:
         df = duck.execute(f"SELECT * FROM {safe_view} LIMIT {limit}").df()
+    except Exception as exc:
+        raise AnalyticsError(
+            f"Failed analytics query for view={safe_view!r} limit={limit}: {exc}"
+        ) from exc
     finally:
         _cleanup_duck_connection(duck)
 
@@ -369,9 +475,10 @@ def _cleanup_duck_connection(duck: duckdb.DuckDBPyConnection) -> None:
     # Clear module-level cache
     from src.db import analytics as analytics_mod
 
-    analytics_mod._local.cached_con = None
-    analytics_mod._local.cached_sqlite_path = None
-    analytics_mod._local.cached_duck_db_path = None
+    if hasattr(analytics_mod, "_local"):
+        analytics_mod._local.cached_con = None
+        analytics_mod._local.cached_sqlite_path = None
+        analytics_mod._local.cached_duck_db_path = None
 
 
 def _export_dataframe(
@@ -391,6 +498,7 @@ def _export_dataframe(
     Raises:
         AnalyticsError: If the export format is unsupported.
     """
+    output_path = output_path.expanduser().resolve()
     output_path.parent.mkdir(parents=True, exist_ok=True)
     suffix = output_path.suffix.lower()
 
@@ -406,7 +514,13 @@ def _export_dataframe(
             "(expected .csv, .parquet, or .json)"
         )
 
-    exporters[suffix]()
+    try:
+        exporters[suffix]()
+    except Exception as exc:
+        raise AnalyticsError(
+            f"Failed exporting analytics view {view_name} to {output_path}: {exc}"
+        ) from exc
+
     logger.info("Analytics view %s exported (%d rows) to %s", view_name, len(df), output_path)
 
 
@@ -425,9 +539,17 @@ def _finalize_metrics(
     if not metrics_enabled:
         return
     if show_summary:
-        log_metrics_summary()
+        try:
+            log_metrics_summary()
+        except Exception:
+            logger.exception("Metrics summary logging failed")
+            raise
     if export_endpoint:
-        export_metrics(export_endpoint)
+        try:
+            export_metrics(export_endpoint)
+        except Exception:
+            logger.exception("Metrics export failed endpoint=%s", export_endpoint)
+            raise
 
 
 def _log_config_summary(config: IngestConfig, log_file: Path | None) -> None:
@@ -468,13 +590,100 @@ def _log_config_summary(config: IngestConfig, log_file: Path | None) -> None:
     )
 
 
+def _set_metrics_env(enabled: bool) -> None:
+    """Set process-level metrics env flag only when explicitly requested."""
+    if enabled:
+        os.environ["LARRYOB_METRICS_ENABLED"] = "true"
+
+
+def _build_stage_plan(config: IngestConfig) -> list[tuple[Stage, list[str], StageFn, tuple[Any, ...], dict[str, Any]]]:
+    """Build the linear stage plan for the ingest run.
+
+    Returns a list of stage tuples: (stage, tables, function, args, kwargs).
+    """
+    plan: list[tuple[Stage, list[str], StageFn, tuple[Any, ...], dict[str, Any]]] = [
+        (Stage.DIMENSIONS, DIMENSIONS_TABLES, _run_dimensions_stage, (config,), {}),
+    ]
+
+    if config.raw_backfill and not config.dims_only:
+        plan.append((Stage.RAW_BACKFILL, RAW_BACKFILL_TABLES, _run_raw_backfill_stage, (config,), {}))
+    if config.awards:
+        plan.append((Stage.AWARDS, AWARDS_TABLES, load_all_awards, (), {"active_only": True}))
+    if config.salaries:
+        plan.append((Stage.SALARIES, SALARIES_TABLES, load_salaries_for_seasons, (config.seasons,), {}))
+    if config.rosters:
+        plan.append((Stage.ROSTERS, ROSTERS_TABLES, load_rosters_for_seasons, (config.seasons,), {}))
+    if not config.dims_only:
+        plan.append((Stage.GAME_LOGS, GAME_LOGS_TABLES, _run_game_logs_stage, (config,), {}))
+
+    return plan
+
+
+def _execute_raw_backfill_stage(
+    con: sqlite3.Connection,
+    state: CheckpointState,
+    config: IngestConfig,
+) -> None:
+    """Execute raw backfill with summary-aware logging and fail-fast semantics."""
+    logger.info("Starting stage: %s", Stage.RAW_BACKFILL.value)
+    stage_start = time.perf_counter()
+    summary = _run_raw_backfill_stage(con, config)
+    elapsed = time.perf_counter() - stage_start
+
+    ok_count = len(summary.get("ok", []))
+    skipped_count = len(summary.get("skipped", []))
+    failed = summary.get("failed", [])
+    failed_count = len(failed)
+
+    logger.info(
+        "Stage %s elapsed=%.2fs ok=%d skipped=%d failed=%d",
+        Stage.RAW_BACKFILL.value.replace("post-", ""),
+        elapsed,
+        ok_count,
+        skipped_count,
+        failed_count,
+    )
+
+    if failed_count > 0:
+        logger.warning("Raw backfill reported failed loaders: %s", failed)
+        if config.raw_backfill_fail_fast:
+            raise IngestError("Raw backfill failed in fail-fast mode.")
+
+    _log_checkpoint(con, Stage.RAW_BACKFILL, RAW_BACKFILL_TABLES, state, config.runlog_tail)
+
+
+def _execute_optional_post_gamelogs_steps(
+    con: sqlite3.Connection,
+    state: CheckpointState,
+    config: IngestConfig,
+) -> None:
+    """Run reconciliation and optional PBP after game logs."""
+    if config.skip_reconciliation:
+        logger.info("--skip-reconciliation set; skipping consistency checks.")
+    else:
+        _run_reconciliation(con, config)
+
+    if config.pbp_limit <= 0:
+        return
+
+    logger.info("Starting stage: %s", Stage.PBP.value)
+    stage_start = time.perf_counter()
+    _run_pbp_stage(con, config)
+    logger.info(
+        "Stage %s elapsed=%.2fs",
+        Stage.PBP.value.replace("post-", ""),
+        time.perf_counter() - stage_start,
+    )
+    _log_checkpoint(con, Stage.PBP, PBP_TABLES, state, config.runlog_tail)
+
+
 def _execute_stage(
     con: sqlite3.Connection,
     stage: Stage,
     tables: list[str],
     state: CheckpointState,
     config: IngestConfig,
-    stage_fn,
+    stage_fn: StageFn,
     *args,
     **kwargs,
 ) -> None:
@@ -492,7 +701,11 @@ def _execute_stage(
     """
     logger.info("Starting stage: %s", stage.value)
     stage_start = time.perf_counter()
-    stage_fn(con, *args, **kwargs)
+    try:
+        stage_fn(con, *args, **kwargs)
+    except Exception:
+        logger.exception("Stage %s failed", stage.value.replace("post-", ""))
+        raise
     elapsed = time.perf_counter() - stage_start
     logger.info("Stage %s elapsed=%.2fs", stage.value.replace("post-", ""), elapsed)
     _log_checkpoint(con, stage, tables, state, config.runlog_tail)
@@ -516,9 +729,7 @@ def _run_raw_backfill_stage(con: sqlite3.Connection, config: IngestConfig) -> di
 
 def _run_game_logs_stage(con: sqlite3.Connection, config: IngestConfig) -> None:
     """Execute the game logs loading stage."""
-    season_types = ["Regular Season"]
-    if config.include_playoffs:
-        season_types.append("Playoffs")
+    season_types = ["Regular Season", "Playoffs"] if config.include_playoffs else ["Regular Season"]
     logger.info("Loading box scores for seasons: %s", config.seasons)
     load_multiple_seasons(con, config.seasons, season_types=season_types)
 
@@ -530,14 +741,16 @@ def _run_reconciliation(con: sqlite3.Connection, config: IngestConfig) -> None:
         ReconciliationError: If discrepancies found and not in warn-only mode.
     """
     total_warnings = 0
-    for season in config.seasons:
+    for idx, season in enumerate(config.seasons, start=1):
         logger.info("Running reconciliation checks for season %s...", season)
         stage_start = time.perf_counter()
         season_warnings = run_consistency_checks(con, season)
         total_warnings += season_warnings
         logger.info(
-            "Reconciliation season=%s warnings=%d elapsed=%.2fs running_total=%d",
+            "Reconciliation season=%s (%d/%d) warnings=%d elapsed=%.2fs running_total=%d",
             season,
+            idx,
+            len(config.seasons),
             season_warnings,
             time.perf_counter() - stage_start,
             total_warnings,
@@ -555,8 +768,14 @@ def _run_reconciliation(con: sqlite3.Connection, config: IngestConfig) -> None:
 
 def _run_pbp_stage(con: sqlite3.Connection, config: IngestConfig) -> None:
     """Execute the play-by-play loading stage."""
-    for season in config.seasons:
-        logger.info("Loading PBP for up to %d games in %s...", config.pbp_limit, season)
+    for idx, season in enumerate(config.seasons, start=1):
+        logger.info(
+            "Loading PBP for up to %d games in %s (%d/%d)...",
+            config.pbp_limit,
+            season,
+            idx,
+            len(config.seasons),
+        )
         load_season_pbp(con, season, limit=config.pbp_limit)
 
 
@@ -730,8 +949,29 @@ def validate_arguments(parser: argparse.ArgumentParser, args: argparse.Namespace
         parser.error("--analytics-only requires --analytics-view")
     if args.analytics_view and args.analytics_limit <= 0:
         parser.error("--analytics-limit must be greater than 0")
+    if args.pbp_limit < 0:
+        parser.error("--pbp-limit must be greater than or equal to 0")
     if args.runlog_tail <= 0:
         parser.error("--runlog-tail must be greater than 0")
+    if args.raw_backfill and args.raw_dir:
+        raw_dir = Path(args.raw_dir)
+        if not raw_dir.exists():
+            parser.error(f"--raw-dir does not exist: {raw_dir}")
+        if not raw_dir.is_dir():
+            parser.error(f"--raw-dir must be a directory: {raw_dir}")
+
+    try:
+        _validate_log_level(args.log_level)
+        seasons = _normalize_seasons(args.seasons)
+        _validate_seasons(seasons)
+        if args.analytics_view:
+            validate_view_name(args.analytics_view)
+        if args.analytics_output:
+            _validate_analytics_output_path(Path(args.analytics_output))
+    except ValidationError as exc:
+        parser.error(str(exc))
+    except AnalyticsError as exc:
+        parser.error(str(exc))
 
 
 def run_ingest_pipeline(con: sqlite3.Connection, config: IngestConfig) -> None:
@@ -747,120 +987,18 @@ def run_ingest_pipeline(con: sqlite3.Connection, config: IngestConfig) -> None:
     state = CheckpointState()
     ingest_start = time.perf_counter()
 
-    # Stage 1: Dimensions
     logger.info("Loading dimension tables...")
-    _execute_stage(
-        con,
-        Stage.DIMENSIONS,
-        ["dim_season", "dim_team", "dim_player"],
-        state,
-        config,
-        _run_dimensions_stage,
-        config,
-    )
+    stage_plan = _build_stage_plan(config)
+    for stage, tables, stage_fn, args, kwargs in stage_plan:
+        if stage is Stage.RAW_BACKFILL:
+            _execute_raw_backfill_stage(con, state, config)
+            continue
+        _execute_stage(con, stage, tables, state, config, stage_fn, *args, **kwargs)
 
-    # Stage 2: Raw backfill (if requested)
-    if config.raw_backfill and not config.dims_only:
-        raw_dir = config.raw_dir or RAW_DIR
-        logger.info("Running raw/ backfill from %s...", raw_dir)
-        stage_start = time.perf_counter()
-        summary = run_raw_backfill(con, raw_dir, fail_fast=config.raw_backfill_fail_fast)
-        logger.info(
-            "Stage raw_backfill elapsed=%.2fs ok=%d skipped=%d failed=%d",
-            time.perf_counter() - stage_start,
-            len(summary["ok"]),
-            len(summary["skipped"]),
-            len(summary["failed"]),
-        )
-        if summary["failed"] and config.raw_backfill_fail_fast:
-            raise IngestError("Raw backfill failed in fail-fast mode.")
-
-        _log_checkpoint(
-            con,
-            Stage.RAW_BACKFILL,
-            [
-                "dim_team_history",
-                "fact_game",
-                "player_game_log",
-                "team_game_log",
-                "fact_team_season",
-                "fact_player_season_stats",
-                "fact_player_advanced_season",
-                "fact_player_shooting_season",
-                "fact_player_pbp_season",
-            ],
-            state,
-            config.runlog_tail,
-        )
-
-    # Stage 3: Awards (if requested)
-    if config.awards:
-        _execute_stage(
-            con,
-            Stage.AWARDS,
-            ["fact_player_award"],
-            state,
-            config,
-            load_all_awards,
-            active_only=True,
-        )
-
-    # Stage 4: Salaries (if requested)
-    if config.salaries:
-        logger.info("Loading salary cap and player salaries...")
-        _execute_stage(
-            con,
-            Stage.SALARIES,
-            ["dim_salary_cap", "fact_salary"],
-            state,
-            config,
-            load_salaries_for_seasons,
-            config.seasons,
-        )
-
-    # Stage 5: Rosters (if requested)
-    if config.rosters:
-        logger.info("Loading rosters...")
-        _execute_stage(
-            con,
-            Stage.ROSTERS,
-            ["fact_roster"],
-            state,
-            config,
-            load_rosters_for_seasons,
-            config.seasons,
-        )
-
-    # Stage 6: Game logs (unless dims-only)
     if config.dims_only:
-        logger.info("--dims-only set; skipping box scores.")
+        logger.info("--dims-only set; skipping box scores, reconciliation, and PBP.")
     else:
-        _execute_stage(
-            con,
-            Stage.GAME_LOGS,
-            ["fact_game", "player_game_log", "team_game_log"],
-            state,
-            config,
-            _run_game_logs_stage,
-            config,
-        )
-
-        # Reconciliation checks
-        if not config.skip_reconciliation:
-            _run_reconciliation(con, config)
-
-        # Play-by-play (if requested)
-        if config.pbp_limit > 0:
-            stage_start = time.perf_counter()
-            _run_pbp_stage(con, config)
-            logger.info("Stage pbp elapsed=%.2fs", time.perf_counter() - stage_start)
-            _log_checkpoint(
-                con,
-                Stage.PBP,
-                ["fact_play_by_play"],
-                state,
-                config.runlog_tail,
-            )
+        _execute_optional_post_gamelogs_steps(con, state, config)
 
     logger.info("Ingest total elapsed=%.2fs", time.perf_counter() - ingest_start)
 
@@ -874,53 +1012,54 @@ def main() -> None:
     parser = create_argument_parser()
     args = parser.parse_args()
 
-    # Enable metrics if requested
-    if args.metrics:
-        import os
-
-        os.environ["LARRYOB_METRICS_ENABLED"] = "true"
-
     validate_arguments(parser, args)
+
+    # Enable metrics env flag only after argument validation succeeds
+    _set_metrics_env(args.metrics)
 
     # Setup logging
     log_file = Path(args.log_file) if args.log_file else None
-    setup_logging(level=args.log_level, log_file=log_file)
+    setup_logging(level=_validate_log_level(args.log_level), log_file=log_file)
 
     config = IngestConfig.from_args(args)
     _log_config_summary(config, log_file)
 
-    # Handle analytics-only mode
-    if config.analytics_only:
-        if config.analytics_view is None:
-            parser.error("--analytics-only requires --analytics-view")
-        _run_analytics_view(
-            view_name=config.analytics_view,
-            limit=config.analytics_limit,
-            output_path=config.analytics_output,
-        )
-        _finalize_metrics(config.metrics_enabled, config.metrics_summary, config.metrics_export_endpoint)
-        return
-
-    # Initialize and run pipeline
-    logger.info("Initialising database schema...")
-    con = init_db()
-
     try:
-        run_ingest_pipeline(con, config)
+        # Handle analytics-only mode
+        if config.analytics_only:
+            if config.analytics_view is None:
+                parser.error("--analytics-only requires --analytics-view")
+            _run_analytics_view(
+                view_name=config.analytics_view,
+                limit=config.analytics_limit,
+                output_path=config.analytics_output,
+            )
+            return
+
+        # Initialize and run pipeline
+        logger.info("Initialising database schema...")
+        con = init_db()
+
+        try:
+            run_ingest_pipeline(con, config)
+        finally:
+            con.close()
+
+        logger.info("Ingest complete.")
+
+        # Run analytics view if requested
+        if config.analytics_view:
+            _run_analytics_view(
+                view_name=config.analytics_view,
+                limit=config.analytics_limit,
+                output_path=config.analytics_output,
+            )
     finally:
-        con.close()
-
-    logger.info("Ingest complete.")
-
-    # Run analytics view if requested
-    if config.analytics_view:
-        _run_analytics_view(
-            view_name=config.analytics_view,
-            limit=config.analytics_limit,
-            output_path=config.analytics_output,
+        _finalize_metrics(
+            config.metrics_enabled,
+            config.metrics_summary,
+            config.metrics_export_endpoint,
         )
-
-    _finalize_metrics(config.metrics_enabled, config.metrics_summary, config.metrics_export_endpoint)
 
 
 if __name__ == "__main__":
