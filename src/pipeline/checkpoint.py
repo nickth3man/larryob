@@ -3,6 +3,17 @@ Checkpoint logging: row-count snapshots and etl_run_log tailing between pipeline
 
 These functions are called after each stage completes to record progress and
 surface any anomalies before the next stage begins.
+
+Design Decisions
+----------------
+- Uses Sequence[str] for tables parameter to accept both list and tuple
+- Validates table names before querying to prevent SQL injection
+- Gracefully handles missing tables (returns None for counts)
+
+Usage
+-----
+    state = CheckpointState()
+    log_checkpoint(con, Stage.DIMENSIONS, DIMENSIONS_TABLES, state, runlog_tail=12)
 """
 
 from __future__ import annotations
@@ -10,6 +21,7 @@ from __future__ import annotations
 import logging
 import sqlite3
 import time
+from collections.abc import Sequence
 
 from src.pipeline.constants import _VALID_IDENTIFIER
 from src.pipeline.models import CheckpointState, Stage
@@ -129,7 +141,7 @@ def _log_runlog_tail(con: sqlite3.Connection, checkpoint: str, limit: int) -> No
 def log_checkpoint(
     con: sqlite3.Connection,
     stage: Stage,
-    tables: list[str],
+    tables: Sequence[str],
     state: CheckpointState,
     runlog_tail: int,
 ) -> None:
@@ -138,7 +150,7 @@ def log_checkpoint(
     Args:
         con: SQLite connection.
         stage: Pipeline stage identifier.
-        tables: Tables to include in row count.
+        tables: Tables to include in row count (accepts list or tuple).
         state: Mutable checkpoint state to update.
         runlog_tail: Number of runlog rows to display.
     """

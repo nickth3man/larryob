@@ -4,6 +4,19 @@ Pipeline orchestration: stage plan construction, stage execution, and the top-le
 
 This module wires together the stage runners from `stages.py`, the checkpoint
 logger from `checkpoint.py`, and the optional ETL metrics from `src.etl.metrics`.
+
+Design Decisions
+----------------
+- Stage plan is built dynamically based on IngestConfig flags
+- Each stage is a tuple of (Stage, tables, function, args, kwargs) for uniformity
+- Raw backfill has special handling for its summary return value
+- Metrics finalization runs in a finally block to ensure cleanup
+
+Usage
+-----
+    config = IngestConfig.from_args(args)
+    con = init_db()
+    run_ingest_pipeline(con, config)
 """
 
 from __future__ import annotations
@@ -12,6 +25,7 @@ import logging
 import os
 import sqlite3
 import time
+from collections.abc import Sequence
 from pathlib import Path
 
 from src.etl.awards import load_all_awards
@@ -40,6 +54,9 @@ from src.pipeline.stages import (
 )
 
 logger = logging.getLogger(__name__)
+
+#: Type alias for a stage plan tuple: (stage, tables, function, args, kwargs)
+StagePlan = tuple[Stage, Sequence[str], StageFn, tuple, dict]
 
 
 def _log_config_summary(config: IngestConfig, log_file: Path | None) -> None:
@@ -105,12 +122,18 @@ def finalize_metrics(
 
 def _build_stage_plan(
     config: IngestConfig,
-) -> list[tuple[Stage, list[str], StageFn, tuple, dict]]:
+) -> list[StagePlan]:
     """Build the linear stage plan for the ingest run.
 
     Returns a list of stage tuples: (stage, tables, function, args, kwargs).
+
+    The stage plan is built dynamically based on config flags:
+    - DIMENSIONS: Always runs first
+    - RAW_BACKFILL: Only if --raw-backfill and not --dims-only
+    - AWARDS/SALARIES/ROSTERS: Optional feature flags
+    - GAME_LOGS: Always unless --dims-only
     """
-    plan: list[tuple[Stage, list[str], StageFn, tuple, dict]] = [
+    plan: list[StagePlan] = [
         (Stage.DIMENSIONS, DIMENSIONS_TABLES, run_dimensions_stage, (config,), {}),
     ]
 
@@ -122,11 +145,17 @@ def _build_stage_plan(
         plan.append((Stage.AWARDS, AWARDS_TABLES, load_all_awards, (), {"active_only": True}))
     if config.salaries:
         plan.append(
-            (Stage.SALARIES, SALARIES_TABLES, load_salaries_for_seasons, (config.seasons,), {})
+            (
+                Stage.SALARIES,
+                SALARIES_TABLES,
+                load_salaries_for_seasons,
+                (list(config.seasons),),
+                {},
+            )
         )
     if config.rosters:
         plan.append(
-            (Stage.ROSTERS, ROSTERS_TABLES, load_rosters_for_seasons, (config.seasons,), {})
+            (Stage.ROSTERS, ROSTERS_TABLES, load_rosters_for_seasons, (list(config.seasons),), {})
         )
     if not config.dims_only:
         plan.append((Stage.GAME_LOGS, GAME_LOGS_TABLES, run_game_logs_stage, (config,), {}))
@@ -195,14 +224,28 @@ def _execute_optional_post_gamelogs_steps(
 def _execute_stage(
     con: sqlite3.Connection,
     stage: Stage,
-    tables: list[str],
+    tables: Sequence[str],
     state: CheckpointState,
     config: IngestConfig,
     stage_fn: StageFn,
     *args,
     **kwargs,
 ) -> None:
-    """Execute a pipeline stage with timing and checkpoint logging."""
+    """Execute a pipeline stage with timing and checkpoint logging.
+
+    Args:
+        con: SQLite connection.
+        stage: Stage identifier for logging.
+        tables: Tables affected by this stage (for checkpoint row counts).
+        state: Mutable checkpoint state.
+        config: Ingest configuration.
+        stage_fn: The stage execution function.
+        *args: Positional arguments passed to stage_fn.
+        **kwargs: Keyword arguments passed to stage_fn.
+
+    Raises:
+        Exception: Re-raises any exception from the stage function after logging.
+    """
     logger.info("Starting stage: %s", stage.value)
     stage_start = time.perf_counter()
     try:

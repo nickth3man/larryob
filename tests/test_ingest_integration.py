@@ -98,8 +98,9 @@ def test_ingest_reconciliation_discrepancy_raises_by_default(tmp_path):
             with patch("src.pipeline.stages.run_dimensions"):
                 with patch("src.pipeline.stages.load_multiple_seasons"):
                     with patch("src.pipeline.stages.run_consistency_checks", return_value=2):
-                        with pytest.raises(RuntimeError, match="Reconciliation checks found 2"):
-                            ingest.main()
+                        # main() now returns exit code 2 for IngestError
+                        exit_code = ingest.main()
+                        assert exit_code == 2
 
 
 def test_ingest_reconciliation_warn_only_continues(tmp_path):
@@ -134,8 +135,9 @@ def test_ingest_skip_reconciliation_bypasses_checks(tmp_path):
 
 def test_ingest_analytics_only_requires_view() -> None:
     with patch("sys.argv", ["ingest.py", "--analytics-only"]):
-        with pytest.raises(SystemExit):
-            ingest.main()
+        # main() now returns exit code 1 for validation errors
+        exit_code = ingest.main()
+        assert exit_code == 1
 
 
 def test_ingest_analytics_only_runs_query_without_init_db() -> None:
@@ -184,5 +186,6 @@ def test_ingest_raw_backfill_fail_fast_raises(tmp_path):
                     "src.pipeline.stages.run_raw_backfill",
                     return_value={"ok": [], "skipped": [], "failed": ["games"], "details": []},
                 ):
-                    with pytest.raises(RuntimeError, match="Raw backfill failed in fail-fast mode"):
-                        ingest.main()
+                    # main() now returns exit code 2 for IngestError
+                    exit_code = ingest.main()
+                    assert exit_code == 2

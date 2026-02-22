@@ -4,6 +4,14 @@ CLI entry point for the ingest pipeline.
 Defines the argument parser, validates argument combinations, and wires
 everything together into the `main()` function.
 
+Design Decisions
+----------------
+- Argument parser is created via factory function for testability
+- Validation happens in two stages: parser.error for simple checks,
+  ValidationError for complex validation with context
+- Metrics finalization runs in finally block to ensure cleanup
+- Database connection lifecycle is managed explicitly
+
 Usage
 -----
     # Recommended (registered script):
@@ -20,13 +28,14 @@ from __future__ import annotations
 
 import argparse
 import logging
+import sys
 from pathlib import Path
 
 from src.db.schema import init_db
 from src.etl.utils import setup_logging
 from src.pipeline.analytics import run_analytics_view
 from src.pipeline.constants import DEFAULT_SEASONS
-from src.pipeline.exceptions import AnalyticsError, ValidationError
+from src.pipeline.exceptions import AnalyticsError, IngestError, ValidationError
 from src.pipeline.executor import (
     _log_config_summary,
     finalize_metrics,
@@ -44,6 +53,12 @@ from src.pipeline.validation import (
 
 logger = logging.getLogger(__name__)
 
+#: Exit codes for different failure modes
+EXIT_SUCCESS = 0
+EXIT_VALIDATION_ERROR = 1
+EXIT_INGEST_ERROR = 2
+EXIT_UNEXPECTED_ERROR = 3
+
 
 def create_argument_parser() -> argparse.ArgumentParser:
     """Create and configure the argument parser."""
@@ -56,8 +71,8 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--seasons",
         nargs="+",
-        default=DEFAULT_SEASONS,
-        help="Season strings to ingest, e.g. 2023-24 2024-25",
+        default=list(DEFAULT_SEASONS),
+        help=f"Season strings to ingest (default: {' '.join(DEFAULT_SEASONS)})",
     )
 
     # Dimension options
@@ -200,13 +215,18 @@ def create_argument_parser() -> argparse.ArgumentParser:
 def validate_arguments(parser: argparse.ArgumentParser, args: argparse.Namespace) -> None:
     """Validate argument combinations.
 
+    Performs two-stage validation:
+    1. Simple combinatorial checks (e.g., --analytics-only requires --analytics-view)
+    2. Complex validation via typed validation functions
+
     Args:
-        parser: Argument parser for error reporting.
+        parser: Argument parser for error reporting (calls parser.error on failure).
         args: Parsed arguments.
 
     Raises:
-        SystemExit: If validation fails.
+        SystemExit: If validation fails (via parser.error).
     """
+    # Combinatorial validation
     if args.analytics_only and not args.analytics_view:
         parser.error("--analytics-only requires --analytics-view")
     if args.analytics_view and args.analytics_limit <= 0:
@@ -215,6 +235,8 @@ def validate_arguments(parser: argparse.ArgumentParser, args: argparse.Namespace
         parser.error("--pbp-limit must be greater than or equal to 0")
     if args.runlog_tail <= 0:
         parser.error("--runlog-tail must be greater than 0")
+
+    # Path validation for raw-dir
     if args.raw_backfill and args.raw_dir:
         raw_dir = Path(args.raw_dir)
         if not raw_dir.exists():
@@ -222,6 +244,7 @@ def validate_arguments(parser: argparse.ArgumentParser, args: argparse.Namespace
         if not raw_dir.is_dir():
             parser.error(f"--raw-dir must be a directory: {raw_dir}")
 
+    # Complex validation via typed validators
     try:
         _validate_log_level(args.log_level)
         seasons = _normalize_seasons(args.seasons)
@@ -236,8 +259,18 @@ def validate_arguments(parser: argparse.ArgumentParser, args: argparse.Namespace
         parser.error(str(exc))
 
 
-def main() -> None:
-    """Main entry point for the ingest pipeline."""
+def main() -> int:
+    """Main entry point for the ingest pipeline.
+
+    Returns:
+        Exit code (0 for success, non-zero for various failure modes).
+
+    Exit Codes:
+        0: Success
+        1: Validation error (invalid arguments)
+        2: Ingest error (pipeline failure)
+        3: Unexpected error
+    """
     from dotenv import load_dotenv
 
     load_dotenv()
@@ -245,26 +278,40 @@ def main() -> None:
     parser = create_argument_parser()
     args = parser.parse_args()
 
-    validate_arguments(parser, args)
+    # Stage 1: Validate arguments
+    try:
+        validate_arguments(parser, args)
+    except SystemExit:
+        return EXIT_VALIDATION_ERROR
 
+    # Stage 2: Setup logging and metrics
     set_metrics_env(args.metrics)
 
     log_file = Path(args.log_file) if args.log_file else None
     setup_logging(level=_validate_log_level(args.log_level), log_file=log_file)
 
-    config = IngestConfig.from_args(args)
+    # Stage 3: Build configuration
+    try:
+        config = IngestConfig.from_args(args)
+    except ValueError as exc:
+        logger.error("Configuration error: %s", exc)
+        return EXIT_VALIDATION_ERROR
+
     _log_config_summary(config, log_file)
 
+    # Stage 4: Execute pipeline
     try:
         if config.analytics_only:
             if config.analytics_view is None:
+                # This should have been caught in validation, but double-check
                 parser.error("--analytics-only requires --analytics-view")
+                return EXIT_VALIDATION_ERROR
             run_analytics_view(
                 view_name=config.analytics_view,
                 limit=config.analytics_limit,
                 output_path=config.analytics_output,
             )
-            return
+            return EXIT_SUCCESS
 
         logger.info("Initialising database schema...")
         con = init_db()
@@ -276,12 +323,24 @@ def main() -> None:
 
         logger.info("Ingest complete.")
 
+        # Optional post-ingest analytics
         if config.analytics_view:
             run_analytics_view(
                 view_name=config.analytics_view,
                 limit=config.analytics_limit,
                 output_path=config.analytics_output,
             )
+
+        return EXIT_SUCCESS
+
+    except IngestError as exc:
+        logger.error("Ingest failed: %s", exc)
+        if exc.context:
+            logger.debug("Error context: %s", exc.context)
+        return EXIT_INGEST_ERROR
+    except Exception as exc:
+        logger.exception("Unexpected error during ingest: %s", exc)
+        return EXIT_UNEXPECTED_ERROR
     finally:
         finalize_metrics(
             config.metrics_enabled,
@@ -291,4 +350,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
