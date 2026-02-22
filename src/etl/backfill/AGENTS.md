@@ -29,6 +29,14 @@ team_history → dim_team_enrich → dim_player_enrich
 → awards
 ```
 
+## ORCHESTRATOR INTERNALS
+
+- `_LOADERS` — ordered list of `(name, table_name, loader_func_name)` tuples
+- `run_raw_backfill(con, raw_dir, *, fail_fast=False)` → returns summary dict with ok/skipped/failed counts
+- Each loader wrapped in try/except — one failure doesn't abort the pipeline (unless `fail_fast=True`)
+- Tracks before/after row counts per table for delta reporting
+- Uses `already_loaded()` / `record_run()` from `utils.py` for idempotency
+
 ## CONVENTIONS
 
 - All modules are **private** (`_` prefix) — import only via `__init__.py`
@@ -36,7 +44,7 @@ team_history → dim_team_enrich → dim_player_enrich
 - `raw_dir` defaults to `Path("raw")` — override via `--raw-dir` CLI flag
 - All inserts use `INSERT OR IGNORE` or `INSERT OR REPLACE` — safe to re-run
 - bref CSV files use `bref_player_id` and `bref_abbrev` — these do NOT FK to dim tables
-- `_orchestrator.py` wraps each loader in try/except — one failure doesn't abort the pipeline
+- Uses absolute imports (`from src.etl.backfill._dims import ...`) not relative
 
 ## ANTI-PATTERNS
 

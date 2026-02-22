@@ -3,7 +3,7 @@ from unittest.mock import patch
 
 import pytest
 
-import ingest
+import src.pipeline.cli as ingest
 
 
 def test_ingest_dims_only(tmp_path, monkeypatch):
@@ -21,7 +21,7 @@ def test_ingest_dims_only(tmp_path, monkeypatch):
     with patch("sys.argv", test_args):
         with patch("src.etl.dimensions.nba_teams_static.get_teams", return_value=[]):
             with patch("src.etl.dimensions.nba_players_static.get_players", return_value=[]):
-                with patch("ingest.init_db", return_value=con):
+                with patch("src.pipeline.cli.init_db", return_value=con):
                     ingest.main()
 
     # Verify tables exist and connection closed successfully
@@ -54,14 +54,14 @@ def test_ingest_full_pipeline_mocked(tmp_path, monkeypatch):
     # Mock network calls to avoid actual HTTP requests
     with patch("sys.argv", test_args):
         with patch("src.db.schema.init_db", return_value=con):
-            with patch("ingest.init_db", return_value=con):
-                with patch("ingest.run_dimensions"):
-                    with patch("ingest.load_all_awards"):
-                        with patch("ingest.load_salaries_for_seasons"):
-                            with patch("ingest.load_rosters_for_seasons"):
-                                with patch("ingest.load_multiple_seasons"):
-                                    with patch("ingest.load_season_pbp"):
-                                        with patch("ingest.run_consistency_checks", return_value=0) as reconcile:
+            with patch("src.pipeline.cli.init_db", return_value=con):
+                with patch("src.pipeline.stages.run_dimensions"):
+                    with patch("src.pipeline.executor.load_all_awards"):
+                        with patch("src.pipeline.executor.load_salaries_for_seasons"):
+                            with patch("src.pipeline.executor.load_rosters_for_seasons"):
+                                with patch("src.pipeline.stages.load_multiple_seasons"):
+                                    with patch("src.pipeline.stages.load_season_pbp"):
+                                        with patch("src.pipeline.stages.run_consistency_checks", return_value=0) as reconcile:
                                             ingest.main()
                                             reconcile.assert_called_once_with(con, "2023-24")
 
@@ -94,10 +94,10 @@ def test_ingest_reconciliation_discrepancy_raises_by_default(tmp_path):
 
     test_args = ["ingest.py", "--seasons", "2023-24"]
     with patch("sys.argv", test_args):
-        with patch("ingest.init_db", return_value=con):
-            with patch("ingest.run_dimensions"):
-                with patch("ingest.load_multiple_seasons"):
-                    with patch("ingest.run_consistency_checks", return_value=2):
+        with patch("src.pipeline.cli.init_db", return_value=con):
+            with patch("src.pipeline.stages.run_dimensions"):
+                with patch("src.pipeline.stages.load_multiple_seasons"):
+                    with patch("src.pipeline.stages.run_consistency_checks", return_value=2):
                         with pytest.raises(RuntimeError, match="Reconciliation checks found 2"):
                             ingest.main()
 
@@ -109,10 +109,10 @@ def test_ingest_reconciliation_warn_only_continues(tmp_path):
 
     test_args = ["ingest.py", "--seasons", "2023-24", "--reconciliation-warn-only"]
     with patch("sys.argv", test_args):
-        with patch("ingest.init_db", return_value=con):
-            with patch("ingest.run_dimensions"):
-                with patch("ingest.load_multiple_seasons"):
-                    with patch("ingest.run_consistency_checks", return_value=3) as reconcile:
+        with patch("src.pipeline.cli.init_db", return_value=con):
+            with patch("src.pipeline.stages.run_dimensions"):
+                with patch("src.pipeline.stages.load_multiple_seasons"):
+                    with patch("src.pipeline.stages.run_consistency_checks", return_value=3) as reconcile:
                         ingest.main()
                         reconcile.assert_called_once_with(con, "2023-24")
 
@@ -124,10 +124,10 @@ def test_ingest_skip_reconciliation_bypasses_checks(tmp_path):
 
     test_args = ["ingest.py", "--seasons", "2023-24", "--skip-reconciliation"]
     with patch("sys.argv", test_args):
-        with patch("ingest.init_db", return_value=con):
-            with patch("ingest.run_dimensions"):
-                with patch("ingest.load_multiple_seasons"):
-                    with patch("ingest.run_consistency_checks") as reconcile:
+        with patch("src.pipeline.cli.init_db", return_value=con):
+            with patch("src.pipeline.stages.run_dimensions"):
+                with patch("src.pipeline.stages.load_multiple_seasons"):
+                    with patch("src.pipeline.stages.run_consistency_checks") as reconcile:
                         ingest.main()
                         reconcile.assert_not_called()
 
@@ -140,8 +140,8 @@ def test_ingest_analytics_only_requires_view() -> None:
 
 def test_ingest_analytics_only_runs_query_without_init_db() -> None:
     with patch("sys.argv", ["ingest.py", "--analytics-only", "--analytics-view", "vw_team_standings"]):
-        with patch("ingest._run_analytics_view") as query_view:
-            with patch("ingest.init_db") as init_db_patch:
+        with patch("src.pipeline.cli.run_analytics_view") as query_view:
+            with patch("src.pipeline.cli.init_db") as init_db_patch:
                 ingest.main()
                 query_view.assert_called_once()
                 init_db_patch.assert_not_called()
@@ -162,13 +162,13 @@ def test_ingest_metrics_summary_and_export_hooks(tmp_path):
     ]
 
     with patch("sys.argv", args):
-        with patch("ingest.init_db", return_value=con):
-            with patch("ingest.run_dimensions"):
-                with patch("ingest.log_metrics_summary") as log_summary:
-                    with patch("ingest.export_metrics") as export_metrics:
+        with patch("src.pipeline.cli.init_db", return_value=con):
+            with patch("src.pipeline.stages.run_dimensions"):
+                with patch("src.pipeline.executor.log_metrics_summary") as log_summary:
+                    with patch("src.pipeline.executor.export_metrics") as export_metrics_mock:
                         ingest.main()
                         log_summary.assert_called_once()
-                        export_metrics.assert_called_once_with("http://localhost:9999/metrics")
+                        export_metrics_mock.assert_called_once_with("http://localhost:9999/metrics")
 
 
 def test_ingest_raw_backfill_fail_fast_raises(tmp_path):
@@ -178,10 +178,10 @@ def test_ingest_raw_backfill_fail_fast_raises(tmp_path):
     con = init_db(db_file)
     args = ["ingest.py", "--raw-backfill", "--raw-backfill-fail-fast", "--seasons", "2023-24"]
     with patch("sys.argv", args):
-        with patch("ingest.init_db", return_value=con):
-            with patch("ingest.run_dimensions"):
+        with patch("src.pipeline.cli.init_db", return_value=con):
+            with patch("src.pipeline.stages.run_dimensions"):
                 with patch(
-                    "ingest.run_raw_backfill",
+                    "src.pipeline.stages.run_raw_backfill",
                     return_value={"ok": [], "skipped": [], "failed": ["games"], "details": []},
                 ):
                     with pytest.raises(RuntimeError, match="Raw backfill failed in fail-fast mode"):
