@@ -18,8 +18,8 @@ All data ingestion logic. Two pipelines: live API (nba_api + scraping) and raw/ 
 | `api_client.py` | `APICaller` — unified API client with adaptive rate limiting | — |
 | `config.py` | Centralized config: API/cache/metrics settings, team metadata, salary cap data, bref abbreviation mapping | — |
 | `metrics.py` | In-memory metrics: ETL rows, API calls, latency, durations; `ETLTimer` context manager | — |
-| `models.py` | Pydantic row validators | — |
-| `validate.py` | Business-rule row filters + post-ingest reconciliation checks | — |
+| `models.py` | Pydantic row validators (`BaseGameLogRow`, `PlayerGameLogRow`, `TeamGameLogRow`, `FactGameRow`, etc.) | — |
+| `validate.py` | Business-rule row filters + post-ingest reconciliation checks; `_ROW_MODELS` registry | — |
 | `helpers.py` | Pure transformation functions | — |
 | `utils.py` | Shared utilities: cache, upsert, logging, idempotency guards | — |
 
@@ -75,6 +75,13 @@ def load_something(con: sqlite3.Connection, season_id: str) -> None:
 - `pad_game_id(game_id)` — zero-pad to 10-char TEXT
 - `_int(v)` / `_flt(v)` — NA-safe scalar coercions (pandas-safe)
 - `_norm_name(name)` — lowercase + strip accents for fuzzy player name matching
+
+## VALIDATION (`validate.py`)
+
+- `validate_rows(table, rows)` — runs Pydantic validation per table using `_ROW_MODELS` registry
+- `_ROW_MODELS` — maps table name → Pydantic model class (covers game logs, fact_game, salaries, season stats, advanced, shooting)
+- `run_consistency_checks(con, season_id)` — reconciles player-sum vs team-total for PTS/REB/AST
+- Tables not in `_ROW_MODELS` skip Pydantic validation (structural insert only)
 
 ## CONVENTIONS
 

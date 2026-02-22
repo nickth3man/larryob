@@ -1,7 +1,8 @@
-# TESTS KNOWLEDGE BASE
+# tests — Pytest Suite
 
 ## OVERVIEW
-Pytest suite for the NBA analytics pipeline using isolated in-memory and temp-file database fixtures.
+
+Pytest suite for the NBA analytics pipeline using isolated in-memory and temp-file database fixtures. 30 test files, ~7k lines. No test ever touches `nba_raw_data.db`.
 
 ## WHERE TO LOOK
 
@@ -17,19 +18,31 @@ Pytest suite for the NBA analytics pipeline using isolated in-memory and temp-fi
 | Schema and DDL tests | `test_schema.py` |
 | DuckDB analytics views | `test_analytics.py` |
 
+## FIXTURES (`conftest.py`)
+
+| Fixture | What it provides | When to use |
+|---------|-----------------|-------------|
+| `sqlite_con` | In-memory SQLite with full schema + migrations applied | Default for any loader test |
+| `sqlite_con_with_data` | Extends `sqlite_con` with minimal FK seed rows (Lakers, Warriors, LeBron, Jokic, one game) | When testing FK constraints or joins |
+| `duck_con_with_sqlite` | In-memory DuckDB with the seeded SQLite attached as `nba` via `sqlite_scanner` | For all analytics view tests |
+
+**`duck_con_with_sqlite` mechanics**: DuckDB's sqlite extension requires a file path. The fixture uses `sqlite_con_with_data.backup()` to write the in-memory DB to `tmp_path/test_nba.db`, then attaches it. The fixture cleans up automatically.
+
 ## CONVENTIONS
 
-- **Empty database**: Use the `sqlite_con` fixture for a fresh, schema-initialized in-memory database.
-- **Seeded database**: Use `sqlite_con_with_data` when testing foreign key constraints. It provides minimal reference rows (Lakers, Warriors, LeBron, Jokic, one game).
-- **DuckDB testing**: Use `duck_con_with_sqlite` for analytics tests. DuckDB requires a file path for its SQLite extension, so this fixture automatically creates a temporary file copy of the seeded database.
-- **API mocking**: Mock external network calls using `unittest.mock.patch` on `src.etl.api_client.APICaller`.
-- **Validation testing**: Test business rules by passing raw dictionaries directly to `validate_rows()` before database insertion.
-- **Metrics testing**: Clear the in-memory metrics singleton between tests if you are asserting exact call counts or row totals.
+- **Empty database**: Use `sqlite_con` for a fresh, schema-initialized in-memory database
+- **Seeded database**: Use `sqlite_con_with_data` when testing foreign key constraints
+- **DuckDB testing**: Use `duck_con_with_sqlite` — never test views against empty DB (joins/aggs return nothing)
+- **API mocking**: `unittest.mock.patch` on `src.etl.api_client.APICaller`; also patch `APICaller` sleep methods to avoid `time.sleep()` in tests
+- **Validation testing**: Pass raw dicts directly to `validate_rows()` before DB insertion
+- **Metrics testing**: Clear the in-memory metrics singleton between tests when asserting exact counts
+- **Parametrize**: Use `@pytest.mark.parametrize` for testing multiple season IDs, stat variants, and edge cases
 
 ## ANTI-PATTERNS
 
-- Never make real network requests to the NBA API or Basketball-Reference. Always mock the responses.
-- Don't let `time.sleep()` slow down the test suite. Patch the `APICaller` sleep methods.
-- Never hardcode file paths for temporary data or cache files. Use the built-in pytest `tmp_path` fixture.
-- Avoid testing DuckDB views against an empty database. Use `duck_con_with_sqlite` to ensure joins and aggregations actually process rows.
-- Don't swallow SQLite operational errors in tests unless specifically testing migration idempotency.
+- Never make real network requests to nba_api or Basketball-Reference — always mock
+- Never let `time.sleep()` run in tests — patch `APICaller.sleep_between_calls` and `APICaller.call_with_backoff`
+- Never hardcode file paths — use `tmp_path` fixture for all temporary data and cache files
+- Never test DuckDB views against an empty database — use `duck_con_with_sqlite`
+- Never swallow `sqlite3.OperationalError` in tests unless specifically testing migration idempotency
+- Never import from `src.etl.backfill._*` modules directly in tests — use the public `run_raw_backfill` API

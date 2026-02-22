@@ -37,10 +37,12 @@ Two-database architecture: SQLite (OLTP writes) + DuckDB (OLAP reads). DuckDB at
 ## CONVENTIONS
 
 - All view SQL references SQLite tables as `nba.<table>` (DuckDB attachment alias)
-- `get_duck_con()` is NOT thread-safe by default — uses `threading.local()` internally
+- `get_duck_con()` is NOT thread-safe — uses `threading.local()` internally; each thread gets its own connection
 - Schema is idempotent: `CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`
-- SQLite ALTERs go in `ALTER_STATEMENTS` (not `DDL_STATEMENTS`) — wrapped in try/except for idempotency
-- `DB_PATH` and `SQLITE_DB` both resolve to `<repo_root>/nba_raw_data.db`
+- New column migrations go in `ALTER_STATEMENTS` (not `DDL_STATEMENTS`) — wrapped in try/except for idempotency
+- `ROLLBACK_STATEMENTS` exists for reversing column additions — keep in sync with `ALTER_STATEMENTS`
+- `DB_PATH` resolves to `<repo_root>/nba_raw_data.db`; tests never touch this file (use `:memory:` or `tmp_path`)
+- All tables use `STRICT` mode — SQLite enforces column types strictly
 
 ## ADDING A NEW VIEW
 
@@ -57,8 +59,16 @@ Append to `_VIEWS` list in `analytics.py`:
 ```
 No migration needed — views are dropped and recreated on each `get_duck_con()` call.
 
+## ADDING A NEW TABLE
+
+1. Add `CREATE TABLE IF NOT EXISTS ... STRICT` DDL to `DDL_STATEMENTS` in `schema.py`
+2. Add any column indexes to `DDL_STATEMENTS` as `CREATE INDEX IF NOT EXISTS`
+3. Add `ALTER_STATEMENTS` entries only for subsequent column additions (not initial DDL)
+4. Update `tests/conftest.py` fixtures if the table needs seed data for FK compliance
+
 ## ANTI-PATTERNS
 
 - Never write to SQLite from `analytics.py` — read-only DuckDB layer
 - Never add executable DDL to `ALTER_STATEMENTS` for new tables — use `DDL_STATEMENTS`
 - Never call `get_duck_con()` concurrently from multiple threads without separate connections
+- Never hardcode `DB_PATH` in tests — always use `:memory:` or `tmp_path`

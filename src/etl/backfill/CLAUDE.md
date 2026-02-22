@@ -9,6 +9,7 @@ Separate sub-pipeline that loads historical data from `raw/` CSV/Parquet files (
 | File | Loads |
 |------|-------|
 | `_orchestrator.py` | Runs all loaders in dependency order; entry point |
+| `_base.py` | `BaseBackfillLoader` — shared CSV-reading logic, path resolution, row-count delta tracking |
 | `_dims.py` | `enrich_dim_player`, `enrich_dim_team`, `load_team_history` |
 | `_games.py` | `load_games`, `load_schedule` → `fact_game` |
 | `_game_logs.py` | `load_player_game_logs`, `load_team_game_logs` |
@@ -32,7 +33,7 @@ team_history → dim_team_enrich → dim_player_enrich
 ## ORCHESTRATOR INTERNALS
 
 - `_LOADERS` — ordered list of `(name, table_name, loader_func_name)` tuples
-- `run_raw_backfill(con, raw_dir, *, fail_fast=False)` → returns summary dict with ok/skipped/failed counts
+- `run_raw_backfill(con, raw_dir, *, fail_fast=False)` → returns `{"ok": [...], "skipped": [...], "failed": [...]}`
 - Each loader wrapped in try/except — one failure doesn't abort the pipeline (unless `fail_fast=True`)
 - Tracks before/after row counts per table for delta reporting
 - Uses `already_loaded()` / `record_run()` from `utils.py` for idempotency
@@ -51,3 +52,4 @@ team_history → dim_team_enrich → dim_player_enrich
 - Never import `_dims.py`, `_games.py` etc. directly from outside `backfill/` — only `run_raw_backfill`
 - Never add nba_api calls here — backfill is CSV-only, offline-capable
 - Never change load order without checking FK dependencies (games before game_logs, dims before facts)
+- Never add `fail_fast=True` as default — callers must opt in explicitly via `--raw-backfill-fail-fast`
