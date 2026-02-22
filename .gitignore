@@ -22,4 +22,3 @@ wheels/
 /raw
 .coverage
 coverage.json
-/scripts
