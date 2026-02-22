@@ -1,141 +1,255 @@
+"""
+Backfill loaders for player and team game logs.
+
+This module handles loading of game-level statistics from NBA API
+CSV exports into player_game_log and team_game_log tables.
+"""
+
 import logging
 import sqlite3
 from pathlib import Path
+from typing import Any
 
-import pandas as pd
-
+from src.etl.backfill._base import (
+    RAW_DIR,
+    csv_path,
+    get_valid_set,
+    read_csv_safe,
+)
 from src.etl.helpers import _flt, _int, _isna, pad_game_id
 from src.etl.utils import log_load_summary, upsert_rows
 from src.etl.validate import validate_rows
 
 logger = logging.getLogger(__name__)
-RAW_DIR = Path("raw")
 
-def load_player_game_logs(
-    con: sqlite3.Connection, raw_dir: Path = RAW_DIR
-) -> None:
-    path = raw_dir / "PlayerStatistics.csv"
-    ts_path = raw_dir / "TeamStatistics.csv"
-    if not path.exists():
-        logger.warning("PlayerStatistics.csv not found, skipping")
-        return
+# Chunk size for processing large CSV files
+_CHUNK_SIZE = 50_000
 
-    # Build (game_id_int, home_flag) → team_id lookup from TeamStatistics.csv.
+
+def _build_team_lookup(
+    raw_dir: Path,
+) -> dict[tuple[int, int], str]:
+    """
+    Build (game_id_int, home_flag) → team_id lookup from TeamStatistics.csv.
+    
+    Args:
+        raw_dir: Directory containing raw CSV files
+        
+    Returns:
+        Dictionary mapping (gameId, home) tuples to team_id strings
+    """
     team_lookup: dict[tuple[int, int], str] = {}
+    ts_path = raw_dir / "TeamStatistics.csv"
+    
     if ts_path.exists():
-        ts_df = pd.read_csv(ts_path, usecols=["gameId", "teamId", "home"])
+        ts_df = read_csv_safe(ts_path, usecols=["gameId", "teamId", "home"])
         for r in ts_df.to_dict("records"):
-            team_lookup[(int(r["gameId"]), int(r["home"]))] = str(int(r["teamId"]))
+            game_id = int(r["gameId"])
+            home_flag = int(r["home"])
+            team_id = str(int(r["teamId"]))
+            team_lookup[(game_id, home_flag)] = team_id
     else:
         logger.warning("TeamStatistics.csv not found; team_id may be missing")
+    
+    return team_lookup
 
-    # Valid game and player IDs already in DB.
-    valid_games   = {r[0] for r in con.execute("SELECT game_id   FROM fact_game")}
-    valid_players = {r[0] for r in con.execute("SELECT player_id FROM dim_player")}
 
-    total, skipped = 0, 0
-    chunk_size = 50_000
+def _transform_player_game_log_row(
+    row: dict[str, Any],
+    valid_games: set[str],
+    valid_players: set[str],
+    team_lookup: dict[tuple[int, int], str],
+) -> dict[str, Any] | None:
+    """
+    Transform a row from PlayerStatistics.csv to player_game_log schema.
+    
+    Args:
+        row: Raw CSV row
+        valid_games: Set of valid game IDs
+        valid_players: Set of valid player IDs
+        team_lookup: (gameId, home) → team_id lookup
+        
+    Returns:
+        Transformed row dict, or None to skip
+    """
+    game_id = pad_game_id(row["gameId"])
+    player_id = str(int(row["personId"]))
 
-    for chunk in pd.read_csv(path, chunksize=chunk_size, low_memory=False):
+    if game_id not in valid_games or player_id not in valid_players:
+        return None
+
+    home_flag = _int(row.get("home"))
+    if home_flag is None:
+        return None
+    
+    team_id = team_lookup.get((int(row["gameId"]), home_flag))
+    if team_id is None:
+        return None
+
+    return {
+        "game_id": game_id,
+        "player_id": player_id,
+        "team_id": team_id,
+        "minutes_played": _flt(row.get("numMinutes")),
+        "fgm": _int(row.get("fieldGoalsMade")),
+        "fga": _int(row.get("fieldGoalsAttempted")),
+        "fg3m": _int(row.get("threePointersMade")),
+        "fg3a": _int(row.get("threePointersAttempted")),
+        "ftm": _int(row.get("freeThrowsMade")),
+        "fta": _int(row.get("freeThrowsAttempted")),
+        "oreb": _int(row.get("reboundsOffensive")),
+        "dreb": _int(row.get("reboundsDefensive")),
+        "reb": _int(row.get("reboundsTotal")),
+        "ast": _int(row.get("assists")),
+        "stl": _int(row.get("steals")),
+        "blk": _int(row.get("blocks")),
+        "tov": _int(row.get("turnovers")),
+        "pf": _int(row.get("foulsPersonal")),
+        "pts": _int(row.get("points")),
+        "plus_minus": _int(row.get("plusMinusPoints")),
+        "starter": None,
+    }
+
+
+def _transform_team_game_log_row(
+    row: dict[str, Any],
+    valid_games: set[str],
+    valid_teams: set[str],
+) -> dict[str, Any] | None:
+    """
+    Transform a row from TeamStatistics.csv to team_game_log schema.
+    
+    Args:
+        row: Raw CSV row
+        valid_games: Set of valid game IDs
+        valid_teams: Set of valid team IDs
+        
+    Returns:
+        Transformed row dict, or None to skip
+    """
+    game_id = pad_game_id(row["gameId"])
+    team_id = str(int(row["teamId"]))
+
+    if game_id not in valid_games or team_id not in valid_teams:
+        return None
+
+    return {
+        "game_id": game_id,
+        "team_id": team_id,
+        "fgm": _int(row.get("fieldGoalsMade")),
+        "fga": _int(row.get("fieldGoalsAttempted")),
+        "fg3m": _int(row.get("threePointersMade")),
+        "fg3a": _int(row.get("threePointersAttempted")),
+        "ftm": _int(row.get("freeThrowsMade")),
+        "fta": _int(row.get("freeThrowsAttempted")),
+        "oreb": _int(row.get("reboundsOffensive")),
+        "dreb": _int(row.get("reboundsDefensive")),
+        "reb": _int(row.get("reboundsTotal")),
+        "ast": _int(row.get("assists")),
+        "stl": _int(row.get("steals")),
+        "blk": _int(row.get("blocks")),
+        "tov": _int(row.get("turnovers")),
+        "pf": _int(row.get("foulsPersonal")),
+        "pts": _int(row.get("teamScore")),
+        "plus_minus": _int(row.get("plusMinusPoints")),
+    }
+
+
+def load_player_game_logs(
+    con: sqlite3.Connection,
+    raw_dir: Path = RAW_DIR,
+) -> None:
+    """
+    Load player game logs from PlayerStatistics.csv.
+    
+    Uses chunked processing for memory efficiency on large files.
+    
+    Args:
+        con: SQLite database connection
+        raw_dir: Directory containing raw CSV files
+    """
+    path = csv_path(raw_dir, "PlayerStatistics.csv")
+    if path is None:
+        return
+
+    # Build team lookup from TeamStatistics.csv
+    team_lookup = _build_team_lookup(raw_dir)
+
+    # Valid game and player IDs already in DB
+    valid_games = get_valid_set(con, "fact_game", "game_id")
+    valid_players = get_valid_set(con, "dim_player", "player_id")
+
+    total_inserted = 0
+    skipped = 0
+
+    reader = read_csv_safe(path, low_memory=False, chunksize=_CHUNK_SIZE)
+    
+    for chunk in reader:
         rows: list[dict] = []
         for row in chunk.to_dict("records"):
-            game_id   = pad_game_id(row["gameId"])
-            player_id = str(int(row["personId"]))
-
-            if game_id not in valid_games or player_id not in valid_players:
-                skipped += 1
-                continue
-
-            home_flag = int(row["home"]) if not _isna(row.get("home")) else None
-            team_id   = team_lookup.get(
-                (int(row["gameId"]), home_flag if home_flag is not None else -1)
+            transformed = _transform_player_game_log_row(
+                row, valid_games, valid_players, team_lookup
             )
-            if team_id is None:
+            if transformed is None:
                 skipped += 1
-                continue
+            else:
+                rows.append(transformed)
 
-            rows.append({
-                "game_id":        game_id,
-                "player_id":      player_id,
-                "team_id":        team_id,
-                "minutes_played": _flt(row.get("numMinutes")),
-                "fgm":  _int(row.get("fieldGoalsMade")),
-                "fga":  _int(row.get("fieldGoalsAttempted")),
-                "fg3m": _int(row.get("threePointersMade")),
-                "fg3a": _int(row.get("threePointersAttempted")),
-                "ftm":  _int(row.get("freeThrowsMade")),
-                "fta":  _int(row.get("freeThrowsAttempted")),
-                "oreb": _int(row.get("reboundsOffensive")),
-                "dreb": _int(row.get("reboundsDefensive")),
-                "reb":  _int(row.get("reboundsTotal")),
-                "ast":  _int(row.get("assists")),
-                "stl":  _int(row.get("steals")),
-                "blk":  _int(row.get("blocks")),
-                "tov":  _int(row.get("turnovers")),
-                "pf":   _int(row.get("foulsPersonal")),
-                "pts":  _int(row.get("points")),
-                "plus_minus": _int(row.get("plusMinusPoints")),
-                "starter": None,
-            })
-
-        inserted = upsert_rows(con, "player_game_log", validate_rows("player_game_log", rows), autocommit=False)
-        total += inserted
+        inserted = upsert_rows(
+            con,
+            "player_game_log",
+            validate_rows("player_game_log", rows),
+            autocommit=False,
+        )
+        total_inserted += inserted
         logger.debug("player_game_log chunk: +%d rows", inserted)
 
     con.commit()
     logger.info(
         "player_game_log (PlayerStatistics.csv): %d inserted/ignored, %d skipped",
-        total, skipped,
+        total_inserted,
+        skipped,
     )
     log_load_summary(con, "player_game_log")
 
+
 def load_team_game_logs(
-    con: sqlite3.Connection, raw_dir: Path = RAW_DIR
+    con: sqlite3.Connection,
+    raw_dir: Path = RAW_DIR,
 ) -> None:
-    path = raw_dir / "TeamStatistics.csv"
-    if not path.exists():
-        logger.warning("TeamStatistics.csv not found, skipping")
+    """
+    Load team game logs from TeamStatistics.csv.
+    
+    Args:
+        con: SQLite database connection
+        raw_dir: Directory containing raw CSV files
+    """
+    path = csv_path(raw_dir, "TeamStatistics.csv")
+    if path is None:
         return
 
-    df = pd.read_csv(path, low_memory=False)
-    valid_games = {r[0] for r in con.execute("SELECT game_id FROM fact_game")}
-    valid_teams = {r[0] for r in con.execute("SELECT team_id FROM dim_team")}
+    df = read_csv_safe(path, low_memory=False)
+    valid_games = get_valid_set(con, "fact_game", "game_id")
+    valid_teams = get_valid_set(con, "dim_team", "team_id")
 
     rows: list[dict] = []
     skipped = 0
 
     for row in df.to_dict("records"):
-        game_id = pad_game_id(row["gameId"])
-        team_id = str(int(row["teamId"]))
-
-        if game_id not in valid_games or team_id not in valid_teams:
+        transformed = _transform_team_game_log_row(row, valid_games, valid_teams)
+        if transformed is None:
             skipped += 1
-            continue
+        else:
+            rows.append(transformed)
 
-        rows.append({
-            "game_id":     game_id,
-            "team_id":     team_id,
-            "fgm":  _int(row.get("fieldGoalsMade")),
-            "fga":  _int(row.get("fieldGoalsAttempted")),
-            "fg3m": _int(row.get("threePointersMade")),
-            "fg3a": _int(row.get("threePointersAttempted")),
-            "ftm":  _int(row.get("freeThrowsMade")),
-            "fta":  _int(row.get("freeThrowsAttempted")),
-            "oreb": _int(row.get("reboundsOffensive")),
-            "dreb": _int(row.get("reboundsDefensive")),
-            "reb":  _int(row.get("reboundsTotal")),
-            "ast":  _int(row.get("assists")),
-            "stl":  _int(row.get("steals")),
-            "blk":  _int(row.get("blocks")),
-            "tov":  _int(row.get("turnovers")),
-            "pf":   _int(row.get("foulsPersonal")),
-            "pts":  _int(row.get("teamScore")),
-            "plus_minus": _int(row.get("plusMinusPoints")),
-        })
-
-    inserted = upsert_rows(con, "team_game_log", validate_rows("team_game_log", rows))
+    inserted = upsert_rows(
+        con,
+        "team_game_log",
+        validate_rows("team_game_log", rows),
+    )
     logger.info(
         "team_game_log (TeamStatistics.csv): %d inserted/ignored, %d skipped",
-        inserted, skipped,
+        inserted,
+        skipped,
     )
     log_load_summary(con, "team_game_log")
