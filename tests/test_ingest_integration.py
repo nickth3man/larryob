@@ -1,8 +1,6 @@
 import sqlite3
 from unittest.mock import patch
 
-import pytest
-
 import src.pipeline.cli as ingest
 
 
@@ -12,6 +10,7 @@ def test_ingest_dims_only(tmp_path, monkeypatch):
 
     # Mock init_db to use our temp file
     from src.db.schema import init_db
+
     con = init_db(db_file)
 
     # Set up CLI args
@@ -26,7 +25,9 @@ def test_ingest_dims_only(tmp_path, monkeypatch):
 
     # Verify tables exist and connection closed successfully
     con = sqlite3.connect(db_file)
-    tables = {r[0] for r in con.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+    tables = {
+        r[0] for r in con.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+    }
     assert "dim_team" in tables
     assert "dim_player" in tables
     assert "dim_season" in tables
@@ -39,16 +40,19 @@ def test_ingest_full_pipeline_mocked(tmp_path, monkeypatch):
 
     # Mock init_db to use our temp file
     from src.db.schema import init_db
+
     con = init_db(db_file)
 
     # Set up CLI args
     test_args = [
         "ingest.py",
-        "--seasons", "2023-24",
+        "--seasons",
+        "2023-24",
         "--awards",
         "--salaries",
         "--rosters",
-        "--pbp-limit", "1"
+        "--pbp-limit",
+        "1",
     ]
 
     # Mock network calls to avoid actual HTTP requests
@@ -61,19 +65,25 @@ def test_ingest_full_pipeline_mocked(tmp_path, monkeypatch):
                             with patch("src.pipeline.executor.load_rosters_for_seasons"):
                                 with patch("src.pipeline.stages.load_multiple_seasons"):
                                     with patch("src.pipeline.stages.load_season_pbp"):
-                                        with patch("src.pipeline.stages.run_consistency_checks", return_value=0) as reconcile:
+                                        with patch(
+                                            "src.pipeline.stages.run_consistency_checks",
+                                            return_value=0,
+                                        ) as reconcile:
                                             ingest.main()
                                             reconcile.assert_called_once_with(con, "2023-24")
 
     # Verify tables exist
     con = sqlite3.connect(db_file)
-    tables = {r[0] for r in con.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()}
+    tables = {
+        r[0] for r in con.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
+    }
     assert "fact_game" in tables
     con.close()
 
     # Clean up singleton connections from any duckdb imports that might have happened
     try:
         import src.db.analytics as analytics
+
         cached_con = getattr(analytics._local, "cached_con", None)
         if cached_con is not None:
             try:
@@ -90,6 +100,7 @@ def test_ingest_full_pipeline_mocked(tmp_path, monkeypatch):
 def test_ingest_reconciliation_discrepancy_raises_by_default(tmp_path):
     db_file = tmp_path / "test_ingest_reconcile_fail.db"
     from src.db.schema import init_db
+
     con = init_db(db_file)
 
     test_args = ["ingest.py", "--seasons", "2023-24"]
@@ -106,6 +117,7 @@ def test_ingest_reconciliation_discrepancy_raises_by_default(tmp_path):
 def test_ingest_reconciliation_warn_only_continues(tmp_path):
     db_file = tmp_path / "test_ingest_reconcile_warn.db"
     from src.db.schema import init_db
+
     con = init_db(db_file)
 
     test_args = ["ingest.py", "--seasons", "2023-24", "--reconciliation-warn-only"]
@@ -113,7 +125,9 @@ def test_ingest_reconciliation_warn_only_continues(tmp_path):
         with patch("src.pipeline.cli.init_db", return_value=con):
             with patch("src.pipeline.stages.run_dimensions"):
                 with patch("src.pipeline.stages.load_multiple_seasons"):
-                    with patch("src.pipeline.stages.run_consistency_checks", return_value=3) as reconcile:
+                    with patch(
+                        "src.pipeline.stages.run_consistency_checks", return_value=3
+                    ) as reconcile:
                         ingest.main()
                         reconcile.assert_called_once_with(con, "2023-24")
 
@@ -121,6 +135,7 @@ def test_ingest_reconciliation_warn_only_continues(tmp_path):
 def test_ingest_skip_reconciliation_bypasses_checks(tmp_path):
     db_file = tmp_path / "test_ingest_skip_reconcile.db"
     from src.db.schema import init_db
+
     con = init_db(db_file)
 
     test_args = ["ingest.py", "--seasons", "2023-24", "--skip-reconciliation"]
@@ -141,7 +156,9 @@ def test_ingest_analytics_only_requires_view() -> None:
 
 
 def test_ingest_analytics_only_runs_query_without_init_db() -> None:
-    with patch("sys.argv", ["ingest.py", "--analytics-only", "--analytics-view", "vw_team_standings"]):
+    with patch(
+        "sys.argv", ["ingest.py", "--analytics-only", "--analytics-view", "vw_team_standings"]
+    ):
         with patch("src.pipeline.cli.run_analytics_view") as query_view:
             with patch("src.pipeline.cli.init_db") as init_db_patch:
                 ingest.main()

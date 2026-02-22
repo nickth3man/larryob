@@ -1,3 +1,3 @@
-from .schema import DB_PATH, init_db
+from .schema import DB_PATH, get_db_connection, init_db
 
-__all__ = ["init_db", "DB_PATH"]
+__all__ = ["init_db", "get_db_connection", "DB_PATH"]

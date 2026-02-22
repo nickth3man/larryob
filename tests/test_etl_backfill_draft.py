@@ -8,7 +8,9 @@ import pandas as pd
 from src.etl.backfill._draft import load_draft
 
 
-def test_load_draft_inserts_rows_for_valid_seasons(sqlite_con: sqlite3.Connection, tmp_path: Path) -> None:
+def test_load_draft_inserts_rows_for_valid_seasons(
+    sqlite_con: sqlite3.Connection, tmp_path: Path
+) -> None:
     sqlite_con.execute(
         "INSERT INTO dim_season (season_id, start_year, end_year) VALUES ('2023-24', 2023, 2024)"
     )

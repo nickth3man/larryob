@@ -11,7 +11,7 @@ import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 from src.etl.backfill._advanced_stats import (
     load_player_advanced,
@@ -59,6 +59,7 @@ __all__ = [
 @dataclass
 class LoaderConfig:
     """Configuration for a single backfill loader."""
+
     name: str
     table_name: str
     loader_name: str  # Function name for runtime lookup
@@ -67,6 +68,7 @@ class LoaderConfig:
 @dataclass
 class LoaderResult:
     """Result of a single loader execution."""
+
     loader: str
     status: str  # "ok", "skipped", "error"
     table: str
@@ -80,11 +82,12 @@ class LoaderResult:
 @dataclass
 class BackfillSummary:
     """Summary of a complete backfill run."""
+
     ok: list[str] = field(default_factory=list)
     skipped: list[str] = field(default_factory=list)
     failed: list[str] = field(default_factory=list)
     details: list[LoaderResult] = field(default_factory=list)
-    
+
     def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for JSON serialization."""
         return {
@@ -131,11 +134,11 @@ _LOADERS: list[LoaderConfig] = [
 def _get_table_count(con: sqlite3.Connection, table_name: str) -> int | None:
     """
     Safely get row count from a table.
-    
+
     Args:
         con: SQLite connection
         table_name: Table to count
-        
+
     Returns:
         Row count or None if table doesn't exist
     """
@@ -154,14 +157,14 @@ def _run_single_loader(
 ) -> LoaderResult:
     """
     Execute a single loader with timing and error handling.
-    
+
     Args:
         con: SQLite connection
         config: Loader configuration
         raw_dir: Directory containing raw CSV files
         loader_idx: Current loader index (1-based)
         total_loaders: Total number of loaders
-        
+
     Returns:
         LoaderResult with execution details
     """
@@ -169,7 +172,7 @@ def _run_single_loader(
     started_at = datetime.now(UTC).isoformat()
     started_perf = time.perf_counter()
     before_count = _get_table_count(con, config.table_name)
-    
+
     logger.info(
         "Raw backfill [%d/%d] starting loader=%s target_table=%s before_row_count=%s",
         loader_idx,
@@ -178,7 +181,7 @@ def _run_single_loader(
         config.table_name,
         before_count if before_count is not None else "n/a",
     )
-    
+
     # Check if already loaded (idempotency)
     if already_loaded(con, config.table_name, None, loader_id):
         elapsed = time.perf_counter() - started_perf
@@ -198,23 +201,21 @@ def _run_single_loader(
             delta_row_count=0,
             elapsed_sec=elapsed,
         )
-    
+
     try:
         # Execute the loader (look up by name to support test patching)
         loader_func = globals()[config.loader_name]
         loader_func(con, raw_dir)
-        
+
         # Record success
         row_count = _get_table_count(con, config.table_name)
         elapsed = time.perf_counter() - started_perf
         delta = (
-            row_count - before_count
-            if row_count is not None and before_count is not None
-            else None
+            row_count - before_count if row_count is not None and before_count is not None else None
         )
-        
+
         record_run(con, config.table_name, None, loader_id, row_count, "ok", started_at)
-        
+
         logger.info(
             "Raw backfill [%d/%d] completed loader=%s row_count=%s before=%s delta=%s elapsed=%.2fs",
             loader_idx,
@@ -225,7 +226,7 @@ def _run_single_loader(
             delta if delta is not None else "n/a",
             elapsed,
         )
-        
+
         return LoaderResult(
             loader=config.name,
             status="ok",
@@ -235,12 +236,12 @@ def _run_single_loader(
             delta_row_count=delta,
             elapsed_sec=elapsed,
         )
-        
+
     except Exception as exc:
         # Record failure
         elapsed = time.perf_counter() - started_perf
         record_run(con, config.table_name, None, loader_id, None, "error", started_at)
-        
+
         logger.exception("Loader %s failed during raw backfill:", config.name)
         logger.error(
             "Raw backfill [%d/%d] failed loader=%s before=%s elapsed=%.2fs",
@@ -250,7 +251,7 @@ def _run_single_loader(
             before_count if before_count is not None else "n/a",
             elapsed,
         )
-        
+
         return LoaderResult(
             loader=config.name,
             status="error",
@@ -271,12 +272,12 @@ def run_raw_backfill(
 ) -> dict[str, Any]:
     """
     Execute all raw-data loaders in dependency order.
-    
+
     Args:
         con: SQLite database connection
         raw_dir: Directory containing raw CSV files
         fail_fast: If True, stop on first error
-        
+
     Returns:
         Machine-readable run summary:
         {
@@ -287,13 +288,13 @@ def run_raw_backfill(
         }
     """
     logger.info("=== Raw backfill starting (raw_dir=%s) ===", raw_dir)
-    
+
     summary = BackfillSummary()
     total = len(_LOADERS)
 
     for idx, config in enumerate(_LOADERS, start=1):
         result = _run_single_loader(con, config, raw_dir, idx, total)
-        
+
         # Update summary based on status
         if result.status == "ok":
             summary.ok.append(result.loader)
@@ -301,9 +302,9 @@ def run_raw_backfill(
             summary.skipped.append(result.loader)
         else:  # error
             summary.failed.append(result.loader)
-        
+
         summary.details.append(result)
-        
+
         # Stop on error if fail_fast
         if result.status == "error" and fail_fast:
             break
@@ -315,7 +316,7 @@ def run_raw_backfill(
         len(summary.skipped),
         len(summary.failed),
     )
-    
+
     for detail in summary.details:
         logger.info(
             "Raw backfill detail: loader=%s status=%s table=%s before=%s after=%s delta=%s elapsed_sec=%s error=%s",
@@ -328,5 +329,5 @@ def run_raw_backfill(
             round(detail.elapsed_sec, 3),
             detail.error,
         )
-    
+
     return summary.to_dict()

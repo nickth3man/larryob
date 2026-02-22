@@ -6,8 +6,8 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.etl.salaries import (
-    BBRRateLimitExceeded,
     _SALARY_CAP_BY_SEASON,
+    BBRRateLimitExceeded,
     _get_html,
     _normalize_name,
     _parse_salary,
@@ -25,9 +25,11 @@ def reset_bref_throttle_state():
     salaries_mod._BREF_THROTTLE.success_streak = 0
     salaries_mod._BREF_THROTTLE.rate_limit_streak = 0
 
+
 # ------------------------------------------------------------------ #
 # _normalize_name                                                     #
 # ------------------------------------------------------------------ #
+
 
 def test_normalize_name_strips_accents() -> None:
     assert _normalize_name("Nikola Jokić") == "nikola jokic"
@@ -53,6 +55,7 @@ def test_normalize_name_handles_empty_string() -> None:
 # ------------------------------------------------------------------ #
 # _parse_salary                                                       #
 # ------------------------------------------------------------------ #
+
 
 def test_parse_salary_converts_formatted_string() -> None:
     assert _parse_salary("$12,345,678") == 12_345_678
@@ -80,6 +83,7 @@ def test_parse_salary_handles_zero() -> None:
 # _get_html                                                           #
 # ------------------------------------------------------------------ #
 
+
 def test_get_html_returns_text_on_success() -> None:
     mock_resp = MagicMock()
     mock_resp.status_code = 200
@@ -92,6 +96,7 @@ def test_get_html_returns_text_on_success() -> None:
 
 def test_get_html_returns_none_on_persistent_error() -> None:
     import requests as req_mod
+
     with patch("src.etl.salaries.requests.get", side_effect=req_mod.RequestException("timeout")):
         with patch("src.etl.salaries.time.sleep"):
             result = _get_html("http://example.com", max_retries=2)
@@ -155,6 +160,7 @@ def test_get_html_skips_extreme_retry_after() -> None:
 # load_salary_cap                                                     #
 # ------------------------------------------------------------------ #
 
+
 def test_load_salary_cap_seeds_all_historical_seasons(sqlite_con: sqlite3.Connection) -> None:
     inserted = load_salary_cap(sqlite_con)
     count = sqlite_con.execute("SELECT COUNT(*) FROM dim_salary_cap").fetchone()[0]
@@ -186,7 +192,10 @@ def test_load_salary_cap_known_season_value(sqlite_con: sqlite3.Connection) -> N
 def test_load_salary_cap_first_season_is_1984_85(sqlite_con: sqlite3.Connection) -> None:
     load_salary_cap(sqlite_con)
     seasons = [
-        r[0] for r in sqlite_con.execute("SELECT season_id FROM dim_salary_cap ORDER BY season_id").fetchall()
+        r[0]
+        for r in sqlite_con.execute(
+            "SELECT season_id FROM dim_salary_cap ORDER BY season_id"
+        ).fetchall()
     ]
     assert seasons[0] == "1984-85"
 

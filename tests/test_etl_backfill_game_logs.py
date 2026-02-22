@@ -35,12 +35,14 @@ def _seed_game_context(con: sqlite3.Connection) -> None:
     con.commit()
 
 
-def test_load_player_game_logs_inserts_valid_rows(sqlite_con: sqlite3.Connection, tmp_path: Path) -> None:
+def test_load_player_game_logs_inserts_valid_rows(
+    sqlite_con: sqlite3.Connection, tmp_path: Path
+) -> None:
     _seed_game_context(sqlite_con)
 
-    pd.DataFrame(
-        [{"gameId": 222300001, "teamId": 1610612747, "home": 1}]
-    ).to_csv(tmp_path / "TeamStatistics.csv", index=False)
+    pd.DataFrame([{"gameId": 222300001, "teamId": 1610612747, "home": 1}]).to_csv(
+        tmp_path / "TeamStatistics.csv", index=False
+    )
 
     pd.DataFrame(
         [

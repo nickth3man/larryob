@@ -69,15 +69,17 @@ def _player_awards_to_rows(records: list[dict]) -> list[dict]:
             r.get("description") or "",
             r.get("all_nba_team_number"),
         )
-        rows.append({
-            "player_id": str(r.get("person_id", "")),
-            "season_id": season_id,
-            "award_name": award_name,
-            "award_type": _map_award_type(r.get("type")),
-            "trophy_name": r.get("subtype1") or None,
-            "votes_received": None,
-            "votes_possible": None,
-        })
+        rows.append(
+            {
+                "player_id": str(r.get("person_id", "")),
+                "season_id": season_id,
+                "award_name": award_name,
+                "award_type": _map_award_type(r.get("type")),
+                "trophy_name": r.get("subtype1") or None,
+                "votes_received": None,
+                "votes_possible": None,
+            }
+        )
     return rows
 
 
@@ -111,6 +113,7 @@ def load_player_awards(
             all_rows.extend(mapped)
         else:
             try:
+
                 def _fetch():
                     ep = playerawards.PlayerAwards(player_id=pid)
                     df = ep.get_data_frames()[0]

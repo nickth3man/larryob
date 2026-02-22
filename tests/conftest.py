@@ -18,6 +18,7 @@ from src.db.schema import ALTER_STATEMENTS, DDL_STATEMENTS
 # SQLite fixtures                                                     #
 # ------------------------------------------------------------------ #
 
+
 @pytest.fixture
 def sqlite_con():
     """An in-memory SQLite db with the full NBA schema initialised."""
@@ -49,16 +50,38 @@ def sqlite_con_with_data(sqlite_con: sqlite3.Connection) -> Iterator[sqlite3.Con
            (team_id, abbreviation, full_name, city, nickname,
             conference, division, color_primary, color_secondary, arena_name, founded_year)
            VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
-        ("1610612747", "LAL", "Los Angeles Lakers", "Los Angeles",
-         "Lakers", "West", "Pacific", "#552583", "#FDB927", "Crypto.com Arena", 1947),
+        (
+            "1610612747",
+            "LAL",
+            "Los Angeles Lakers",
+            "Los Angeles",
+            "Lakers",
+            "West",
+            "Pacific",
+            "#552583",
+            "#FDB927",
+            "Crypto.com Arena",
+            1947,
+        ),
     )
     con.execute(
         """INSERT INTO dim_team
            (team_id, abbreviation, full_name, city, nickname,
             conference, division, color_primary, color_secondary, arena_name, founded_year)
            VALUES (?,?,?,?,?,?,?,?,?,?,?)""",
-        ("1610612744", "GSW", "Golden State Warriors", "San Francisco",
-         "Warriors", "West", "Pacific", "#1D428A", "#FFC72C", "Chase Center", 1946),
+        (
+            "1610612744",
+            "GSW",
+            "Golden State Warriors",
+            "San Francisco",
+            "Warriors",
+            "West",
+            "Pacific",
+            "#1D428A",
+            "#FFC72C",
+            "Chase Center",
+            1946,
+        ),
     )
     con.execute(
         """INSERT INTO dim_player
@@ -67,8 +90,22 @@ def sqlite_con_with_data(sqlite_con: sqlite3.Connection) -> Iterator[sqlite3.Con
             height_cm, weight_kg, position,
             draft_year, draft_round, draft_number, is_active)
            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-        ("2544", "LeBron", "James", "LeBron James",
-         "1984-12-30", "Akron", "USA", 206.0, 113.0, "SF", 2003, 1, 1, 1),
+        (
+            "2544",
+            "LeBron",
+            "James",
+            "LeBron James",
+            "1984-12-30",
+            "Akron",
+            "USA",
+            206.0,
+            113.0,
+            "SF",
+            2003,
+            1,
+            1,
+            1,
+        ),
     )
     con.execute(
         """INSERT INTO dim_player
@@ -77,25 +114,48 @@ def sqlite_con_with_data(sqlite_con: sqlite3.Connection) -> Iterator[sqlite3.Con
             height_cm, weight_kg, position,
             draft_year, draft_round, draft_number, is_active)
            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-        ("203999", "Nikola", "Jokic", "Nikola Jokic",
-         "1995-02-19", "Sombor", "Serbia", 211.0, 129.0, "C", 2014, 2, 41, 1),
+        (
+            "203999",
+            "Nikola",
+            "Jokic",
+            "Nikola Jokic",
+            "1995-02-19",
+            "Sombor",
+            "Serbia",
+            211.0,
+            129.0,
+            "C",
+            2014,
+            2,
+            41,
+            1,
+        ),
     )
     con.execute(
         """INSERT INTO fact_game
            (game_id, season_id, game_date, home_team_id, away_team_id,
             home_score, away_score, season_type, status)
            VALUES (?,?,?,?,?,?,?,?,?)""",
-        ("0022300001", "2023-24", "2023-10-24",
-         "1610612747", "1610612744", 120, 110, "Regular Season", "Final"),
+        (
+            "0022300001",
+            "2023-24",
+            "2023-10-24",
+            "1610612747",
+            "1610612744",
+            120,
+            110,
+            "Regular Season",
+            "Final",
+        ),
     )
     con.commit()
     yield con
 
 
-
 # ------------------------------------------------------------------ #
 # DuckDB fixture with SQLite bridge                                   #
 # ------------------------------------------------------------------ #
+
 
 @pytest.fixture
 def duck_con_with_sqlite(sqlite_con_with_data: sqlite3.Connection, tmp_path: Path):

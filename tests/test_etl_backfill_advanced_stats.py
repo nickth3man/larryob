@@ -146,7 +146,9 @@ def test_load_player_shooting_enforces_zone_distribution_sum(
     assert count == 1
 
 
-def test_load_player_pbp_season_inserts_valid_rows(sqlite_con: sqlite3.Connection, tmp_path: Path) -> None:
+def test_load_player_pbp_season_inserts_valid_rows(
+    sqlite_con: sqlite3.Connection, tmp_path: Path
+) -> None:
     sqlite_con.execute(
         "INSERT INTO dim_season (season_id, start_year, end_year) VALUES ('2023-24', 2023, 2024)"
     )

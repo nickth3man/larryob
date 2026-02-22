@@ -50,7 +50,9 @@ def test_load_team_history_inserts_rows_when_csv_present(
     assert row == ("1610612747", "Los Angeles", "Lakers", "LAL", 1948, 2026, "NBA")
 
 
-def test_load_team_history_skips_when_csv_missing(sqlite_con: sqlite3.Connection, tmp_path: Path) -> None:
+def test_load_team_history_skips_when_csv_missing(
+    sqlite_con: sqlite3.Connection, tmp_path: Path
+) -> None:
     load_team_history(sqlite_con, tmp_path)
     count = sqlite_con.execute("SELECT COUNT(*) FROM dim_team_history").fetchone()[0]
     assert count == 0

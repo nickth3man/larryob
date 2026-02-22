@@ -15,6 +15,7 @@ from src.etl.awards import (
 # _build_award_name                                                   #
 # ------------------------------------------------------------------ #
 
+
 def test_build_award_name_returns_unknown_for_empty_description() -> None:
     assert _build_award_name("", None) == "Unknown"
 
@@ -56,6 +57,7 @@ def test_build_award_name_strips_whitespace() -> None:
 # _map_award_type                                                     #
 # ------------------------------------------------------------------ #
 
+
 def test_map_award_type_returns_individual_for_none() -> None:
     assert _map_award_type(None) == "individual"
 
@@ -83,6 +85,7 @@ def test_map_award_type_individual_for_unrecognized() -> None:
 # ------------------------------------------------------------------ #
 # _player_awards_to_rows                                              #
 # ------------------------------------------------------------------ #
+
 
 def _make_api_records() -> list[dict]:
     return [
@@ -143,14 +146,23 @@ def test_player_awards_to_rows_returns_empty_for_empty_input() -> None:
 
 
 def test_player_awards_to_rows_skips_all_blank_season_records() -> None:
-    records = [{"PERSON_ID": "1", "DESCRIPTION": "MVP", "SEASON": None, "TYPE": None,
-                "ALL_NBA_TEAM_NUMBER": None, "SUBTYPE1": None}]
+    records = [
+        {
+            "PERSON_ID": "1",
+            "DESCRIPTION": "MVP",
+            "SEASON": None,
+            "TYPE": None,
+            "ALL_NBA_TEAM_NUMBER": None,
+            "SUBTYPE1": None,
+        }
+    ]
     assert _player_awards_to_rows(records) == []
 
 
 # ------------------------------------------------------------------ #
 # load_player_awards (mock API)                                       #
 # ------------------------------------------------------------------ #
+
 
 def test_load_player_awards_from_cache(
     monkeypatch,
@@ -159,19 +171,24 @@ def test_load_player_awards_from_cache(
 ) -> None:
     """When cache is warm, no API call is made and rows are inserted."""
     import src.etl.utils as utils_mod
+
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
 
     from src.etl.utils import save_cache
-    save_cache("awards_2544", [
-        {
-            "PERSON_ID": "2544",
-            "DESCRIPTION": "MVP",
-            "SEASON": "2023-24",
-            "TYPE": "Individual",
-            "ALL_NBA_TEAM_NUMBER": None,
-            "SUBTYPE1": None,
-        }
-    ])
+
+    save_cache(
+        "awards_2544",
+        [
+            {
+                "PERSON_ID": "2544",
+                "DESCRIPTION": "MVP",
+                "SEASON": "2023-24",
+                "TYPE": "Individual",
+                "ALL_NBA_TEAM_NUMBER": None,
+                "SUBTYPE1": None,
+            }
+        ],
+    )
     inserted = load_player_awards(sqlite_con_with_data, ["2544"])
     assert inserted >= 1
 
@@ -182,35 +199,40 @@ def test_load_player_awards_filters_rows_missing_fk_targets(
     tmp_path,
 ) -> None:
     import src.etl.utils as utils_mod
+
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
 
     from src.etl.utils import save_cache
-    save_cache("awards_2544", [
-        {
-            "PERSON_ID": "2544",
-            "DESCRIPTION": "MVP",
-            "SEASON": "2023-24",
-            "TYPE": "Individual",
-            "ALL_NBA_TEAM_NUMBER": None,
-            "SUBTYPE1": None,
-        },
-        {
-            "PERSON_ID": "999999",
-            "DESCRIPTION": "MVP",
-            "SEASON": "2023-24",
-            "TYPE": "Individual",
-            "ALL_NBA_TEAM_NUMBER": None,
-            "SUBTYPE1": None,
-        },
-        {
-            "PERSON_ID": "2544",
-            "DESCRIPTION": "MVP",
-            "SEASON": "1999-00",
-            "TYPE": "Individual",
-            "ALL_NBA_TEAM_NUMBER": None,
-            "SUBTYPE1": None,
-        },
-    ])
+
+    save_cache(
+        "awards_2544",
+        [
+            {
+                "PERSON_ID": "2544",
+                "DESCRIPTION": "MVP",
+                "SEASON": "2023-24",
+                "TYPE": "Individual",
+                "ALL_NBA_TEAM_NUMBER": None,
+                "SUBTYPE1": None,
+            },
+            {
+                "PERSON_ID": "999999",
+                "DESCRIPTION": "MVP",
+                "SEASON": "2023-24",
+                "TYPE": "Individual",
+                "ALL_NBA_TEAM_NUMBER": None,
+                "SUBTYPE1": None,
+            },
+            {
+                "PERSON_ID": "2544",
+                "DESCRIPTION": "MVP",
+                "SEASON": "1999-00",
+                "TYPE": "Individual",
+                "ALL_NBA_TEAM_NUMBER": None,
+                "SUBTYPE1": None,
+            },
+        ],
+    )
 
     inserted = load_player_awards(sqlite_con_with_data, ["2544"])
     assert inserted == 1
@@ -225,6 +247,7 @@ def test_load_player_awards_returns_zero_for_no_awards(
 ) -> None:
     """No awards in cache or API → returns 0."""
     import src.etl.utils as utils_mod
+
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
 
     mock_ep = MagicMock()
@@ -242,6 +265,7 @@ def test_load_player_awards_handles_api_exception(
 ) -> None:
     """API failure is logged and skipped; function returns 0."""
     import src.etl.utils as utils_mod
+
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
 
     with patch("src.etl.awards.playerawards.PlayerAwards", side_effect=RuntimeError("API down")):
@@ -254,12 +278,14 @@ def test_load_player_awards_handles_api_exception(
 # load_all_awards                                                     #
 # ------------------------------------------------------------------ #
 
+
 def test_load_all_awards_returns_zero_when_no_players(
     sqlite_con: sqlite3.Connection,
     monkeypatch,
     tmp_path,
 ) -> None:
     import src.etl.utils as utils_mod
+
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
     result = load_all_awards(sqlite_con, active_only=True)
     assert result == 0
@@ -272,6 +298,7 @@ def test_load_all_awards_active_only_queries_active_players(
 ) -> None:
     """active_only=True should not raise; no API calls because cache returns empty."""
     import src.etl.utils as utils_mod
+
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
     with patch("src.etl.awards.playerawards.PlayerAwards", side_effect=RuntimeError("no API")):
         with patch("src.etl.utils.time.sleep"):

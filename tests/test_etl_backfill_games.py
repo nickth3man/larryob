@@ -172,7 +172,9 @@ def test_load_schedule_sets_season_type_from_game_label(
     assert fallback == "Regular Season"
 
 
-def test_load_schedule_skips_when_files_missing(sqlite_con: sqlite3.Connection, tmp_path: Path) -> None:
+def test_load_schedule_skips_when_files_missing(
+    sqlite_con: sqlite3.Connection, tmp_path: Path
+) -> None:
     load_schedule(sqlite_con, tmp_path)
     count = sqlite_con.execute("SELECT COUNT(*) FROM fact_game").fetchone()[0]
     assert count == 0

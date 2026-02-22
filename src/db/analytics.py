@@ -21,14 +21,13 @@ from pathlib import Path
 
 import duckdb
 
-logger = logging.getLogger(__name__)
+from .schema import DB_PATH
 
-SQLITE_DB = Path(__file__).parent.parent.parent / "nba_raw_data.db"
+logger = logging.getLogger(__name__)
 
 # All VIEWs are defined here as (name, SQL) pairs.
 # SQL references the SQLite tables via the 'nba.' prefix after attachment.
 _VIEWS: list[tuple[str, str]] = [
-
     # ------------------------------------------------------------------ #
     # Shooting efficiency                                                  #
     # ------------------------------------------------------------------ #
@@ -61,7 +60,6 @@ _VIEWS: list[tuple[str, str]] = [
         GROUP BY p.player_id, p.full_name, g.season_id
         """,
     ),
-
     # ------------------------------------------------------------------ #
     # Per-game averages (season totals / games played)                    #
     # ------------------------------------------------------------------ #
@@ -90,7 +88,6 @@ _VIEWS: list[tuple[str, str]] = [
         GROUP BY p.player_id, p.full_name, g.season_id
         """,
     ),
-
     # ------------------------------------------------------------------ #
     # Last N games rolling window (default 10)                            #
     # ------------------------------------------------------------------ #
@@ -122,7 +119,6 @@ _VIEWS: list[tuple[str, str]] = [
         GROUP BY r.player_id, p.full_name
         """,
     ),
-
     # ------------------------------------------------------------------ #
     # Team season standings                                               #
     # ------------------------------------------------------------------ #
@@ -149,7 +145,6 @@ _VIEWS: list[tuple[str, str]] = [
         ORDER BY g.season_id DESC, win_pct DESC
         """,
     ),
-
     # ------------------------------------------------------------------ #
     # Pace estimate (possessions per 48 min)                             #
     # Requires modern era data (1973-74 onwards where TOV/OReb tracked) #
@@ -187,7 +182,6 @@ _VIEWS: list[tuple[str, str]] = [
         GROUP BY t.abbreviation, t.full_name, g.season_id
         """,
     ),
-
     # ------------------------------------------------------------------ #
     # Play-by-play: shot distribution by event type                      #
     # ------------------------------------------------------------------ #
@@ -209,7 +203,6 @@ _VIEWS: list[tuple[str, str]] = [
         GROUP BY p.full_name, pbp.game_id, g.game_date, g.season_id
         """,
     ),
-
     # ------------------------------------------------------------------ #
     # Awards: career trophy case per player                               #
     # ------------------------------------------------------------------ #
@@ -228,7 +221,6 @@ _VIEWS: list[tuple[str, str]] = [
         ORDER BY p.full_name, times_won DESC
         """,
     ),
-
     # ------------------------------------------------------------------ #
     # Salary: contract as % of cap (era-agnostic comparison)             #
     # ------------------------------------------------------------------ #
@@ -249,7 +241,6 @@ _VIEWS: list[tuple[str, str]] = [
         ORDER BY s.season_id DESC, cap_pct DESC
         """,
     ),
-
     # ------------------------------------------------------------------ #
     # Per-36-minute stats (normalized to 36 min)                          #
     # ------------------------------------------------------------------ #
@@ -274,7 +265,6 @@ _VIEWS: list[tuple[str, str]] = [
         GROUP BY p.player_id, p.full_name, g.season_id
         """,
     ),
-
     # ------------------------------------------------------------------ #
     # Usage rate: % of team possessions used while on court                #
     # USG% = 100 * (FGA + 0.44*FTA + TOV) * (TmMP/5) / (MP * (TmFGA + 0.44*TmFTA + TmTOV))
@@ -319,7 +309,6 @@ _VIEWS: list[tuple[str, str]] = [
         GROUP BY p.player_id, p.full_name, g.season_id
         """,
     ),
-
     # ------------------------------------------------------------------ #
     # Team offensive/defensive ratings (pts per 100 poss)                 #
     # ------------------------------------------------------------------ #
@@ -365,7 +354,6 @@ _VIEWS: list[tuple[str, str]] = [
         JOIN nba.dim_team t ON t.team_id = st.team_id
         """,
     ),
-
     # ------------------------------------------------------------------ #
     # Clutch: 4th quarter, score within 5 points (made/missed shots)      #
     # ------------------------------------------------------------------ #
@@ -399,7 +387,6 @@ _VIEWS: list[tuple[str, str]] = [
         GROUP BY p.player_id, p.full_name, ce.season_id
         """,
     ),
-
     # ------------------------------------------------------------------ #
     # Combined advanced metrics per player per season                     #
     # ------------------------------------------------------------------ #
@@ -437,7 +424,6 @@ _VIEWS: list[tuple[str, str]] = [
         WHERE total_mp > 0
         """,
     ),
-
     # ------------------------------------------------------------------ #
     # Per-100 possessions (from player_game_log + dim_league_season)       #
     # ------------------------------------------------------------------ #
@@ -491,7 +477,6 @@ _VIEWS: list[tuple[str, str]] = [
         WHERE mp > 0
         """,
     ),
-
     # ------------------------------------------------------------------ #
     # Full Basketball-Reference advanced stats (precomputed PER/WS/BPM)   #
     # Extends vw_player_season_advanced with data from fact_player_advanced_season
@@ -534,7 +519,6 @@ _VIEWS: list[tuple[str, str]] = [
         LEFT JOIN nba.dim_player p ON p.bref_id = a.bref_player_id
         """,
     ),
-
     # ------------------------------------------------------------------ #
     # Team Four Factors (Dean Oliver) per team per season                  #
     # ------------------------------------------------------------------ #
@@ -566,7 +550,6 @@ _VIEWS: list[tuple[str, str]] = [
         WHERE t.playoffs = 0
         """,
     ),
-
     # ------------------------------------------------------------------ #
     # Draft class career value                                             #
     # ------------------------------------------------------------------ #
@@ -595,7 +578,6 @@ _VIEWS: list[tuple[str, str]] = [
             d.bref_team_abbrev, d.player_name, d.college, a.bref_player_id
         """,
     ),
-
     # ------------------------------------------------------------------ #
     # Shooting zone distribution and efficiency (1997–present)            #
     # ------------------------------------------------------------------ #
@@ -641,8 +623,9 @@ _VIEWS: list[tuple[str, str]] = [
 
 _local = threading.local()
 
+
 def get_duck_con(
-    sqlite_path: Path = SQLITE_DB,
+    sqlite_path: Path = DB_PATH,
     duck_db_path: str = ":memory:",
     *,
     force_refresh: bool = False,
@@ -666,7 +649,9 @@ def get_duck_con(
         _local.cached_sqlite_path = None
         _local.cached_duck_db_path = None
 
-    cache_match = (_local.cached_sqlite_path == str(sqlite_path) and _local.cached_duck_db_path == duck_db_path)
+    cache_match = (
+        _local.cached_sqlite_path == str(sqlite_path) and _local.cached_duck_db_path == duck_db_path
+    )
     if _local.cached_con is not None and not force_refresh and cache_match:
         try:
             _local.cached_con.execute("SELECT 1")

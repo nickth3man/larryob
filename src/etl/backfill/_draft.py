@@ -18,7 +18,7 @@ from src.etl.backfill._base import (
     safe_int,
     safe_str,
 )
-from src.etl.helpers import _isna, int_season_to_id
+from src.etl.helpers import int_season_to_id
 from src.etl.utils import upsert_rows
 
 logger = logging.getLogger(__name__)
@@ -43,18 +43,18 @@ def _transform_draft_row(
 ) -> dict[str, Any] | None:
     """
     Transform a row from Draft Pick History.csv to fact_draft schema.
-    
+
     Args:
         row: Raw CSV row
         valid_seasons: Set of valid season IDs
-        
+
     Returns:
         Transformed row dict, or None to skip
     """
     season_id = int_season_to_id(row["season"])
     if season_id not in valid_seasons:
         return None
-    
+
     return {
         "season_id": season_id,
         "draft_round": safe_int(row.get("round")),
@@ -73,7 +73,7 @@ def load_draft(
 ) -> None:
     """
     Load draft pick history from Draft Pick History.csv.
-    
+
     Args:
         con: SQLite database connection
         raw_dir: Directory containing raw CSV files
@@ -87,7 +87,7 @@ def load_draft(
 
     rows: list[dict] = []
     skipped = 0
-    
+
     for row in df.to_dict("records"):
         transformed = _transform_draft_row(row, valid_seasons)
         if transformed is None:

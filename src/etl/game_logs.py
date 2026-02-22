@@ -73,25 +73,52 @@ _PGL_RENAME = {
 
 # Columns required for player_game_log insert
 _PGL_COLS = [
-    "game_id", "player_id", "team_id",
+    "game_id",
+    "player_id",
+    "team_id",
     "minutes_played",
-    "fgm", "fga", "fg3m", "fg3a",
-    "ftm", "fta",
-    "oreb", "dreb", "reb",
-    "ast", "stl", "blk", "tov", "pf", "pts",
+    "fgm",
+    "fga",
+    "fg3m",
+    "fg3a",
+    "ftm",
+    "fta",
+    "oreb",
+    "dreb",
+    "reb",
+    "ast",
+    "stl",
+    "blk",
+    "tov",
+    "pf",
+    "pts",
     "plus_minus",
 ]
 
 # Team aggregate columns (sum across players in the same game/team)
 _TEAM_SUM_COLS = [
-    "fgm", "fga", "fg3m", "fg3a", "ftm", "fta",
-    "oreb", "dreb", "reb", "ast", "stl", "blk", "tov", "pf", "pts",
+    "fgm",
+    "fga",
+    "fg3m",
+    "fg3a",
+    "ftm",
+    "fta",
+    "oreb",
+    "dreb",
+    "reb",
+    "ast",
+    "stl",
+    "blk",
+    "tov",
+    "pf",
+    "pts",
 ]
 
 
 # ------------------------------------------------------------------ #
 # Fetch raw data                                                      #
 # ------------------------------------------------------------------ #
+
 
 def _fetch_player_game_logs(
     season: str,
@@ -134,6 +161,7 @@ def _fetch_player_game_logs(
 # Transform                                                           #
 # ------------------------------------------------------------------ #
 
+
 def _parse_matchup(matchup: str) -> tuple[str | None, str | None, bool]:
     """
     Parse 'LAL vs. BOS' or 'LAL @ BOS' into (home_abbr, away_abbr, is_home).
@@ -150,38 +178,48 @@ def _parse_matchup(matchup: str) -> tuple[str | None, str | None, bool]:
 
 def _build_game_rows(df: pd.DataFrame, season_id: str, season_type: str) -> list[dict]:
     """
-    Derive fact_game rows from the flat player-game-log DataFrame.
-    Uses all rows for a game to resolve both home and away team IDs.
+    Derive fact_game rows from the flat player-game-log DataFrame using vectorized operations.
     """
     game_rows: dict[str, dict] = {}
     dropped = 0
-    for game_id, grp in df.groupby("GAME_ID", sort=False):
+
+    # Ensure columns exist and fill na to avoid string matching errors
+    if "MATCHUP" not in df.columns or "TEAM_ID" not in df.columns:
+        return []
+
+    df_clean = df.copy()
+    df_clean["MATCHUP"] = df_clean["MATCHUP"].fillna("")
+
+    # Vectorized boolean masks
+    is_home = df_clean["MATCHUP"].str.contains(" vs. ")
+    is_away = df_clean["MATCHUP"].str.contains(" @ ")
+
+    for game_id, grp in df_clean.groupby("GAME_ID", sort=False):
         gid = str(game_id)
-        home_team_id: str | None = None
-        away_team_id: str | None = None
-        team_ids: set[str] = set()
 
-        for _, row in grp.iterrows():
-            team_id = str(row["TEAM_ID"])
-            team_ids.add(team_id)
-            matchup = str(row.get("MATCHUP", ""))
-            if " vs. " in matchup:
-                home_team_id = team_id
-            elif " @ " in matchup:
-                away_team_id = team_id
+        # Get team IDs where conditions are met for this game group
+        home_teams = grp.loc[is_home, "TEAM_ID"].unique()
+        away_teams = grp.loc[is_away, "TEAM_ID"].unique()
+        all_teams = grp["TEAM_ID"].unique()
 
-        if len(team_ids) == 2:
+        home_team_id = str(home_teams[0]) if len(home_teams) > 0 else None
+        away_team_id = str(away_teams[0]) if len(away_teams) > 0 else None
+
+        # Fallback resolution if string parsing failed but exactly 2 teams exist
+        if len(all_teams) == 2:
+            all_teams_str = [str(t) for t in all_teams]
             if home_team_id is None and away_team_id is not None:
-                home_team_id = next((tid for tid in team_ids if tid != away_team_id), None)
-            if away_team_id is None and home_team_id is not None:
-                away_team_id = next((tid for tid in team_ids if tid != home_team_id), None)
+                home_team_id = next(t for t in all_teams_str if t != away_team_id)
+            elif away_team_id is None and home_team_id is not None:
+                away_team_id = next(t for t in all_teams_str if t != home_team_id)
 
         if home_team_id is None or away_team_id is None:
             dropped += 1
             logger.warning(
-                "build_game_rows: dropping game_id=%s season=%s season_type=%s unresolved teams "
-                "(team_ids=%s home=%s away=%s)",
-                gid, season_id, season_type, sorted(team_ids), home_team_id, away_team_id,
+                "build_game_rows: dropping game_id=%s unresolved teams (home=%s away=%s)",
+                gid,
+                home_team_id,
+                away_team_id,
             )
             continue
 
@@ -199,12 +237,14 @@ def _build_game_rows(df: pd.DataFrame, season_id: str, season_type: str) -> list
             "arena": None,
             "attendance": None,
         }
+
     if dropped > 0:
         logger.warning(
             "build_game_rows: dropped %d/%d games due to unresolved team mapping",
             dropped,
-            len(df.drop_duplicates("GAME_ID")),
+            len(df_clean["GAME_ID"].unique()),
         )
+
     return list(game_rows.values())
 
 
@@ -241,6 +281,7 @@ def _build_team_rows(df: pd.DataFrame) -> list[dict]:
 # Load                                                                #
 # ------------------------------------------------------------------ #
 
+
 def load_season(
     con: sqlite3.Connection,
     season: str,
@@ -257,6 +298,7 @@ def load_season(
         return {}
 
     from datetime import datetime
+
     started_at = datetime.now(UTC).isoformat()
     started_perf = time.perf_counter()
 
@@ -293,10 +335,7 @@ def load_season(
         "player_game_log": len(player_rows),
         "team_game_log": len(team_rows),
     }
-    dropped_counts = {
-        table: raw_counts[table] - validated_counts[table]
-        for table in raw_counts
-    }
+    dropped_counts = {table: raw_counts[table] - validated_counts[table] for table in raw_counts}
     logger.info(
         "Season %s %s transform summary: raw=%s validated=%s dropped=%s",
         season,
@@ -306,13 +345,12 @@ def load_season(
         dropped_counts,
     )
 
-    candidate_game_ids = {row["game_id"] for row in game_rows}
-    if candidate_game_ids:
+    if candidate_game_ids := {row["game_id"] for row in game_rows}:
         existing_game_ids: set[str] = set()
         candidate_list = list(candidate_game_ids)
         chunk_size = 900
         for i in range(0, len(candidate_list), chunk_size):
-            chunk = candidate_list[i:i + chunk_size]
+            chunk = candidate_list[i : i + chunk_size]
             placeholders = ", ".join("?" for _ in chunk)
             sql = f"SELECT game_id FROM fact_game WHERE game_id IN ({placeholders})"
             existing_game_ids.update(r[0] for r in con.execute(sql, chunk).fetchall())
@@ -400,8 +438,7 @@ def load_multiple_seasons(
                 s_type,
             )
             try:
-                counts = load_season(con, season, s_type, api_caller)
-                if counts:
+                if counts := load_season(con, season, s_type, api_caller):
                     logger.info(
                         "Game logs [%d/%d] completed season=%s season_type=%s counts=%s",
                         run_idx,
@@ -432,6 +469,7 @@ def load_multiple_seasons(
 
 if __name__ == "__main__":  # pragma: no cover
     from src.db.schema import init_db
+
     logging.basicConfig(level=logging.INFO)
     con = init_db()
     load_multiple_seasons(con, ["2023-24", "2024-25"])

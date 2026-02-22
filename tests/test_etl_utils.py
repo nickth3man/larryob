@@ -24,6 +24,7 @@ from src.etl.utils import (
 # Helpers                                                             #
 # ------------------------------------------------------------------ #
 
+
 def _make_schema(con: sqlite3.Connection) -> None:
     """Minimal schema for run-log and upsert tests."""
     con.execute("""
@@ -50,6 +51,7 @@ def _make_schema(con: sqlite3.Connection) -> None:
 # ------------------------------------------------------------------ #
 # setup_logging                                                       #
 # ------------------------------------------------------------------ #
+
 
 def test_setup_logging_adds_stream_handler_to_root() -> None:
     setup_logging(level="WARNING")
@@ -79,8 +81,10 @@ def test_setup_logging_with_file_adds_two_handlers(tmp_path: Path) -> None:
 # cache_path                                                          #
 # ------------------------------------------------------------------ #
 
+
 def test_cache_path_returns_json_path(monkeypatch, tmp_path: Path) -> None:
     import src.etl.utils as utils_mod
+
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
     result = cache_path("my_key")
     assert result == tmp_path / "my_key.json"
@@ -90,8 +94,10 @@ def test_cache_path_returns_json_path(monkeypatch, tmp_path: Path) -> None:
 # save_cache / load_cache                                             #
 # ------------------------------------------------------------------ #
 
+
 def test_save_and_load_cache_roundtrip(monkeypatch, tmp_path: Path) -> None:
     import src.etl.utils as utils_mod
+
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
     save_cache("roundtrip", {"x": 1})
     result = load_cache("roundtrip")
@@ -100,12 +106,14 @@ def test_save_and_load_cache_roundtrip(monkeypatch, tmp_path: Path) -> None:
 
 def test_load_cache_returns_none_for_missing_file(monkeypatch, tmp_path: Path) -> None:
     import src.etl.utils as utils_mod
+
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
     assert load_cache("nonexistent_key") is None
 
 
 def test_load_cache_returns_none_for_stale_ttl(monkeypatch, tmp_path: Path) -> None:
     import src.etl.utils as utils_mod
+
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
     save_cache("ttl_key", [1, 2, 3])
     p = tmp_path / "ttl_key.json"
@@ -117,6 +125,7 @@ def test_load_cache_returns_none_for_stale_ttl(monkeypatch, tmp_path: Path) -> N
 
 def test_load_cache_returns_data_when_ttl_not_expired(monkeypatch, tmp_path: Path) -> None:
     import src.etl.utils as utils_mod
+
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
     save_cache("fresh_key", "hello")
     assert load_cache("fresh_key", ttl_days=30) == "hello"
@@ -124,6 +133,7 @@ def test_load_cache_returns_data_when_ttl_not_expired(monkeypatch, tmp_path: Pat
 
 def test_load_cache_returns_none_for_wrong_version(monkeypatch, tmp_path: Path) -> None:
     import src.etl.utils as utils_mod
+
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
     save_cache("ver_key", "data")
     p = tmp_path / "ver_key.json"
@@ -135,6 +145,7 @@ def test_load_cache_returns_none_for_wrong_version(monkeypatch, tmp_path: Path) 
 
 def test_load_cache_returns_none_for_corrupt_json(monkeypatch, tmp_path: Path) -> None:
     import src.etl.utils as utils_mod
+
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
     (tmp_path / "bad.json").write_text("{not valid json}", encoding="utf-8")
     assert load_cache("bad") is None
@@ -143,6 +154,7 @@ def test_load_cache_returns_none_for_corrupt_json(monkeypatch, tmp_path: Path) -
 def test_load_cache_returns_none_for_old_format_when_version_2(monkeypatch, tmp_path: Path) -> None:
     """Files with no 'v'/'ts' keys (old v1 format) must return None when CACHE_VERSION >= 2."""
     import src.etl.utils as utils_mod
+
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
     (tmp_path / "oldformat.json").write_text(json.dumps({"key": "value"}), encoding="utf-8")
     assert load_cache("oldformat") is None
@@ -151,6 +163,7 @@ def test_load_cache_returns_none_for_old_format_when_version_2(monkeypatch, tmp_
 # ------------------------------------------------------------------ #
 # upsert_rows                                                         #
 # ------------------------------------------------------------------ #
+
 
 def test_upsert_rows_returns_zero_for_empty_list() -> None:
     con = sqlite3.connect(":memory:")
@@ -213,6 +226,7 @@ def test_upsert_rows_raises_for_non_missing_operational_error() -> None:
 # already_loaded                                                      #
 # ------------------------------------------------------------------ #
 
+
 def test_already_loaded_returns_false_when_no_record(sqlite_con: sqlite3.Connection) -> None:
     assert already_loaded(sqlite_con, "player_game_log", "2023-24", "test_loader") is False
 
@@ -243,6 +257,7 @@ def test_already_loaded_returns_false_when_table_missing() -> None:
 # record_run                                                          #
 # ------------------------------------------------------------------ #
 
+
 def test_record_run_inserts_row_to_etl_run_log(sqlite_con: sqlite3.Connection) -> None:
     record_run(sqlite_con, "fact_game", "2023-24", "game_logs.load_season", 500, "ok")
     row = sqlite_con.execute(
@@ -253,7 +268,12 @@ def test_record_run_inserts_row_to_etl_run_log(sqlite_con: sqlite3.Connection) -
 
 def test_record_run_uses_provided_started_at(sqlite_con: sqlite3.Connection) -> None:
     record_run(
-        sqlite_con, "fact_game", None, "loader", 0, "ok",
+        sqlite_con,
+        "fact_game",
+        None,
+        "loader",
+        0,
+        "ok",
         started_at="2024-01-01T00:00:00+00:00",
     )
     row = sqlite_con.execute("SELECT started_at FROM etl_run_log").fetchone()
@@ -269,11 +289,12 @@ def test_record_run_silently_ignores_missing_table() -> None:
 # log_load_summary                                                    #
 # ------------------------------------------------------------------ #
 
+
 def test_log_load_summary_returns_row_count(sqlite_con: sqlite3.Connection) -> None:
     for i in range(5):
         sqlite_con.execute(
             "INSERT INTO dim_season (season_id, start_year, end_year) VALUES (?, ?, ?)",
-            (f"200{i}-0{i+1}", 2000 + i, 2001 + i),
+            (f"200{i}-0{i + 1}", 2000 + i, 2001 + i),
         )
     sqlite_con.commit()
     count = log_load_summary(sqlite_con, "dim_season")
@@ -285,6 +306,7 @@ def test_log_load_summary_warns_when_count_below_min_rows(
     caplog,
 ) -> None:
     import logging
+
     with caplog.at_level(logging.WARNING):
         count = log_load_summary(sqlite_con, "dim_season", min_rows=9999)
     assert count == 0
@@ -312,6 +334,7 @@ def test_log_load_summary_with_season_filter(sqlite_con: sqlite3.Connection) -> 
 # ------------------------------------------------------------------ #
 # transaction context manager                                         #
 # ------------------------------------------------------------------ #
+
 
 def test_transaction_commits_on_success(sqlite_con: sqlite3.Connection) -> None:
     with transaction(sqlite_con):

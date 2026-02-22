@@ -11,14 +11,11 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
-
 from src.etl.backfill._base import (
     RAW_DIR,
     csv_path,
     get_valid_set,
     read_csv_safe,
-    safe_int,
     safe_str,
 )
 from src.etl.helpers import _flt, _int, _isna, int_season_to_id
@@ -31,10 +28,10 @@ logger = logging.getLogger(__name__)
 def _parse_playoffs_flag(value: Any) -> int:
     """
     Parse a playoffs flag value to integer (0 or 1).
-    
+
     Args:
         value: Raw playoffs value from CSV
-        
+
     Returns:
         1 if playoffs, 0 otherwise
     """
@@ -49,18 +46,18 @@ def _transform_team_season_row(
 ) -> dict[str, Any] | None:
     """
     Transform a row from Team Summaries.csv to fact_team_season schema.
-    
+
     Args:
         row: Raw CSV row
         valid_seasons: Set of valid season IDs
-        
+
     Returns:
         Transformed row dict, or None to skip
     """
     season_id = int_season_to_id(row["season"])
     if season_id not in valid_seasons:
         return None
-    
+
     return {
         "season_id": season_id,
         "bref_abbrev": safe_str(row.get("abbreviation")),
@@ -98,18 +95,18 @@ def _transform_player_season_stats_row(
 ) -> dict[str, Any] | None:
     """
     Transform a row from Player Totals.csv to fact_player_season_stats schema.
-    
+
     Args:
         row: Raw CSV row
         valid_seasons: Set of valid season IDs
-        
+
     Returns:
         Transformed row dict, or None to skip
     """
     season_id = int_season_to_id(row["season"])
     if season_id not in valid_seasons:
         return None
-    
+
     return {
         "bref_player_id": safe_str(row.get("player_id")),
         "season_id": season_id,
@@ -144,7 +141,7 @@ def load_team_season(
 ) -> None:
     """
     Load team season stats from Team Summaries.csv.
-    
+
     Args:
         con: SQLite database connection
         raw_dir: Directory containing raw CSV files
@@ -180,10 +177,10 @@ def load_league_season(
 ) -> None:
     """
     Load league-wide season averages from Team Summaries.csv and Team Stats Per Game.csv.
-    
+
     Aggregates team stats to compute league averages for pace, rating,
     and per-game statistics.
-    
+
     Args:
         con: SQLite database connection
         raw_dir: Directory containing raw CSV files
@@ -217,14 +214,16 @@ def load_league_season(
         "avg_blk": "blk_per_game",
         "avg_tov": "tov_per_game",
     }
-    
+
     # Merge with per-game stats if available
     per_game_path = csv_path(raw_dir, "Team Stats Per Game.csv")
     if per_game_path is not None:
         pg_df = read_csv_safe(per_game_path)
-        per_game_agg = pg_df.groupby("season").agg(
-            **{out: (src, "mean") for out, src in per_game_cols.items()}
-        ).reset_index()
+        per_game_agg = (
+            pg_df.groupby("season")
+            .agg(**{out: (src, "mean") for out, src in per_game_cols.items()})
+            .reset_index()
+        )
         merged = pace_ortg.merge(per_game_agg, on="season", how="left")
     else:
         merged = pace_ortg
@@ -237,20 +236,22 @@ def load_league_season(
         if season_id not in valid_seasons:
             continue
 
-        rows.append({
-            "season_id": season_id,
-            "num_teams": int(row["num_teams"]),
-            "avg_pace": _flt(row.get("avg_pace")),
-            "avg_ortg": _flt(row.get("avg_ortg")),
-            "avg_pts": _flt(row.get("avg_pts")),
-            "avg_fga": _flt(row.get("avg_fga")),
-            "avg_fta": _flt(row.get("avg_fta")),
-            "avg_trb": _flt(row.get("avg_trb")),
-            "avg_ast": _flt(row.get("avg_ast")),
-            "avg_stl": _flt(row.get("avg_stl")),
-            "avg_blk": _flt(row.get("avg_blk")),
-            "avg_tov": _flt(row.get("avg_tov")),
-        })
+        rows.append(
+            {
+                "season_id": season_id,
+                "num_teams": int(row["num_teams"]),
+                "avg_pace": _flt(row.get("avg_pace")),
+                "avg_ortg": _flt(row.get("avg_ortg")),
+                "avg_pts": _flt(row.get("avg_pts")),
+                "avg_fga": _flt(row.get("avg_fga")),
+                "avg_fta": _flt(row.get("avg_fta")),
+                "avg_trb": _flt(row.get("avg_trb")),
+                "avg_ast": _flt(row.get("avg_ast")),
+                "avg_stl": _flt(row.get("avg_stl")),
+                "avg_blk": _flt(row.get("avg_blk")),
+                "avg_tov": _flt(row.get("avg_tov")),
+            }
+        )
 
     inserted = upsert_rows(con, "dim_league_season", rows, conflict="REPLACE")
     logger.info("dim_league_season: %d rows upserted", inserted)
@@ -262,7 +263,7 @@ def load_player_season_stats(
 ) -> None:
     """
     Load player season totals from Player Totals.csv.
-    
+
     Args:
         con: SQLite database connection
         raw_dir: Directory containing raw CSV files

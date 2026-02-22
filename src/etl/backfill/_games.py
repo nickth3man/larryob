@@ -19,7 +19,7 @@ from src.etl.backfill._base import (
     safe_int,
     safe_str,
 )
-from src.etl.helpers import _isna, pad_game_id, season_id_from_date, season_type_from_game_id
+from src.etl.helpers import pad_game_id, season_id_from_date, season_type_from_game_id
 from src.etl.utils import log_load_summary, upsert_rows
 from src.etl.validate import validate_rows
 
@@ -36,16 +36,16 @@ _SCHEDULE_FILES = [
 def _determine_season_type_from_label(game_id: str, label: str) -> str:
     """
     Determine season type from game label and game ID.
-    
+
     Args:
         game_id: NBA game ID
         label: Game label string (e.g., "Preseason", "Playoffs")
-        
+
     Returns:
         Season type string
     """
     label_lc = str(label).strip().lower()
-    
+
     if "preseason" in label_lc:
         return "Preseason"
     elif "play-in" in label_lc or "playin" in label_lc:
@@ -63,12 +63,12 @@ def _transform_game_row(
 ) -> dict[str, Any] | None:
     """
     Transform a row from Games.csv to fact_game schema.
-    
+
     Args:
         row: Raw CSV row
         valid_seasons: Set of valid season IDs
         valid_teams: Set of valid team IDs
-        
+
     Returns:
         Transformed row dict, or None to skip
     """
@@ -76,7 +76,7 @@ def _transform_game_row(
     season_type = season_type_from_game_id(game_id)
     home_id = str(int(row["hometeamId"]))
     away_id = str(int(row["awayteamId"]))
-    
+
     # Derive season from game date — more reliable than game-ID encoding
     raw_date = str(row["gameDateTimeEst"])
     season_id = season_id_from_date(raw_date)
@@ -113,12 +113,12 @@ def _transform_schedule_row(
 ) -> dict[str, Any] | None:
     """
     Transform a row from LeagueSchedule*.csv to fact_game schema.
-    
+
     Args:
         row: Raw CSV row (with lowercase column names)
         valid_seasons: Set of valid season IDs
         valid_teams: Set of valid team IDs
-        
+
     Returns:
         Transformed row dict, or None to skip
     """
@@ -159,7 +159,7 @@ def load_games(
 ) -> None:
     """
     Load completed games from Games.csv.
-    
+
     Args:
         con: SQLite database connection
         raw_dir: Directory containing raw CSV files
@@ -174,7 +174,7 @@ def load_games(
 
     rows: list[dict] = []
     skipped = 0
-    
+
     for row in df.to_dict("records"):
         transformed = _transform_game_row(row, valid_seasons, valid_teams)
         if transformed is None:
@@ -197,9 +197,9 @@ def load_schedule(
 ) -> None:
     """
     Load scheduled games from LeagueSchedule*.csv files.
-    
+
     Handles column name normalization for files with different casing.
-    
+
     Args:
         con: SQLite database connection
         raw_dir: Directory containing raw CSV files
@@ -208,14 +208,14 @@ def load_schedule(
     valid_teams = get_valid_set(con, "dim_team", "team_id")
 
     total_inserted = 0
-    
+
     for filename in _SCHEDULE_FILES:
         path = csv_path(raw_dir, filename)
         if path is None:
             continue
 
         df = read_csv_safe(path)
-        
+
         # Normalize column names — files may have different casing
         df.columns = [c.lower() for c in df.columns]
 

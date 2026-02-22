@@ -60,9 +60,9 @@ def test_load_awards_prefers_eos_voting_when_present(
         ]
     ).to_csv(tmp_path / "Player Award Shares.csv", index=False)
 
-    pd.DataFrame(
-        [{"season": 2024, "player_id": "jamesle01"}]
-    ).to_csv(tmp_path / "All-Star Selections.csv", index=False)
+    pd.DataFrame([{"season": 2024, "player_id": "jamesle01"}]).to_csv(
+        tmp_path / "All-Star Selections.csv", index=False
+    )
 
     pd.DataFrame(
         [
@@ -114,9 +114,7 @@ def test_load_awards_maps_award_share_name_to_canonical_short_code(
 
     load_awards(sqlite_con, tmp_path)
 
-    award_name = sqlite_con.execute(
-        "SELECT award_name FROM fact_player_award"
-    ).fetchone()[0]
+    award_name = sqlite_con.execute("SELECT award_name FROM fact_player_award").fetchone()[0]
     assert award_name == "MVP"
 
 
@@ -166,7 +164,13 @@ def test_load_awards_skips_rows_for_invalid_season_and_unknown_player(
 
     pd.DataFrame(
         [
-            {"season": 1990, "player_id": "jamesle01", "award": "MVP", "pts_won": 10, "pts_max": 100},
+            {
+                "season": 1990,
+                "player_id": "jamesle01",
+                "award": "MVP",
+                "pts_won": 10,
+                "pts_max": 100,
+            },
             {
                 "season": 2024,
                 "player_id": "unknown01",

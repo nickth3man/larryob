@@ -11,6 +11,7 @@ from src.etl.utils import upsert_rows
 # Helpers to seed player game log data                               #
 # ------------------------------------------------------------------ #
 
+
 def _seed_player_logs(con: sqlite3.Connection) -> None:
     rows = [
         {
@@ -18,13 +19,23 @@ def _seed_player_logs(con: sqlite3.Connection) -> None:
             "player_id": "2544",
             "team_id": "1610612747",
             "minutes_played": 35.0,
-            "fgm": 10, "fga": 20,
-            "fg3m": 2, "fg3a": 5,
-            "ftm": 3, "fta": 4,
-            "oreb": 1, "dreb": 6, "reb": 7,
-            "ast": 8, "stl": 1, "blk": 0,
-            "tov": 3, "pf": 1, "pts": 25,
-            "plus_minus": 10, "starter": 1,
+            "fgm": 10,
+            "fga": 20,
+            "fg3m": 2,
+            "fg3a": 5,
+            "ftm": 3,
+            "fta": 4,
+            "oreb": 1,
+            "dreb": 6,
+            "reb": 7,
+            "ast": 8,
+            "stl": 1,
+            "blk": 0,
+            "tov": 3,
+            "pf": 1,
+            "pts": 25,
+            "plus_minus": 10,
+            "starter": 1,
         },
     ]
     upsert_rows(con, "player_game_log", rows, conflict="ABORT")
@@ -33,23 +44,41 @@ def _seed_player_logs(con: sqlite3.Connection) -> None:
         {
             "game_id": "0022300001",
             "team_id": "1610612747",
-            "fgm": 42, "fga": 85,
-            "fg3m": 12, "fg3a": 30,
-            "ftm": 20, "fta": 25,
-            "oreb": 8, "dreb": 35, "reb": 43,
-            "ast": 24, "stl": 7, "blk": 4,
-            "tov": 13, "pf": 18, "pts": 116,
+            "fgm": 42,
+            "fga": 85,
+            "fg3m": 12,
+            "fg3a": 30,
+            "ftm": 20,
+            "fta": 25,
+            "oreb": 8,
+            "dreb": 35,
+            "reb": 43,
+            "ast": 24,
+            "stl": 7,
+            "blk": 4,
+            "tov": 13,
+            "pf": 18,
+            "pts": 116,
             "plus_minus": 10,
         },
         {
             "game_id": "0022300001",
             "team_id": "1610612744",
-            "fgm": 38, "fga": 90,
-            "fg3m": 10, "fg3a": 28,
-            "ftm": 20, "fta": 26,
-            "oreb": 10, "dreb": 30, "reb": 40,
-            "ast": 21, "stl": 6, "blk": 3,
-            "tov": 14, "pf": 20, "pts": 106,
+            "fgm": 38,
+            "fga": 90,
+            "fg3m": 10,
+            "fg3a": 28,
+            "ftm": 20,
+            "fta": 26,
+            "oreb": 10,
+            "dreb": 30,
+            "reb": 40,
+            "ast": 21,
+            "stl": 6,
+            "blk": 3,
+            "tov": 14,
+            "pf": 20,
+            "pts": 106,
             "plus_minus": -10,
         },
     ]
@@ -61,6 +90,7 @@ def _seed_player_logs(con: sqlite3.Connection) -> None:
 # Tests                                                               #
 # ------------------------------------------------------------------ #
 
+
 def test_sqlite_extension_loads(duck_con_with_sqlite) -> None:
     """DuckDB can successfully load the sqlite extension and attach the db."""
     result = duck_con_with_sqlite.execute("SHOW DATABASES").fetchall()
@@ -69,17 +99,13 @@ def test_sqlite_extension_loads(duck_con_with_sqlite) -> None:
 
 
 def test_can_query_dim_player(duck_con_with_sqlite) -> None:
-    df = duck_con_with_sqlite.execute(
-        "SELECT * FROM nba.dim_player WHERE player_id = '2544'"
-    ).df()
+    df = duck_con_with_sqlite.execute("SELECT * FROM nba.dim_player WHERE player_id = '2544'").df()
     assert len(df) == 1
     assert df["full_name"].iloc[0] == "LeBron James"
 
 
 def test_can_query_fact_game(duck_con_with_sqlite) -> None:
-    df = duck_con_with_sqlite.execute(
-        "SELECT * FROM nba.fact_game"
-    ).df()
+    df = duck_con_with_sqlite.execute("SELECT * FROM nba.fact_game").df()
     assert len(df) == 1
 
 
@@ -141,12 +167,12 @@ def test_ts_pct_calculation(
 def test_views_are_queryable(duck_con_with_sqlite) -> None:
     """All views must be defined; querying them must not raise."""
 
-
-
     # Re-attach with views via get_duck_con (using existing sqlite fixture via tmp)
     # This test just ensures the view SQL parses without error.
     for name, _ in _VIEWS:
-        duck_con_with_sqlite.execute(f"SELECT 1 FROM ({_view_sql(name, duck_con_with_sqlite)}) LIMIT 0")
+        duck_con_with_sqlite.execute(
+            f"SELECT 1 FROM ({_view_sql(name, duck_con_with_sqlite)}) LIMIT 0"
+        )
 
 
 def test_get_duck_con_singleton(tmp_path, monkeypatch) -> None:
@@ -166,8 +192,10 @@ def test_get_duck_con_singleton(tmp_path, monkeypatch) -> None:
 
     sqlite_file = tmp_path / "test_singleton.db"
     import sqlite3
+
     con1 = sqlite3.connect(sqlite_file)
     from src.db.schema import ALTER_STATEMENTS, DDL_STATEMENTS
+
     for ddl in DDL_STATEMENTS:
         con1.execute(ddl)
     for alter in ALTER_STATEMENTS:

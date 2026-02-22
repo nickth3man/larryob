@@ -12,14 +12,12 @@ from typing import Any
 
 from src.etl.backfill._base import (
     RAW_DIR,
-    BaseBackfillLoader,
     csv_path,
     get_valid_set,
     read_csv_safe,
-    safe_int,
     safe_str,
 )
-from src.etl.helpers import _flt, _int, _isna, int_season_to_id
+from src.etl.helpers import _flt, _int, int_season_to_id
 from src.etl.utils import log_load_summary, upsert_rows
 from src.etl.validate import validate_rows
 
@@ -118,18 +116,18 @@ def _transform_advanced_row(
 ) -> dict[str, Any] | None:
     """
     Transform a row from Advanced.csv to fact_player_advanced_season schema.
-    
+
     Args:
         row: Raw CSV row
         valid_seasons: Set of valid season IDs
-        
+
     Returns:
         Transformed row dict, or None to skip
     """
     season_id = int_season_to_id(row["season"])
     if season_id not in valid_seasons:
         return None
-    
+
     return {
         "bref_player_id": safe_str(row.get("player_id")),
         "season_id": season_id,
@@ -168,18 +166,18 @@ def _transform_shooting_row(
 ) -> dict[str, Any] | None:
     """
     Transform a row from Player Shooting.csv to fact_player_shooting_season schema.
-    
+
     Args:
         row: Raw CSV row
         valid_seasons: Set of valid season IDs
-        
+
     Returns:
         Transformed row dict, or None to skip
     """
     season_id = int_season_to_id(row["season"])
     if season_id not in valid_seasons:
         return None
-    
+
     return {
         "bref_player_id": safe_str(row.get("player_id")),
         "season_id": season_id,
@@ -214,18 +212,18 @@ def _transform_pbp_row(
 ) -> dict[str, Any] | None:
     """
     Transform a row from Player Play By Play.csv to fact_player_pbp_season schema.
-    
+
     Args:
         row: Raw CSV row
         valid_seasons: Set of valid season IDs
-        
+
     Returns:
         Transformed row dict, or None to skip
     """
     season_id = int_season_to_id(row["season"])
     if season_id not in valid_seasons:
         return None
-    
+
     return {
         "bref_player_id": safe_str(row.get("player_id")),
         "season_id": season_id,
@@ -257,7 +255,7 @@ def load_player_advanced(
 ) -> None:
     """
     Load player advanced season stats from Advanced.csv.
-    
+
     Args:
         con: SQLite database connection
         raw_dir: Directory containing raw CSV files
@@ -298,7 +296,7 @@ def load_player_shooting(
 ) -> None:
     """
     Load player shooting season stats from Player Shooting.csv.
-    
+
     Args:
         con: SQLite database connection
         raw_dir: Directory containing raw CSV files
@@ -339,7 +337,7 @@ def load_player_pbp_season(
 ) -> None:
     """
     Load player play-by-play season stats from Player Play By Play.csv.
-    
+
     Args:
         con: SQLite database connection
         raw_dir: Directory containing raw CSV files

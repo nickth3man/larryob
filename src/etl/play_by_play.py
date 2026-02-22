@@ -72,20 +72,33 @@ _PBP_RENAME = {
 }
 
 _PBP_COLS = [
-    "event_id", "game_id", "period",
-    "pc_time_string", "wc_time_string",
-    "eventmsgtype", "eventmsgactiontype",
-    "player1_id", "player2_id", "player3_id",
-    "person1type", "person2type", "person3type",
-    "team1_id", "team2_id",
-    "home_description", "visitor_description", "neutral_description",
-    "score", "score_margin",
+    "event_id",
+    "game_id",
+    "period",
+    "pc_time_string",
+    "wc_time_string",
+    "eventmsgtype",
+    "eventmsgactiontype",
+    "player1_id",
+    "player2_id",
+    "player3_id",
+    "person1type",
+    "person2type",
+    "person3type",
+    "team1_id",
+    "team2_id",
+    "home_description",
+    "visitor_description",
+    "neutral_description",
+    "score",
+    "score_margin",
 ]
 
 
 # ------------------------------------------------------------------ #
 # Fetch                                                               #
 # ------------------------------------------------------------------ #
+
 
 def _fetch_pbp(game_id: str, api_caller: APICaller | None = None) -> pd.DataFrame:
     cache_key = f"pbp_{game_id}"
@@ -114,12 +127,13 @@ def _fetch_pbp(game_id: str, api_caller: APICaller | None = None) -> pd.DataFram
 # Transform                                                           #
 # ------------------------------------------------------------------ #
 
+
 def _transform_pbp(df: pd.DataFrame) -> list[dict]:
     df = df.rename(columns=_PBP_RENAME)
 
     # Synthesise a stable event_id: zero-pad eventnum to 6 digits for correct text sort
-    df["event_id"] = df["game_id"].astype(str) + "_" + df["eventnum"].astype(int).map(
-        lambda x: f"{x:06d}"
+    df["event_id"] = (
+        df["game_id"].astype(str) + "_" + df["eventnum"].astype(int).map(lambda x: f"{x:06d}")
     )
 
     # Cast IDs to str; treat "0" player IDs as None (team-level events)
@@ -147,6 +161,7 @@ def _transform_pbp(df: pd.DataFrame) -> list[dict]:
 # ------------------------------------------------------------------ #
 # Load                                                                #
 # ------------------------------------------------------------------ #
+
 
 def load_game(con: sqlite3.Connection, game_id: str, api_caller: APICaller | None = None) -> int:
     """Fetch and load play-by-play for a single *game_id*."""
@@ -204,6 +219,7 @@ def load_season_pbp(
         return 0
 
     from datetime import datetime
+
     started_at = datetime.now(UTC).isoformat()
 
     cursor = con.execute(
@@ -228,6 +244,7 @@ def load_season_pbp(
 
 if __name__ == "__main__":  # pragma: no cover
     from src.db.schema import init_db
+
     logging.basicConfig(level=logging.INFO)
     con = init_db()
     # Demo: load PBP for the first 5 games already in the db

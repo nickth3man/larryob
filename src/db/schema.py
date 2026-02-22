@@ -50,7 +50,6 @@ DDL_STATEMENTS = [
         end_year    INTEGER NOT NULL
     ) STRICT;
     """,
-
     # ------------------------------------------------------------------ #
     # Dimension: teams                                                     #
     # A franchise keeps the same team_id even across relocations/rebranDs  #
@@ -70,7 +69,6 @@ DDL_STATEMENTS = [
         founded_year INTEGER
     ) STRICT;
     """,
-
     # ------------------------------------------------------------------ #
     # Dimension: players                                                   #
     # Surrogate key is the NBA numeric id (stored as TEXT to be safe)      #
@@ -93,7 +91,6 @@ DDL_STATEMENTS = [
         is_active    INTEGER NOT NULL DEFAULT 1  -- 0 | 1
     ) STRICT;
     """,
-
     # ------------------------------------------------------------------ #
     # Temporal: roster stints                                             #
     # Tracks every player-team employment period to support mid-season   #
@@ -111,7 +108,6 @@ DDL_STATEMENTS = [
         UNIQUE (player_id, team_id, season_id)
     ) STRICT;
     """,
-
     # ------------------------------------------------------------------ #
     # Fact: games                                                         #
     # ------------------------------------------------------------------ #
@@ -133,7 +129,6 @@ DDL_STATEMENTS = [
         CHECK (away_score IS NULL OR away_score >= 0)
     ) STRICT;
     """,
-
     # ------------------------------------------------------------------ #
     # Fact: team box-score aggregates per game                            #
     # ------------------------------------------------------------------ #
@@ -157,7 +152,6 @@ DDL_STATEMENTS = [
         PRIMARY KEY (game_id, team_id)
     ) STRICT;
     """,
-
     # ------------------------------------------------------------------ #
     # Fact: individual player box scores (one row per player per game)    #
     # This is the largest table and the heart of the analytics layer.     #
@@ -185,7 +179,6 @@ DDL_STATEMENTS = [
         PRIMARY KEY (game_id, player_id)
     ) STRICT;
     """,
-
     # ------------------------------------------------------------------ #
     # Fact: play-by-play events                                           #
     # EVENTMSGTYPE codes (official NBA):                                  #
@@ -218,7 +211,6 @@ DDL_STATEMENTS = [
         score_margin        TEXT                -- '+5', '-3', 'TIE', or NULL; cast to INTEGER at query time
     ) STRICT;
     """,
-
     # ------------------------------------------------------------------ #
     # Fact: awards / accolades                                            #
     # ------------------------------------------------------------------ #
@@ -235,7 +227,6 @@ DDL_STATEMENTS = [
         UNIQUE (player_id, season_id, award_name)
     ) STRICT;
     """,
-
     # ------------------------------------------------------------------ #
     # Dimension: salary cap by season                                     #
     # ------------------------------------------------------------------ #
@@ -245,7 +236,6 @@ DDL_STATEMENTS = [
         cap_amount INTEGER NOT NULL             -- in USD
     ) STRICT;
     """,
-
     # ------------------------------------------------------------------ #
     # Fact: player salaries                                               #
     # ------------------------------------------------------------------ #
@@ -259,7 +249,6 @@ DDL_STATEMENTS = [
         UNIQUE (player_id, team_id, season_id)
     ) STRICT;
     """,
-
     # ------------------------------------------------------------------ #
     # Indexes for common query patterns                                   #
     # ------------------------------------------------------------------ #
@@ -278,7 +267,6 @@ DDL_STATEMENTS = [
     "CREATE INDEX IF NOT EXISTS idx_roster_player_dates ON fact_roster(player_id, start_date, end_date);",
     "CREATE UNIQUE INDEX IF NOT EXISTS idx_roster_unique ON fact_roster(player_id, team_id, season_id);",
     "CREATE INDEX IF NOT EXISTS idx_tgl_team   ON team_game_log(team_id);",
-
     # ------------------------------------------------------------------ #
     # Dimension: franchise/team history (SuperSonics→Thunder, etc.)       #
     # One row per city/name era for each franchise.                        #
@@ -296,7 +284,6 @@ DDL_STATEMENTS = [
         UNIQUE (team_id, season_founded)
     ) STRICT;
     """,
-
     # ------------------------------------------------------------------ #
     # Fact: team season summaries (pace, ratings, four factors, etc.)     #
     # Source: Basketball-Reference Team Summaries                          #
@@ -323,7 +310,6 @@ DDL_STATEMENTS = [
         UNIQUE (season_id, bref_abbrev)
     ) STRICT;
     """,
-
     # ------------------------------------------------------------------ #
     # Dimension: league-wide averages per season                          #
     # Required for PER, Win Shares, BPM, VORP formulas.                  #
@@ -344,7 +330,6 @@ DDL_STATEMENTS = [
         avg_tov      REAL
     ) STRICT;
     """,
-
     # ------------------------------------------------------------------ #
     # Fact: NBA draft pick history                                         #
     # Source: Basketball-Reference Draft Pick History                      #
@@ -364,7 +349,6 @@ DDL_STATEMENTS = [
         UNIQUE (season_id, overall_pick)
     ) STRICT;
     """,
-
     # ------------------------------------------------------------------ #
     # Fact: player season totals (1947–present)                           #
     # Source: Basketball-Reference Player Totals                           #
@@ -389,7 +373,6 @@ DDL_STATEMENTS = [
         UNIQUE (bref_player_id, season_id, team_abbrev)
     ) STRICT;
     """,
-
     # ------------------------------------------------------------------ #
     # Fact: player advanced season stats (1947–present)                   #
     # PER, WS, BPM, VORP are precomputed by Basketball-Reference.         #
@@ -410,7 +393,6 @@ DDL_STATEMENTS = [
         UNIQUE (bref_player_id, season_id, team_abbrev)
     ) STRICT;
     """,
-
     # ------------------------------------------------------------------ #
     # Fact: player shooting zone breakdown (1997–present)                 #
     # Source: Basketball-Reference Player Shooting                         #
@@ -433,7 +415,6 @@ DDL_STATEMENTS = [
         UNIQUE (bref_player_id, season_id, team_abbrev)
     ) STRICT;
     """,
-
     # ------------------------------------------------------------------ #
     # Fact: player play-by-play season aggregates (1997–present)          #
     # Source: Basketball-Reference Player Play By Play                     #
@@ -460,7 +441,6 @@ DDL_STATEMENTS = [
         UNIQUE (bref_player_id, season_id, team_abbrev)
     ) STRICT;
     """,
-
     # ------------------------------------------------------------------ #
     # Indexes for new tables                                              #
     # ------------------------------------------------------------------ #
@@ -475,7 +455,6 @@ DDL_STATEMENTS = [
     "CREATE INDEX IF NOT EXISTS idx_pas_season      ON fact_player_advanced_season(season_id);",
     "CREATE INDEX IF NOT EXISTS idx_pshoot_player   ON fact_player_shooting_season(bref_player_id);",
     "CREATE INDEX IF NOT EXISTS idx_ppbp_player     ON fact_player_pbp_season(bref_player_id);",
-
     # ------------------------------------------------------------------ #
     # Internal: ETL Run Log                                               #
     # ------------------------------------------------------------------ #
@@ -495,13 +474,19 @@ DDL_STATEMENTS = [
 ]
 
 
-def init_db(db_path: Path = DB_PATH) -> sqlite3.Connection:
-    """Create all tables and indexes; returns an open connection."""
-    db_path.parent.mkdir(parents=True, exist_ok=True)
+def get_db_connection(db_path: Path = DB_PATH) -> sqlite3.Connection:
+    """Return a configured SQLite connection (WAL, FKs enabled)."""
     con = sqlite3.connect(db_path)
     con.execute("PRAGMA journal_mode=WAL;")
     con.execute("PRAGMA foreign_keys=ON;")
     con.execute("PRAGMA synchronous=NORMAL;")
+    return con
+
+
+def init_db(db_path: Path = DB_PATH) -> sqlite3.Connection:
+    """Create all tables and indexes; returns an open connection."""
+    db_path.parent.mkdir(parents=True, exist_ok=True)
+    con = get_db_connection(db_path)
     # One-time cleanup: remove misnamed index from earlier schema versions
     con.execute("DROP INDEX IF EXISTS idx_pgl_player_season;")
     for ddl in DDL_STATEMENTS:

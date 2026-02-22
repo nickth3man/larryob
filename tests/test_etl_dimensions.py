@@ -45,7 +45,7 @@ def test_season_id_format(sqlite_con: sqlite3.Connection) -> None:
 
 
 def test_load_teams(sqlite_con: sqlite3.Connection) -> None:
-    load_seasons(sqlite_con)    # teams need no FK, but seasons must exist
+    load_seasons(sqlite_con)  # teams need no FK, but seasons must exist
     load_teams(sqlite_con)
     count = sqlite_con.execute("SELECT COUNT(*) FROM dim_team").fetchone()[0]
     assert count >= 30, f"Expected at least 30 teams, got {count}"
@@ -197,6 +197,7 @@ def test_map_nba_player_static_inactive() -> None:
 # _season_id helper                                                   #
 # ------------------------------------------------------------------ #
 
+
 def test_season_id_1946() -> None:
     assert _season_id(1946) == "1946-47"
 
@@ -212,6 +213,7 @@ def test_season_id_1999() -> None:
 # ------------------------------------------------------------------ #
 # _map_common_all_player                                              #
 # ------------------------------------------------------------------ #
+
 
 def test_map_common_all_player_active_status() -> None:
     row = {
@@ -250,6 +252,7 @@ def test_map_common_all_player_uses_player_slug_fallback() -> None:
 # load_seasons: skips when already loaded                            #
 # ------------------------------------------------------------------ #
 
+
 def test_load_seasons_skips_when_etl_run_log_has_entry(
     sqlite_con: sqlite3.Connection,
 ) -> None:
@@ -265,19 +268,26 @@ def test_load_seasons_skips_when_etl_run_log_has_entry(
 # load_players_full (mock API)                                        #
 # ------------------------------------------------------------------ #
 
+
 def test_load_players_full_from_cache(
     monkeypatch,
     sqlite_con: sqlite3.Connection,
     tmp_path: Path,
 ) -> None:
     import src.etl.utils as utils_mod
+
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
     load_seasons(sqlite_con, up_to_start_year=2024)
 
     from src.etl.utils import save_cache
+
     records = [
-        {"person_id": "2544", "display_first_last": "LeBron James",
-         "rosterstatus": "1", "player_slug": "lebron-james"},
+        {
+            "person_id": "2544",
+            "display_first_last": "LeBron James",
+            "rosterstatus": "1",
+            "player_slug": "lebron-james",
+        },
     ]
     save_cache("common_all_players_2024-25", records)
 
@@ -289,15 +299,18 @@ def test_load_players_full_from_cache(
 # load_players_bio_enrichment (mock API)                              #
 # ------------------------------------------------------------------ #
 
+
 def test_load_players_bio_enrichment_from_cache(
     monkeypatch,
     sqlite_con_with_data: sqlite3.Connection,
     tmp_path: Path,
 ) -> None:
     import src.etl.utils as utils_mod
+
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
 
     from src.etl.utils import save_cache
+
     record = {
         "PERSON_ID": "2544",
         "DISPLAY_FIRST_LAST": "LeBron James",
@@ -323,10 +336,12 @@ def test_load_players_bio_enrichment_api_exception_skips_player(
     tmp_path: Path,
 ) -> None:
     import src.etl.utils as utils_mod
+
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
 
-    with patch("src.etl.dimensions.commonplayerinfo.CommonPlayerInfo",
-               side_effect=RuntimeError("API down")):
+    with patch(
+        "src.etl.dimensions.commonplayerinfo.CommonPlayerInfo", side_effect=RuntimeError("API down")
+    ):
         with patch("time.sleep"):
             result = load_players_bio_enrichment(sqlite_con_with_data, player_ids=["2544"])
     assert result == 0
@@ -353,6 +368,7 @@ def test_load_players_bio_enrichment_records_run_when_auto_selected_empty(
 # ------------------------------------------------------------------ #
 # run_all                                                             #
 # ------------------------------------------------------------------ #
+
 
 def test_run_all_without_full_players_does_not_call_api(
     sqlite_con: sqlite3.Connection,

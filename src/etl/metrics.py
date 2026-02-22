@@ -241,7 +241,11 @@ def log_metrics_summary() -> None:
             retries = summary["api_retries"].get(label, 0)
             logger.info(
                 "  %s: %d calls (%d success, %d failures, %d retries)",
-                label, total, success, failures, retries
+                label,
+                total,
+                success,
+                failures,
+                retries,
             )
 
     if summary["api_latency_summary"]:
@@ -249,7 +253,11 @@ def log_metrics_summary() -> None:
         for label, stats in summary["api_latency_summary"].items():
             logger.info(
                 "  %s: avg=%.2fms, min=%.2fms, max=%.2fms (%d samples)",
-                label, stats["avg_ms"], stats["min_ms"], stats["max_ms"], stats["count"]
+                label,
+                stats["avg_ms"],
+                stats["min_ms"],
+                stats["max_ms"],
+                stats["count"],
             )
 
     if summary["etl_duration_summary"]:
@@ -257,7 +265,11 @@ def log_metrics_summary() -> None:
         for key, stats in summary["etl_duration_summary"].items():
             logger.info(
                 "  %s: avg=%.2fs, min=%.2fs, max=%.2fs (%d runs)",
-                key, stats["avg_s"], stats["min_s"], stats["max_s"], stats["count"]
+                key,
+                stats["avg_s"],
+                stats["min_s"],
+                stats["max_s"],
+                stats["count"],
             )
 
 

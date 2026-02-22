@@ -48,7 +48,9 @@ class APICaller:
         """
         self._base_sleep = base_sleep if base_sleep is not None else APIConfig.base_sleep()
         self._max_retries = max_retries if max_retries is not None else APIConfig.max_retries()
-        self._inter_call_sleep = inter_call_sleep if inter_call_sleep is not None else APIConfig.inter_call_sleep()
+        self._inter_call_sleep = (
+            inter_call_sleep if inter_call_sleep is not None else APIConfig.inter_call_sleep()
+        )
 
         # Adaptive pacing state.
         self._adaptive_sleep = max(0.0, self._base_sleep)
@@ -94,7 +96,7 @@ class APICaller:
                 record_api_call(label, success=True, attempt=attempt)
                 return result
             except Exception as exc:
-                wait = max(sleep_time * (2 ** attempt), self._adaptive_sleep)
+                wait = max(sleep_time * (2**attempt), self._adaptive_sleep)
                 logger.warning(
                     "Attempt %d/%d failed for %r: %s - retrying in %.0fs",
                     attempt,
@@ -135,7 +137,7 @@ class APICaller:
                 record_api_call(label, success=True, attempt=attempt)
                 return result
             except Exception as exc:
-                wait = base_sleep * (2 ** attempt)
+                wait = base_sleep * (2**attempt)
                 logger.warning(
                     "Attempt %d/%d failed for %r: %s - retrying in %.0fs",
                     attempt,

@@ -12,8 +12,6 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
-import pandas as pd
-
 from src.etl.backfill._base import (
     RAW_DIR,
     csv_path,
@@ -36,18 +34,18 @@ LBS_TO_KG = 0.453592
 def _height_to_cm(ht: str | float | None) -> float | None:
     """
     Convert height string ('feet-inches') or numeric (inches) to centimeters.
-    
+
     Args:
         ht: Height in 'feet-inches' format (e.g., '6-3') or inches
-        
+
     Returns:
         Height in centimeters, or None if invalid
     """
     if _isna(ht):
         return None
-    
+
     s = str(ht).strip()
-    
+
     # Handle 'feet-inches' format
     if "-" in s:
         parts = s.split("-")
@@ -56,7 +54,7 @@ def _height_to_cm(ht: str | float | None) -> float | None:
             return total_inches * INCHES_TO_CM
         except (ValueError, IndexError):
             return None
-    
+
     # Handle numeric inches
     try:
         return float(s) * INCHES_TO_CM
@@ -67,10 +65,10 @@ def _height_to_cm(ht: str | float | None) -> float | None:
 def _weight_to_kg(w: Any) -> float | None:
     """
     Convert weight in pounds to kilograms.
-    
+
     Args:
         w: Weight in pounds
-        
+
     Returns:
         Weight in kilograms, or None if invalid
     """
@@ -85,10 +83,10 @@ def _weight_to_kg(w: Any) -> float | None:
 def _parse_hof_flag(value: Any) -> int:
     """
     Parse a Hall of Fame flag value to integer (0 or 1).
-    
+
     Args:
         value: Raw HOF value from CSV
-        
+
     Returns:
         1 if HOF, 0 otherwise
     """
@@ -103,7 +101,7 @@ def load_team_history(
 ) -> None:
     """
     Load team historical data from TeamHistories.csv.
-    
+
     Args:
         con: SQLite database connection
         raw_dir: Directory containing raw CSV files
@@ -114,25 +112,27 @@ def load_team_history(
 
     df = read_csv_safe(path)
     valid_team_ids = get_valid_set(con, "dim_team", "team_id")
-    
+
     rows: list[dict] = []
     skipped = 0
-    
+
     for row in df.to_dict("records"):
         team_id = str(int(row["teamId"]))
         if team_id not in valid_team_ids:
             skipped += 1
             continue
-        
-        rows.append({
-            "team_id": team_id,
-            "team_city": safe_str(row.get("teamCity")),
-            "team_name": safe_str(row.get("teamName")),
-            "team_abbrev": safe_str(row.get("teamAbbrev")),
-            "season_founded": safe_int(row.get("seasonFounded")),
-            "season_active_till": safe_int(row.get("seasonActiveTill")),
-            "league": safe_str(row.get("league")),
-        })
+
+        rows.append(
+            {
+                "team_id": team_id,
+                "team_city": safe_str(row.get("teamCity")),
+                "team_name": safe_str(row.get("teamName")),
+                "team_abbrev": safe_str(row.get("teamAbbrev")),
+                "season_founded": safe_int(row.get("seasonFounded")),
+                "season_active_till": safe_int(row.get("seasonActiveTill")),
+                "league": safe_str(row.get("league")),
+            }
+        )
 
     inserted = upsert_rows(con, "dim_team_history", rows)
     logger.info("dim_team_history: %d rows inserted/ignored, %d skipped", inserted, skipped)
@@ -144,9 +144,9 @@ def enrich_dim_team(
 ) -> None:
     """
     Enrich dim_team with bref_abbrev from Team Abbrev.csv.
-    
+
     Uses the most recent season's abbreviation for each team name.
-    
+
     Args:
         con: SQLite database connection
         raw_dir: Directory containing raw CSV files
@@ -156,11 +156,10 @@ def enrich_dim_team(
         return
 
     df = read_csv_safe(path)
-    
+
     # Keep only the most recent season's abbreviation for each team name
-    latest = (
-        df.sort_values("season", ascending=False)
-        .drop_duplicates(subset=["team"], keep="first")
+    latest = df.sort_values("season", ascending=False).drop_duplicates(
+        subset=["team"], keep="first"
     )
 
     # Build a full_name → bref_abbrev lookup
@@ -176,7 +175,7 @@ def enrich_dim_team(
             (bref_abbrev, full_name),
         )
         updated += cur.rowcount
-    
+
     con.commit()
     logger.info("dim_team bref_abbrev: %d teams updated", updated)
 
@@ -187,7 +186,7 @@ def _enrich_from_players_csv(
 ) -> None:
     """
     Enrich dim_player with bio data from NBA API Players.csv.
-    
+
     Args:
         con: SQLite database connection
         raw_dir: Directory containing raw CSV files
@@ -236,10 +235,10 @@ def _enrich_from_career_info(
 ) -> None:
     """
     Enrich dim_player with bref_id, college, hof from Player Career Info.csv.
-    
+
     Matches Basketball-Reference players to dim_player by normalized name
     with birth_date as tiebreaker for duplicate names.
-    
+
     Args:
         con: SQLite database connection
         raw_dir: Directory containing raw CSV files
@@ -251,10 +250,8 @@ def _enrich_from_career_info(
     bref_df = read_csv_safe(path)
 
     # Load existing dim_player names for matching
-    rows = con.execute(
-        "SELECT player_id, full_name, birth_date FROM dim_player"
-    ).fetchall()
-    
+    rows = con.execute("SELECT player_id, full_name, birth_date FROM dim_player").fetchall()
+
     # Build normalized name → [(player_id, birth_date), ...] lookup
     name_to_ids: dict[str, list[tuple[str, str | None]]] = {}
     for pid, full_name, birth_date in rows:
@@ -263,7 +260,7 @@ def _enrich_from_career_info(
 
     updated = 0
     skipped = 0
-    
+
     for row in bref_df.to_dict("records"):
         bref_id = safe_str(row.get("player_id"), strip=True) or ""
         raw_name = safe_str(row.get("player"), strip=True) or ""
@@ -279,9 +276,7 @@ def _enrich_from_career_info(
             pid = candidates[0][0]
         else:
             bref_bd = str(row.get("birth_date", "")).strip()[:10]
-            matched = [
-                p for p, bd in candidates if bd and str(bd)[:10] == bref_bd
-            ]
+            matched = [p for p, bd in candidates if bd and str(bd)[:10] == bref_bd]
             pid = matched[0] if matched else candidates[0][0]
 
         height_cm = _height_to_cm(row.get("ht_in_in"))
@@ -317,11 +312,11 @@ def enrich_dim_player(
 ) -> None:
     """
     Enrich dim_player with bio data from multiple CSV sources.
-    
+
     Loads data from:
     - Players.csv (NBA API bio data)
     - Player Career Info.csv (Basketball-Reference data)
-    
+
     Args:
         con: SQLite database connection
         raw_dir: Directory containing raw CSV files

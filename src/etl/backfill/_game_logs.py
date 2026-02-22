@@ -16,7 +16,7 @@ from src.etl.backfill._base import (
     get_valid_set,
     read_csv_safe,
 )
-from src.etl.helpers import _flt, _int, _isna, pad_game_id
+from src.etl.helpers import _flt, _int, pad_game_id
 from src.etl.utils import log_load_summary, upsert_rows
 from src.etl.validate import validate_rows
 
@@ -31,16 +31,16 @@ def _build_team_lookup(
 ) -> dict[tuple[int, int], str]:
     """
     Build (game_id_int, home_flag) → team_id lookup from TeamStatistics.csv.
-    
+
     Args:
         raw_dir: Directory containing raw CSV files
-        
+
     Returns:
         Dictionary mapping (gameId, home) tuples to team_id strings
     """
     team_lookup: dict[tuple[int, int], str] = {}
     ts_path = raw_dir / "TeamStatistics.csv"
-    
+
     if ts_path.exists():
         ts_df = read_csv_safe(ts_path, usecols=["gameId", "teamId", "home"])
         for r in ts_df.to_dict("records"):
@@ -50,7 +50,7 @@ def _build_team_lookup(
             team_lookup[(game_id, home_flag)] = team_id
     else:
         logger.warning("TeamStatistics.csv not found; team_id may be missing")
-    
+
     return team_lookup
 
 
@@ -62,13 +62,13 @@ def _transform_player_game_log_row(
 ) -> dict[str, Any] | None:
     """
     Transform a row from PlayerStatistics.csv to player_game_log schema.
-    
+
     Args:
         row: Raw CSV row
         valid_games: Set of valid game IDs
         valid_players: Set of valid player IDs
         team_lookup: (gameId, home) → team_id lookup
-        
+
     Returns:
         Transformed row dict, or None to skip
     """
@@ -81,7 +81,7 @@ def _transform_player_game_log_row(
     home_flag = _int(row.get("home"))
     if home_flag is None:
         return None
-    
+
     team_id = team_lookup.get((int(row["gameId"]), home_flag))
     if team_id is None:
         return None
@@ -118,12 +118,12 @@ def _transform_team_game_log_row(
 ) -> dict[str, Any] | None:
     """
     Transform a row from TeamStatistics.csv to team_game_log schema.
-    
+
     Args:
         row: Raw CSV row
         valid_games: Set of valid game IDs
         valid_teams: Set of valid team IDs
-        
+
     Returns:
         Transformed row dict, or None to skip
     """
@@ -161,9 +161,9 @@ def load_player_game_logs(
 ) -> None:
     """
     Load player game logs from PlayerStatistics.csv.
-    
+
     Uses chunked processing for memory efficiency on large files.
-    
+
     Args:
         con: SQLite database connection
         raw_dir: Directory containing raw CSV files
@@ -183,7 +183,7 @@ def load_player_game_logs(
     skipped = 0
 
     reader = read_csv_safe(path, low_memory=False, chunksize=_CHUNK_SIZE)
-    
+
     for chunk in reader:
         rows: list[dict] = []
         for row in chunk.to_dict("records"):
@@ -219,7 +219,7 @@ def load_team_game_logs(
 ) -> None:
     """
     Load team game logs from TeamStatistics.csv.
-    
+
     Args:
         con: SQLite database connection
         raw_dir: Directory containing raw CSV files

@@ -88,7 +88,7 @@ class TestAPICaller:
 
     def test_sleep_between_calls(self) -> None:
         """Should sleep for inter_call_sleep duration."""
-        caller = APICaller(inter_call_sleep=0.01)
+        caller = APICaller(inter_call_sleep=0.01, base_sleep=0.01)
 
         start = time.time()
         caller.sleep_between_calls()

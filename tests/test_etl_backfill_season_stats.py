@@ -12,7 +12,9 @@ from src.etl.backfill._season_stats import (
 )
 
 
-def test_load_team_season_inserts_valid_rows(sqlite_con: sqlite3.Connection, tmp_path: Path) -> None:
+def test_load_team_season_inserts_valid_rows(
+    sqlite_con: sqlite3.Connection, tmp_path: Path
+) -> None:
     sqlite_con.execute(
         "INSERT INTO dim_season (season_id, start_year, end_year) VALUES ('2023-24', 2023, 2024)"
     )
@@ -127,9 +129,9 @@ def test_load_league_season_without_per_game_sets_null_averages(
     )
     sqlite_con.commit()
 
-    pd.DataFrame(
-        [{"season": 2024, "team": "LAL", "pace": 99.0, "o_rtg": 114.0}]
-    ).to_csv(tmp_path / "Team Summaries.csv", index=False)
+    pd.DataFrame([{"season": 2024, "team": "LAL", "pace": 99.0, "o_rtg": 114.0}]).to_csv(
+        tmp_path / "Team Summaries.csv", index=False
+    )
 
     load_league_season(sqlite_con, tmp_path)
 
@@ -143,9 +145,9 @@ def test_load_league_season_skips_rows_for_unseeded_seasons(
     sqlite_con: sqlite3.Connection,
     tmp_path: Path,
 ) -> None:
-    pd.DataFrame(
-        [{"season": 1990, "team": "LAL", "pace": 99.0, "o_rtg": 114.0}]
-    ).to_csv(tmp_path / "Team Summaries.csv", index=False)
+    pd.DataFrame([{"season": 1990, "team": "LAL", "pace": 99.0, "o_rtg": 114.0}]).to_csv(
+        tmp_path / "Team Summaries.csv", index=False
+    )
 
     load_league_season(sqlite_con, tmp_path)
 

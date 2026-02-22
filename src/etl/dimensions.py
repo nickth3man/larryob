@@ -51,15 +51,18 @@ def load_seasons(con: sqlite3.Connection, up_to_start_year: int = 2024) -> int:
         return 0
 
     from datetime import datetime
+
     started_at = datetime.now(UTC).isoformat()
 
     rows = []
     for y in range(NBA_FIRST_SEASON_START, up_to_start_year + 1):
-        rows.append({
-            "season_id": _season_id(y),
-            "start_year": y,
-            "end_year": y + 1,
-        })
+        rows.append(
+            {
+                "season_id": _season_id(y),
+                "start_year": y,
+                "end_year": y + 1,
+            }
+        )
     inserted = upsert_rows(con, "dim_season", rows)
     logger.info("dim_season: %d rows upserted.", inserted)
 
@@ -70,6 +73,7 @@ def load_seasons(con: sqlite3.Connection, up_to_start_year: int = 2024) -> int:
 # ------------------------------------------------------------------ #
 # Teams                                                               #
 # ------------------------------------------------------------------ #
+
 
 def _map_nba_team(t: dict) -> dict:
     """Map nba_api static team dict → dim_team row."""
@@ -99,6 +103,7 @@ def load_teams(con: sqlite3.Connection) -> int:
         return 0
 
     from datetime import datetime
+
     started_at = datetime.now(UTC).isoformat()
 
     cache_key = "teams_static"
@@ -124,6 +129,7 @@ def load_teams(con: sqlite3.Connection) -> int:
 # ------------------------------------------------------------------ #
 # Players                                                             #
 # ------------------------------------------------------------------ #
+
 
 def _map_nba_player_static(p: dict) -> dict:
     """Map nba_api static player dict → partial dim_player row."""
@@ -280,6 +286,7 @@ def load_players_static(con: sqlite3.Connection) -> int:
         return 0
 
     from datetime import datetime
+
     started_at = datetime.now(UTC).isoformat()
 
     raw = nba_players_static.get_players()
@@ -313,6 +320,7 @@ def load_players_full(
         return 0
 
     from datetime import datetime
+
     started_at = datetime.now(UTC).isoformat()
 
     cache_key = f"common_all_players_{season_id}"
@@ -322,6 +330,7 @@ def load_players_full(
         logger.info("dim_player full: loading from cache for %s.", season_id)
         records = cached
     else:
+
         def _fetch():
             ep = commonallplayers.CommonAllPlayers(
                 is_only_current_season=0,
@@ -342,7 +351,8 @@ def load_players_full(
         record_run(con, "dim_player", None, loader_id, inserted, "ok", started_at)
         logger.info(
             "dim_player full: %d rows upserted from CommonAllPlayers(%s).",
-            inserted, season_id,
+            inserted,
+            season_id,
         )
         return inserted
     except Exception:
@@ -369,6 +379,7 @@ def load_players_bio_enrichment(
         return 0
 
     from datetime import datetime
+
     started_at = datetime.now(UTC).isoformat()
 
     if selected_from_db:
@@ -388,6 +399,7 @@ def load_players_bio_enrichment(
             rows.append(_map_common_player_info(cached))
             continue
         try:
+
             def _fetch():
                 ep = commonplayerinfo.CommonPlayerInfo(player_id=pid)
                 df = ep.get_data_frames()[0]
@@ -424,6 +436,7 @@ def load_players_bio_enrichment(
 # Convenience: run all dimension loaders                             #
 # ------------------------------------------------------------------ #
 
+
 def run_all(
     con: sqlite3.Connection,
     full_players: bool = False,
@@ -452,6 +465,7 @@ def run_all(
 
 if __name__ == "__main__":  # pragma: no cover
     from src.db.schema import init_db
+
     logging.basicConfig(level=logging.INFO)
     con = init_db()
     run_all(con, full_players=True)

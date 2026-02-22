@@ -31,11 +31,13 @@ logger = logging.getLogger(__name__)
 # Use centralized config for salary cap data
 _SALARY_CAP_BY_SEASON = get_all_salary_caps()
 
+
 # Helper function for abbreviation conversion (uses centralized config)
 def _abbr_to_bref(abbr: str) -> str:
     """Convert NBA abbreviation to Basketball-Reference abbreviation."""
     result = nba_abbr_to_bref(abbr)
     return result if result is not None else abbr
+
 
 _BREF_BASE = "https://www.basketball-reference.com"
 _HEADERS = {"User-Agent": "Mozilla/5.0 (personal research project, non-commercial)"}
@@ -106,7 +108,9 @@ class _AdaptiveBRefThrottle:
     def on_rate_limit(self, retry_after: int | None) -> int:
         self.success_streak = 0
         self.rate_limit_streak += 1
-        requested_wait = retry_after if retry_after is not None and retry_after > 0 else int(self.delay * 2)
+        requested_wait = (
+            retry_after if retry_after is not None and retry_after > 0 else int(self.delay * 2)
+        )
         wait = int(max(self.min_delay, min(self.max_delay, float(requested_wait))))
         self.delay = min(self.max_delay, max(self.delay * 1.8, float(wait)))
         self.next_allowed_at = time.monotonic() + wait
@@ -125,12 +129,10 @@ def load_salary_cap(con: sqlite3.Connection) -> int:
     """Seed dim_salary_cap from hardcoded historical values."""
     # Ensure dim_season has the seasons we need (FK constraint)
     from .dimensions import load_seasons
+
     max_start_year = max(int(sid.split("-")[0]) for sid in _SALARY_CAP_BY_SEASON)
     load_seasons(con, up_to_start_year=max_start_year)
-    rows = [
-        {"season_id": sid, "cap_amount": cap}
-        for sid, cap in _SALARY_CAP_BY_SEASON.items()
-    ]
+    rows = [{"season_id": sid, "cap_amount": cap} for sid, cap in _SALARY_CAP_BY_SEASON.items()]
     inserted = upsert_rows(con, "dim_salary_cap", rows, conflict="REPLACE")
     logger.info("dim_salary_cap: %d rows upserted.", inserted)
     return inserted
@@ -274,10 +276,9 @@ def _fetch_team_current_contracts(bref_abbr: str) -> list[dict]:
         return []
 
     df = pd.DataFrame(tables[0])
-    df.columns = pd.Index([
-        b if str(a).startswith("Unnamed") else f"{a}__{b}"
-        for a, b in df.columns
-    ])
+    df.columns = pd.Index(
+        [b if str(a).startswith("Unnamed") else f"{a}__{b}" for a, b in df.columns]
+    )
     df = cast(pd.DataFrame, df[df["Player"] != "Player"]).copy()
     df = cast(pd.DataFrame, df[df["Player"].notna()]).copy()
 
@@ -379,21 +380,22 @@ def load_player_salaries(
         return 0
 
     from datetime import datetime
+
     started_at = datetime.now(UTC).isoformat()
     import datetime as dt
+
     current_year = dt.date.today().year
     end_year = int(season_id.split("-")[0]) + 1  # '2023-24' → 2024
 
     # Ensure dim_season covers this season (FK guard)
     from .dimensions import load_seasons
+
     start_year = end_year - 1
     load_seasons(con, up_to_start_year=start_year)
 
     # Build normalized-name → player_id index
     cur = con.execute("SELECT player_id, full_name FROM dim_player")
-    player_index: dict[str, str] = {
-        _normalize_name(row[1]): row[0] for row in cur.fetchall()
-    }
+    player_index: dict[str, str] = {_normalize_name(row[1]): row[0] for row in cur.fetchall()}
 
     bref_to_team_id, team_map_source = _season_team_map(con, season_id)
     logger.info(
@@ -432,7 +434,8 @@ def load_player_salaries(
                 logger.debug("BBref team contracts: %s", bref_abbr)
                 was_cached = load_cache(cache_key_contracts) is not None
                 entries = [
-                    e for e in _fetch_team_current_contracts(bref_abbr)
+                    e
+                    for e in _fetch_team_current_contracts(bref_abbr)
                     if e["season_id"] == season_id
                 ]
         except BBRRateLimitExceeded as exc:
@@ -457,12 +460,14 @@ def load_player_salaries(
             if not player_id:
                 unmatched_names.add(entry["name"])
                 continue
-            rows_to_insert.append({
-                "player_id": player_id,
-                "team_id": team_id,
-                "season_id": season_id,
-                "salary": entry["salary"],
-            })
+            rows_to_insert.append(
+                {
+                    "player_id": player_id,
+                    "team_id": team_id,
+                    "season_id": season_id,
+                    "salary": entry["salary"],
+                }
+            )
 
     logger.info(
         "fact_salary (%s): team_pages fetched=%d cached=%d candidate_rows=%d unmatched_names=%d",
@@ -504,8 +509,11 @@ def load_player_salaries(
         return 0
 
     from .utils import transaction
+
     with transaction(con):
-        inserted = upsert_rows(con, "fact_salary", rows_to_insert, conflict="REPLACE", autocommit=False)
+        inserted = upsert_rows(
+            con, "fact_salary", rows_to_insert, conflict="REPLACE", autocommit=False
+        )
     logger.info("fact_salary (%s): %d rows upserted.", season_id, inserted)
 
     status = "partial_rate_limited" if rate_limit_exc else "ok"

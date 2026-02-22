@@ -19,14 +19,25 @@ def test_all_tables_created(sqlite_con: sqlite3.Connection) -> None:
         ).fetchall()
     }
     expected = {
-        "dim_season", "dim_team", "dim_player",
-        "fact_game", "fact_roster",
-        "player_game_log", "team_game_log",
-        "fact_play_by_play", "fact_player_award",
-        "dim_salary_cap", "fact_salary", "etl_run_log",
-        "dim_team_history", "fact_team_season", "dim_league_season",
-        "fact_draft", "fact_player_season_stats",
-        "fact_player_advanced_season", "fact_player_shooting_season",
+        "dim_season",
+        "dim_team",
+        "dim_player",
+        "fact_game",
+        "fact_roster",
+        "player_game_log",
+        "team_game_log",
+        "fact_play_by_play",
+        "fact_player_award",
+        "dim_salary_cap",
+        "fact_salary",
+        "etl_run_log",
+        "dim_team_history",
+        "fact_team_season",
+        "dim_league_season",
+        "fact_draft",
+        "fact_player_season_stats",
+        "fact_player_advanced_season",
+        "fact_player_shooting_season",
         "fact_player_pbp_season",
     }
     assert expected == tables, f"Missing/extra tables: expected {expected}, got {tables}"
@@ -35,10 +46,27 @@ def test_all_tables_created(sqlite_con: sqlite3.Connection) -> None:
 def test_player_game_log_columns(sqlite_con: sqlite3.Connection) -> None:
     cols = _table_columns(sqlite_con, "player_game_log")
     required = [
-        "game_id", "player_id", "team_id", "minutes_played",
-        "fgm", "fga", "fg3m", "fg3a", "ftm", "fta",
-        "oreb", "dreb", "reb", "ast", "stl", "blk", "tov", "pf", "pts",
-        "plus_minus", "starter",
+        "game_id",
+        "player_id",
+        "team_id",
+        "minutes_played",
+        "fgm",
+        "fga",
+        "fg3m",
+        "fg3a",
+        "ftm",
+        "fta",
+        "oreb",
+        "dreb",
+        "reb",
+        "ast",
+        "stl",
+        "blk",
+        "tov",
+        "pf",
+        "pts",
+        "plus_minus",
+        "starter",
     ]
     for col in required:
         assert col in cols, f"Missing column '{col}' in player_game_log"
@@ -47,11 +75,22 @@ def test_player_game_log_columns(sqlite_con: sqlite3.Connection) -> None:
 def test_fact_play_by_play_columns(sqlite_con: sqlite3.Connection) -> None:
     cols = _table_columns(sqlite_con, "fact_play_by_play")
     required = [
-        "event_id", "game_id", "period",
-        "pc_time_string", "eventmsgtype", "eventmsgactiontype",
-        "player1_id", "player2_id", "player3_id",
-        "person1type", "person2type", "person3type",
-        "home_description", "visitor_description", "score", "score_margin",
+        "event_id",
+        "game_id",
+        "period",
+        "pc_time_string",
+        "eventmsgtype",
+        "eventmsgactiontype",
+        "player1_id",
+        "player2_id",
+        "player3_id",
+        "person1type",
+        "person2type",
+        "person3type",
+        "home_description",
+        "visitor_description",
+        "score",
+        "score_margin",
     ]
     for col in required:
         assert col in cols, f"Missing column '{col}' in fact_play_by_play"
@@ -60,9 +99,16 @@ def test_fact_play_by_play_columns(sqlite_con: sqlite3.Connection) -> None:
 def test_dim_player_columns(sqlite_con: sqlite3.Connection) -> None:
     cols = _table_columns(sqlite_con, "dim_player")
     required = [
-        "player_id", "first_name", "last_name", "full_name",
-        "birth_date", "height_cm", "weight_kg", "position",
-        "draft_year", "is_active",
+        "player_id",
+        "first_name",
+        "last_name",
+        "full_name",
+        "birth_date",
+        "height_cm",
+        "weight_kg",
+        "position",
+        "draft_year",
+        "is_active",
     ]
     for col in required:
         assert col in cols, f"Missing column '{col}' in dim_player"
@@ -76,33 +122,39 @@ def test_indexes_created(sqlite_con: sqlite3.Connection) -> None:
         ).fetchall()
     }
     expected_indexes = {
-        "idx_pgl_player", "idx_pgl_game", "idx_pgl_player_game",
-        "idx_game_date", "idx_game_home", "idx_game_away",
-        "idx_pbp_game", "idx_pbp_game_period", "idx_pbp_player1",
-        "idx_roster_player_dates", "idx_tgl_team",
+        "idx_pgl_player",
+        "idx_pgl_game",
+        "idx_pgl_player_game",
+        "idx_game_date",
+        "idx_game_home",
+        "idx_game_away",
+        "idx_pbp_game",
+        "idx_pbp_game_period",
+        "idx_pbp_player1",
+        "idx_roster_player_dates",
+        "idx_tgl_team",
     }
-    assert expected_indexes.issubset(indexes), \
-        f"Missing indexes: {expected_indexes - indexes}"
+    assert expected_indexes.issubset(indexes), f"Missing indexes: {expected_indexes - indexes}"
 
 
 def test_schema_is_idempotent(sqlite_con: sqlite3.Connection) -> None:
     """Running DDL a second time must not raise."""
     from src.db.schema import DDL_STATEMENTS
+
     for ddl in DDL_STATEMENTS:
         sqlite_con.execute(ddl)  # should not raise
 
 
 def test_init_db_creates_file_and_returns_connection(tmp_path: Path) -> None:
     from src.db.schema import init_db
+
     db_file = tmp_path / "test_init.db"
     con = init_db(db_file)
     try:
         assert db_file.exists()
         tables = {
             r[0]
-            for r in con.execute(
-                "SELECT name FROM sqlite_master WHERE type='table'"
-            ).fetchall()
+            for r in con.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
         }
         assert "dim_season" in tables
         assert "fact_game" in tables
@@ -114,6 +166,7 @@ def test_init_db_creates_file_and_returns_connection(tmp_path: Path) -> None:
 def test_init_db_is_idempotent(tmp_path: Path) -> None:
     """Calling init_db twice on the same file must not raise."""
     from src.db.schema import init_db
+
     db_file = tmp_path / "test_idempotent.db"
     con1 = init_db(db_file)
     con1.close()
@@ -123,6 +176,7 @@ def test_init_db_is_idempotent(tmp_path: Path) -> None:
 
 def test_init_db_enables_foreign_keys(tmp_path: Path) -> None:
     from src.db.schema import init_db
+
     db_file = tmp_path / "test_fk.db"
     con = init_db(db_file)
     try:
@@ -134,8 +188,18 @@ def test_init_db_enables_foreign_keys(tmp_path: Path) -> None:
 
 def test_dim_team_columns(sqlite_con: sqlite3.Connection) -> None:
     cols = [row[1] for row in sqlite_con.execute("PRAGMA table_info(dim_team)").fetchall()]
-    required = ["team_id", "abbreviation", "full_name", "city", "nickname",
-                "conference", "division", "color_primary", "arena_name", "founded_year"]
+    required = [
+        "team_id",
+        "abbreviation",
+        "full_name",
+        "city",
+        "nickname",
+        "conference",
+        "division",
+        "color_primary",
+        "arena_name",
+        "founded_year",
+    ]
     for col in required:
         assert col in cols, f"Missing column '{col}' in dim_team"
 

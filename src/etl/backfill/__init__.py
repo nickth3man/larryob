@@ -6,7 +6,7 @@ Basketball-Reference and NBA API CSV exports into the SQLite database.
 
 Usage:
     from src.etl.backfill import run_raw_backfill
-    
+
     run_raw_backfill(con, Path("raw"))
 
 All loaders follow a consistent pattern:

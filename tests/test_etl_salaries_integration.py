@@ -10,6 +10,7 @@ def test_load_player_salaries_historical_season(
     monkeypatch,
 ):
     import src.etl.utils as utils_mod
+
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
 
     mock_html = """
@@ -45,11 +46,13 @@ def test_load_player_salaries_current_season(
     monkeypatch,
 ):
     import src.etl.utils as utils_mod
+
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
 
     import datetime as dt
+
     current_year = dt.date.today().year
-    season = f"{current_year}-{str(current_year+1)[-2:]}"
+    season = f"{current_year}-{str(current_year + 1)[-2:]}"
 
     mock_html = f"""
     <html>
@@ -92,6 +95,8 @@ def test_load_player_salaries_current_season(
         with patch("src.etl.salaries.time.sleep"):
             load_player_salaries(sqlite_con_with_data, season)
 
-    row = sqlite_con_with_data.execute(f"SELECT player_id, salary FROM fact_salary WHERE season_id = '{season}'").fetchone()
+    row = sqlite_con_with_data.execute(
+        f"SELECT player_id, salary FROM fact_salary WHERE season_id = '{season}'"
+    ).fetchone()
     assert row[0] == "2544"
     assert row[1] == 50000000

@@ -64,7 +64,9 @@ def load_team_roster(
                     return []
                 return df.to_dict(orient="records")
 
-            records = api_caller.call_with_backoff(_fetch, label=f"CommonTeamRoster({team_id},{season_id})")
+            records = api_caller.call_with_backoff(
+                _fetch, label=f"CommonTeamRoster({team_id},{season_id})"
+            )
             if not records:
                 return 0
 
@@ -81,13 +83,15 @@ def load_team_roster(
                 pid = str(r.get("PLAYER_ID", ""))
                 tid = str(r.get("TeamID", team_id))
                 if pid in valid_players and tid in valid_teams:
-                    rows.append({
-                        "player_id": pid,
-                        "team_id": tid,
-                        "season_id": season_id,
-                        "start_date": start_date,
-                        "end_date": None,
-                    })
+                    rows.append(
+                        {
+                            "player_id": pid,
+                            "team_id": tid,
+                            "season_id": season_id,
+                            "start_date": start_date,
+                            "end_date": None,
+                        }
+                    )
             save_cache(cache_key, rows)
         except Exception as exc:
             logger.warning("CommonTeamRoster(%s,%s) failed: %s", team_id, season_id, exc)
@@ -127,13 +131,17 @@ def load_season_rosters(
         total = 0
         for i, tid in enumerate(team_ids):
             total += load_team_roster(
-                con, tid, season_id,
+                con,
+                tid,
+                season_id,
                 valid_players=valid_players,
                 valid_teams=valid_teams,
                 api_caller=api_caller,
             )
             if (i + 1) % 5 == 0:
-                logger.info("Roster: %d/%d teams processed for %s.", i + 1, len(team_ids), season_id)
+                logger.info(
+                    "Roster: %d/%d teams processed for %s.", i + 1, len(team_ids), season_id
+                )
             api_caller.sleep_between_calls()
         logger.info("fact_roster: %d total rows for %s.", total, season_id)
         record_etl_rows("fact_roster", season_id, total)
