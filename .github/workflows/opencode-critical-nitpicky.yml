@@ -1,0 +1,44 @@
+name: opencode-critical-nitpicky
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review, labeled]
+
+concurrency:
+  group: opencode-critical-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    if: contains(github.event.pull_request.labels.*.name, 'opencode:critical')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: anomalyco/opencode/github@latest
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: openrouter/mistralai/devstral-2512
+          use_github_token: true
+          prompt: |
+            Perform a nitpicky and highly critical review of this pull request.
+            Be strict and specific. Prioritize:
+            - correctness bugs and behavioral regressions
+            - error handling and failure-mode gaps
+            - data integrity, null/empty edge cases, and schema assumptions
+            - test gaps, flaky patterns, and missing assertions
+            - performance or maintainability traps
+
+            For each finding include:
+            - severity (high, medium, low)
+            - why it matters
+            - a concrete fix suggestion

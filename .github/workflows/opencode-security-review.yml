@@ -1,0 +1,39 @@
+name: opencode-security-review
+
+on:
+  pull_request:
+    types: [opened]
+
+concurrency:
+  group: opencode-security-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: anomalyco/opencode/github@latest
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: openrouter/mistralai/devstral-2512
+          use_github_token: true
+          prompt: |
+            Review this pull request with a strict security focus.
+            Identify:
+            - secret/token exposure risks
+            - unsafe shell/subprocess/file handling patterns
+            - insecure defaults in CI, auth, and permissions
+            - dependency/update risks introduced by the changes
+
+            Return only actionable findings with severity and concrete remediation steps.
