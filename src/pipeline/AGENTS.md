@@ -2,7 +2,7 @@
 
 > **Purpose:** This file exists to correct consistent agent mistakes and specify required tooling — nothing more.
 > Do NOT auto-generate or expand this file. If you encounter something surprising or confusing in this codebase,
-> flag it to the developer and suggest an edit here. The developer will decide whether to fix the code or update this file.
+> flag it to the developer and suggest an edit here. The developer will determine whether to fix the code or update this file.
 
 ---
 
@@ -12,9 +12,7 @@
      Example: "Always use pnpm (not npm or yarn) to run scripts."
      If the tool is detectable from package.json or config files, omit it. -->
 
-- [ ] `[package manager]` — always use `[command]` to run scripts
-- [ ] `[type checker / linter]` — run after every change: `[command]`
-- [ ] `[test runner]` — run affected tests before marking a task complete: `[command]`
+See root AGENTS.md for project-wide tooling requirements.
 
 ---
 
@@ -28,6 +26,10 @@
 - DO NOT use [X pattern/library] — use [Y] instead. Reason: [one sentence].
 - Always run `[command]` after modifying [area of codebase].
 -->
+
+- Entry point is `cli.py` via `uv run ingest` or `uv run python -m src.pipeline`
+- Validation logic belongs in `validation.py`, not scattered in `cli.py`
+- Exception types are defined in `exceptions.py` — use these, not generic exceptions
 
 ---
 
@@ -50,7 +52,14 @@
      - "This project is early-stage. Schema changes are welcome."
      - "This app has no production users yet. Don't generate data migration scripts."
      - "All new features must be backward-compatible — production data exists."
--->
+     -->
+
+- This module orchestrates the ingest pipeline with CLI entry point
+- `cli.py` defines argument parsing and wires components together
+- `executor.py` handles pipeline execution logic
+- `stages.py` defines pipeline stages as discrete steps
+- `validation.py` contains input validation logic
+- `analytics.py` runs DuckDB analytics views on the SQLite data
 
 ---
 

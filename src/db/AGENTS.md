@@ -12,9 +12,7 @@
      Example: "Always use pnpm (not npm or yarn) to run scripts."
      If the tool is detectable from package.json or config files, omit it. -->
 
-- [ ] `[package manager]` — always use `[command]` to run scripts
-- [ ] `[type checker / linter]` — run after every change: `[command]`
-- [ ] `[test runner]` — run affected tests before marking a task complete: `[command]`
+See root AGENTS.md for project-wide tooling requirements.
 
 ---
 
@@ -28,6 +26,9 @@
 - DO NOT use [X pattern/library] — use [Y] instead. Reason: [one sentence].
 - Always run `[command]` after modifying [area of codebase].
 -->
+
+- Schema DDL lives in `.sql` files, not Python strings. Edit `src/db/schema/*.sql` for table/index definitions.
+- All fact tables use NULL (not 0) for stats not tracked in early NBA eras (e.g., blocks/steals pre-1973-74).
 
 ---
 
@@ -50,7 +51,12 @@
      - "This project is early-stage. Schema changes are welcome."
      - "This app has no production users yet. Don't generate data migration scripts."
      - "All new features must be backward-compatible — production data exists."
--->
+     -->
+
+- This module manages SQLite schema definitions and analytics views
+- DDL statements are loaded from `schema/*.sql` files (tables.sql, indexes.sql, migrations.sql, rollback.sql)
+- Analytics views are defined in `views/*.sql` files
+- `schema.py` loads and executes SQL from these files — do not inline DDL in Python
 
 ---
 

@@ -2,7 +2,7 @@
 
 > **Purpose:** This file exists to correct consistent agent mistakes and specify required tooling — nothing more.
 > Do NOT auto-generate or expand this file. If you encounter something surprising or confusing in this codebase,
-> flag it to the developer and suggest an edit here. The developer will decide whether to fix the code or update this file.
+> flag it to the developer and suggest an edit here. The developer will determine whether to fix the code or update this file.
 
 ---
 
@@ -12,9 +12,7 @@
      Example: "Always use pnpm (not npm or yarn) to run scripts."
      If the tool is detectable from package.json or config files, omit it. -->
 
-- [ ] `[package manager]` — always use `[command]` to run scripts
-- [ ] `[type checker / linter]` — run after every change: `[command]`
-- [ ] `[test runner]` — run affected tests before marking a task complete: `[command]`
+See root AGENTS.md for project-wide tooling requirements.
 
 ---
 
@@ -28,6 +26,10 @@
 - DO NOT use [X pattern/library] — use [Y] instead. Reason: [one sentence].
 - Always run `[command]` after modifying [area of codebase].
 -->
+
+- All backfill modules inherit from `_base.py` (`BaseBackfill` class). New backfillers must follow this pattern.
+- Private modules with underscore prefix (e.g., `_advanced_stats.py`) are internal — do not import directly from outside this package.
+- Use `_orchestrator.py` to coordinate multiple backfill operations, not ad-hoc orchestration.
 
 ---
 
@@ -50,7 +52,12 @@
      - "This project is early-stage. Schema changes are welcome."
      - "This app has no production users yet. Don't generate data migration scripts."
      - "All new features must be backward-compatible — production data exists."
--->
+     -->
+
+- This subdirectory handles historical data backfill from external APIs
+- Each backfill type has a dedicated module: `_draft.py`, `_awards.py`, `_game_logs.py`, `_all_star.py`, etc.
+- `_orchestrator.py` coordinates batch backfill operations
+- All modules follow the pattern established in `_base.py` for consistency
 
 ---
 

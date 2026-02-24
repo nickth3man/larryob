@@ -12,9 +12,7 @@
      Example: "Always use pnpm (not npm or yarn) to run scripts."
      If the tool is detectable from package.json or config files, omit it. -->
 
-- [ ] `[package manager]` — always use `[command]` to run scripts
-- [ ] `[type checker / linter]` — run after every change: `[command]`
-- [ ] `[test runner]` — run affected tests before marking a task complete: `[command]`
+See root AGENTS.md for project-wide tooling requirements.
 
 ---
 
@@ -28,6 +26,10 @@
 - DO NOT use [X pattern/library] — use [Y] instead. Reason: [one sentence].
 - Always run `[command]` after modifying [area of codebase].
 -->
+
+- Helper modules use underscore prefix (e.g., `_helpers.py`, `_salaries_fetch.py`). These are internal implementation details.
+- Static reference data lives in `data/*.json` files, not hardcoded in Python.
+- API configuration is centralized in `config.py` — use `APIConfig` class for rate limiting settings.
 
 ---
 
@@ -50,7 +52,12 @@
      - "This project is early-stage. Schema changes are welcome."
      - "This app has no production users yet. Don't generate data migration scripts."
      - "All new features must be backward-compatible — production data exists."
--->
+     -->
+
+- This module contains ETL pipelines for NBA data extraction and transformation
+- `backfill/` subdirectory handles historical data backfill with specialized modules
+- `data/` subdirectory contains static JSON files (team_metadata.json, salary_cap.json, abbr_mappings.json)
+- Configuration via environment variables: `LARRYOB_API_DELAY_SECONDS`, `LARRYOB_API_MAX_RETRIES`, `LARRYOB_CACHE_DIR`
 
 ---
 

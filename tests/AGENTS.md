@@ -1,7 +1,7 @@
 # CLAUDE.md
 
 > **Purpose:** This file exists to correct consistent agent mistakes and specify required tooling — nothing more.
-> Do NOT auto-generate or expand this file. If you encounter something surprising or confusing in this codebase,
+> Do NOT auto-generate or expand this file. If you encounter something in this codebase,
 > flag it to the developer and suggest an edit here. The developer will decide whether to fix the code or update this file.
 
 ---
@@ -12,9 +12,7 @@
      Example: "Always use pnpm (not npm or yarn) to run scripts."
      If the tool is detectable from package.json or config files, omit it. -->
 
-- [ ] `[package manager]` — always use `[command]` to run scripts
-- [ ] `[type checker / linter]` — run after every change: `[command]`
-- [ ] `[test runner]` — run affected tests before marking a task complete: `[command]`
+See root AGENTS.md for project-wide tooling requirements.
 
 ---
 
@@ -28,6 +26,10 @@
 - DO NOT use [X pattern/library] — use [Y] instead. Reason: [one sentence].
 - Always run `[command]` after modifying [area of codebase].
 -->
+
+- All tests use in-memory or temp-file databases — never touch production `nba_raw_data.db`
+- Shared fixtures are in `conftest.py` (e.g., `sqlite_con`, `sqlite_con_with_data`)
+- Test files follow naming pattern `test_<module>_<feature>.py` or `test_<module>.py`
 
 ---
 
@@ -50,7 +52,11 @@
      - "This project is early-stage. Schema changes are welcome."
      - "This app has no production users yet. Don't generate data migration scripts."
      - "All new features must be backward-compatible — production data exists."
--->
+     -->
+
+- Test structure mirrors `src/` structure: `test_etl_*.py` for ETL modules, `test_pipeline_*.py` for pipeline
+- `conftest.py` provides SQLite and DuckDB fixtures with full schema initialized
+- Integration tests are suffixed with `_integration.py` and may require external API access
 
 ---
 
