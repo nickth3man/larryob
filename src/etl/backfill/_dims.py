@@ -311,15 +311,10 @@ def enrich_dim_player(
     raw_dir: Path = RAW_DIR,
 ) -> None:
     """
-    Enrich dim_player with bio data from multiple CSV sources.
-
-    Loads data from:
-    - Players.csv (NBA API bio data)
-    - Player Career Info.csv (Basketball-Reference data)
+    Enrich dim_player with NBA API player bio data from Players.csv.
 
     Args:
         con: SQLite database connection
         raw_dir: Directory containing raw CSV files
     """
     _enrich_from_players_csv(con, raw_dir)
-    _enrich_from_career_info(con, raw_dir)

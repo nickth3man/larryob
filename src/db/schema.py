@@ -228,6 +228,58 @@ DDL_STATEMENTS = [
     ) STRICT;
     """,
     # ------------------------------------------------------------------ #
+    # Fact: all-star selections                                           #
+    # Source: Basketball-Reference All-Star Selections                    #
+    # ------------------------------------------------------------------ #
+    """
+    CREATE TABLE IF NOT EXISTS fact_all_star (
+        all_star_id      INTEGER PRIMARY KEY,
+        player_id        TEXT NOT NULL REFERENCES dim_player(player_id),
+        season_id        TEXT NOT NULL REFERENCES dim_season(season_id),
+        team_id          TEXT REFERENCES dim_team(team_id),
+        selection_team   TEXT,   -- raw label from source ('East', 'West', 'Team LeBron', etc.)
+        is_starter       INTEGER CHECK (is_starter IN (0, 1) OR is_starter IS NULL),
+        is_replacement   INTEGER NOT NULL DEFAULT 0 CHECK (is_replacement IN (0, 1)),
+        UNIQUE (player_id, season_id)
+    ) STRICT;
+    """,
+    # ------------------------------------------------------------------ #
+    # Fact: end-of-season team selections                                #
+    # Source: Basketball-Reference End of Season Teams                    #
+    # ------------------------------------------------------------------ #
+    """
+    CREATE TABLE IF NOT EXISTS fact_all_nba (
+        selection_id   INTEGER PRIMARY KEY,
+        player_id      TEXT NOT NULL REFERENCES dim_player(player_id),
+        season_id      TEXT NOT NULL REFERENCES dim_season(season_id),
+        team_type      TEXT NOT NULL,  -- All-NBA | All-Defense | All-Rookie | All-ABA | All-BAA
+        team_number    INTEGER CHECK (team_number IN (1, 2, 3)),
+        position       TEXT,
+        UNIQUE (player_id, season_id, team_type)
+    ) STRICT;
+    """,
+    # ------------------------------------------------------------------ #
+    # Fact: end-of-season team voting detail                             #
+    # Source: Basketball-Reference End of Season Teams (Voting)           #
+    # ------------------------------------------------------------------ #
+    """
+    CREATE TABLE IF NOT EXISTS fact_all_nba_vote (
+        vote_id              INTEGER PRIMARY KEY,
+        player_id            TEXT NOT NULL REFERENCES dim_player(player_id),
+        season_id            TEXT NOT NULL REFERENCES dim_season(season_id),
+        team_type            TEXT NOT NULL,
+        team_number          INTEGER CHECK (team_number IN (1, 2, 3) OR team_number IS NULL),
+        position             TEXT,
+        pts_won              INTEGER,
+        pts_max              INTEGER,
+        share                REAL,
+        first_team_votes     INTEGER,
+        second_team_votes    INTEGER,
+        third_team_votes     INTEGER,
+        UNIQUE (player_id, season_id, team_type)
+    ) STRICT;
+    """,
+    # ------------------------------------------------------------------ #
     # Dimension: salary cap by season                                     #
     # ------------------------------------------------------------------ #
     """
@@ -267,6 +319,12 @@ DDL_STATEMENTS = [
     "CREATE INDEX IF NOT EXISTS idx_roster_player_dates ON fact_roster(player_id, start_date, end_date);",
     "CREATE UNIQUE INDEX IF NOT EXISTS idx_roster_unique ON fact_roster(player_id, team_id, season_id);",
     "CREATE INDEX IF NOT EXISTS idx_tgl_team   ON team_game_log(team_id);",
+    "CREATE INDEX IF NOT EXISTS idx_allstar_player ON fact_all_star(player_id);",
+    "CREATE INDEX IF NOT EXISTS idx_allstar_season ON fact_all_star(season_id);",
+    "CREATE INDEX IF NOT EXISTS idx_allnba_player ON fact_all_nba(player_id);",
+    "CREATE INDEX IF NOT EXISTS idx_allnba_season ON fact_all_nba(season_id);",
+    "CREATE INDEX IF NOT EXISTS idx_allnba_vote_player ON fact_all_nba_vote(player_id);",
+    "CREATE INDEX IF NOT EXISTS idx_allnba_vote_season ON fact_all_nba_vote(season_id);",
     # ------------------------------------------------------------------ #
     # Dimension: franchise/team history (SuperSonics→Thunder, etc.)       #
     # One row per city/name era for each franchise.                        #

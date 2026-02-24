@@ -103,7 +103,7 @@ _PBP_COLS = [
 def _fetch_pbp(game_id: str, api_caller: APICaller | None = None) -> pd.DataFrame:
     cache_key = f"pbp_{game_id}"
     cached = load_cache(cache_key)
-    if cached:
+    if cached is not None:
         return pd.DataFrame(cached)
 
     if api_caller is None:

@@ -131,6 +131,12 @@ def test_efg_pct_calculation(
         FROM nba.player_game_log
         WHERE player_id = '2544'
     """).df()
+
+    # Detach before closing to prevent ResourceWarning
+    try:
+        duck.execute("DETACH nba;")
+    except Exception:
+        pass
     duck.close()
 
     assert abs(df["efg"].iloc[0] - 0.55) < 0.001
@@ -158,6 +164,12 @@ def test_ts_pct_calculation(
         FROM nba.player_game_log
         WHERE player_id = '2544'
     """).df()
+
+    # Detach before closing to prevent ResourceWarning
+    try:
+        duck.execute("DETACH nba;")
+    except Exception:
+        pass
     duck.close()
 
     expected = 25 / (2 * (20 + 0.44 * 4))

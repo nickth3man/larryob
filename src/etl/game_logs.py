@@ -131,7 +131,7 @@ def _fetch_player_game_logs(
     """
     cache_key = f"pgl_{season}_{season_type.replace(' ', '_')}"
     cached = load_cache(cache_key)
-    if cached:
+    if cached is not None:
         logger.info(
             "player_game_logs: loaded from cache for %s %s (rows=%d).",
             season,

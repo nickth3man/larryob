@@ -43,3 +43,15 @@ def test_run_raw_backfill_fail_fast_stops_on_first_error(
 
     enrich_patch.assert_not_called()
     assert summary["failed"] == ["team_history"]
+
+
+def test_loader_registry_includes_database_completion_loaders() -> None:
+    loader_names = [config.name for config in orchestrator_mod._LOADERS]
+
+    assert "player_career" in loader_names
+    assert "all_star" in loader_names
+    assert "all_nba" in loader_names
+    assert "all_nba_votes" in loader_names
+
+    assert loader_names.index("player_career") > loader_names.index("dim_player_enrich")
+    assert loader_names.index("all_star") > loader_names.index("awards")

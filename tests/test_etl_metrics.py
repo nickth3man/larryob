@@ -227,7 +227,210 @@ class TestMetricsExport:
         os.environ.pop("LARRYOB_METRICS_ENABLED")
         os.environ.pop("LARRYOB_METRICS_ENDPOINT")
 
+    def test_export_metrics_returns_false_when_no_endpoint(self) -> None:
+        """Should return False when metrics enabled but no endpoint configured."""
+        os.environ["LARRYOB_METRICS_ENABLED"] = "true"
+        # Ensure no endpoint is configured
+        os.environ.pop("LARRYOB_METRICS_ENDPOINT", None)
+
+        assert export_metrics() is False
+
+        os.environ.pop("LARRYOB_METRICS_ENABLED")
+
+    def test_export_metrics_handles_http_errors(self) -> None:
+        """Should return False when HTTP request fails."""
+        os.environ["LARRYOB_METRICS_ENABLED"] = "true"
+        os.environ["LARRYOB_METRICS_ENDPOINT"] = "http://localhost:9999/metrics"
+        record_etl_rows("player_game_log", "2023-24", 10)
+
+        with patch("requests.post") as post_mock:
+            post_mock.side_effect = Exception("Connection refused")
+
+            assert export_metrics() is False
+
+        os.environ.pop("LARRYOB_METRICS_ENABLED")
+        os.environ.pop("LARRYOB_METRICS_ENDPOINT")
+
+    def test_export_metrics_with_custom_endpoint(self) -> None:
+        """Should use custom endpoint parameter when provided."""
+        os.environ["LARRYOB_METRICS_ENABLED"] = "true"
+        record_etl_rows("player_game_log", "2023-24", 10)
+
+        with patch("requests.post") as post_mock:
+            response = MagicMock()
+            response.raise_for_status.return_value = None
+            post_mock.return_value = response
+
+            custom_endpoint = "http://custom.example.com/metrics"
+            assert export_metrics(endpoint=custom_endpoint) is True
+
+            # Verify the custom endpoint was used
+            post_mock.assert_called_once()
+            call_args = post_mock.call_args
+            assert call_args[0][0] == custom_endpoint
+
+        os.environ.pop("LARRYOB_METRICS_ENABLED")
+
     def test_log_metrics_summary_noop_when_disabled(self) -> None:
         os.environ.pop("LARRYOB_METRICS_ENABLED", None)
         # Should not raise even with no metrics enabled
         log_metrics_summary()
+
+    def test_log_metrics_summary_with_etl_rows(self) -> None:
+        """Should log ETL rows summary when metrics are enabled."""
+        os.environ["LARRYOB_METRICS_ENABLED"] = "true"
+
+        record_etl_rows("player_game_log", "2023-24", 1234)
+        record_etl_rows("team_game_log", "2023-24", 500)
+
+        # Should not raise, should log the summary
+        with patch("src.etl.metrics.logger") as logger_mock:
+            log_metrics_summary()
+            # Verify logger.info was called with the summary header
+            logger_mock.info.assert_called()
+
+        os.environ.pop("LARRYOB_METRICS_ENABLED")
+
+    def test_log_metrics_summary_with_api_calls(self) -> None:
+        """Should log API calls summary when metrics are enabled."""
+        os.environ["LARRYOB_METRICS_ENABLED"] = "true"
+
+        record_api_call("PlayerGameLogs(2023-24)", success=True, attempt=1)
+        record_api_call("PlayerGameLogs(2023-24)", success=False, attempt=2)
+        record_retry("PlayerGameLogs(2023-24)", 2, ValueError("Rate limit"))
+
+        # Should not raise, should log the summary
+        with patch("src.etl.metrics.logger") as logger_mock:
+            log_metrics_summary()
+            # Verify logger.info was called with the summary header
+            logger_mock.info.assert_called()
+
+        os.environ.pop("LARRYOB_METRICS_ENABLED")
+
+    def test_log_metrics_summary_with_latency(self) -> None:
+        """Should log API latency summary when metrics are enabled."""
+        os.environ["LARRYOB_METRICS_ENABLED"] = "true"
+
+        record_api_latency("PlayerGameLogs(2023-24)", 123.45)
+        record_api_latency("PlayerGameLogs(2023-24)", 234.56)
+
+        # Should not raise, should log the summary
+        with patch("src.etl.metrics.logger") as logger_mock:
+            log_metrics_summary()
+            # Verify logger.info was called with the summary header
+            logger_mock.info.assert_called()
+
+        os.environ.pop("LARRYOB_METRICS_ENABLED")
+
+    def test_log_metrics_summary_with_durations(self) -> None:
+        """Should log ETL duration summary when metrics are enabled."""
+        os.environ["LARRYOB_METRICS_ENABLED"] = "true"
+
+        record_etl_duration("player_game_log", "2023-24", 45.5)
+        record_etl_duration("player_game_log", "2023-24", 55.5)
+
+        # Should not raise, should log the summary
+        with patch("src.etl.metrics.logger") as logger_mock:
+            log_metrics_summary()
+            # Verify logger.info was called with the summary header
+            logger_mock.info.assert_called()
+
+        os.environ.pop("LARRYOB_METRICS_ENABLED")
+
+    def test_log_metrics_summary_comprehensive(self) -> None:
+        """Should log comprehensive summary with all metric types."""
+        os.environ["LARRYOB_METRICS_ENABLED"] = "true"
+
+        # Record all types of metrics
+        record_etl_rows("player_game_log", "2023-24", 1234)
+        record_api_call("PlayerGameLogs(2023-24)", success=True, attempt=1)
+        record_api_call("PlayerGameLogs(2023-24)", success=False, attempt=2)
+        record_retry("PlayerGameLogs(2023-24)", 2, ValueError("Rate limit"))
+        record_api_latency("PlayerGameLogs(2023-24)", 123.45)
+        record_etl_duration("player_game_log", "2023-24", 45.5)
+
+        # Should not raise, should log the complete summary
+        with patch("src.etl.metrics.logger") as logger_mock:
+            log_metrics_summary()
+            # Verify logger.info was called multiple times for different sections
+            assert logger_mock.info.call_count > 0
+
+        os.environ.pop("LARRYOB_METRICS_ENABLED")
+
+
+class TestMetricsDisabledRecording:
+    """Test that individual recording functions respect disabled state."""
+
+    def test_record_etl_duration_when_disabled(self) -> None:
+        """Should not record duration when metrics disabled."""
+        os.environ.pop("LARRYOB_METRICS_ENABLED", None)
+
+        record_etl_duration("player_game_log", "2023-24", 45.5)
+
+        summary = get_metrics_summary()
+        assert len(summary["etl_duration_summary"]) == 0
+
+    def test_record_retry_when_disabled(self) -> None:
+        """Should not record retry when metrics disabled."""
+        os.environ.pop("LARRYOB_METRICS_ENABLED", None)
+
+        record_retry("PlayerGameLogs(2023-24)", 2, ValueError("Rate limit"))
+
+        summary = get_metrics_summary()
+        assert len(summary["api_retries"]) == 0
+
+    def test_record_api_latency_when_disabled(self) -> None:
+        """Should not record latency when metrics disabled."""
+        os.environ.pop("LARRYOB_METRICS_ENABLED", None)
+
+        record_api_latency("PlayerGameLogs(2023-24)", 123.45)
+
+        summary = get_metrics_summary()
+        assert len(summary["api_latency_summary"]) == 0
+
+
+class TestETLTimerEdgeCases:
+    """Test ETLTimer context manager edge cases."""
+
+    def test_etl_timer_without_season_id(self) -> None:
+        """Should record duration for non-seasonal tables."""
+        os.environ["LARRYOB_METRICS_ENABLED"] = "true"
+
+        import time
+
+        with ETLTimer("dim_player"):
+            time.sleep(0.01)
+
+        summary = get_metrics_summary()
+        # Should have recorded duration with (table, None) key
+        assert len(summary["etl_duration_summary"]) == 1
+        # Key is string representation of tuple
+        duration_key = "('dim_player', None)"
+        assert duration_key in summary["etl_duration_summary"]
+
+        os.environ.pop("LARRYOB_METRICS_ENABLED")
+
+    def test_etl_timer_when_metrics_disabled(self) -> None:
+        """Should not record duration when metrics disabled."""
+        os.environ.pop("LARRYOB_METRICS_ENABLED", None)
+
+        import time
+
+        with ETLTimer("player_game_log", "2023-24"):
+            time.sleep(0.01)
+
+        summary = get_metrics_summary()
+        assert len(summary["etl_duration_summary"]) == 0
+
+    def test_etl_timer_with_zero_duration(self) -> None:
+        """Should handle zero or near-zero duration gracefully."""
+        os.environ["LARRYOB_METRICS_ENABLED"] = "true"
+
+        # Very fast operation - might have zero duration
+        with ETLTimer("player_game_log", "2023-24"):
+            pass  # No operation, immediate return
+
+        summary = get_metrics_summary()
+        assert len(summary["etl_duration_summary"]) == 1
+
+        os.environ.pop("LARRYOB_METRICS_ENABLED")

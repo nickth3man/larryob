@@ -3,6 +3,8 @@
 import sqlite3
 from unittest.mock import MagicMock, patch
 
+import pandas as pd
+
 from src.etl.awards import (
     _build_award_name,
     _map_award_type,
@@ -251,7 +253,7 @@ def test_load_player_awards_returns_zero_for_no_awards(
     monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
 
     mock_ep = MagicMock()
-    mock_ep.get_data_frames.return_value = [__import__("pandas").DataFrame()]
+    mock_ep.get_data_frames.return_value = [pd.DataFrame()]
     with patch("src.etl.awards.playerawards.PlayerAwards", return_value=mock_ep):
         with patch("src.etl.utils.time.sleep"):
             inserted = load_player_awards(sqlite_con_with_data, ["2544"])

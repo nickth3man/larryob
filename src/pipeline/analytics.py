@@ -24,6 +24,7 @@ Usage
 from __future__ import annotations
 
 import logging
+import sys
 from collections.abc import Callable
 from contextlib import suppress
 from pathlib import Path
@@ -42,6 +43,16 @@ logger = logging.getLogger(__name__)
 #: Registry of export functions keyed by file extension
 ExportFn = Callable[["pd.DataFrame", Path], None]
 EXPORTERS: dict[str, ExportFn] = {}
+
+
+def _coerce_stdout_text(text: str, *, encoding: str | None) -> str:
+    """Return text that can be encoded by the current stdout encoding."""
+    target_encoding = encoding or "utf-8"
+    try:
+        text.encode(target_encoding)
+    except UnicodeEncodeError:
+        return text.encode(target_encoding, errors="replace").decode(target_encoding)
+    return text
 
 
 def _register_exporter(extension: str) -> Callable[[ExportFn], ExportFn]:
@@ -128,7 +139,8 @@ def run_analytics_view(
 
     logger.info("Analytics view %s returned %d rows (limit=%d)", safe_view, len(df), limit)
     if not df.empty:
-        print(df.to_string(index=False))
+        rendered = _coerce_stdout_text(df.to_string(index=False), encoding=sys.stdout.encoding)
+        print(rendered)
 
 
 def _cleanup_duck_connection(duck: duckdb.DuckDBPyConnection) -> None:

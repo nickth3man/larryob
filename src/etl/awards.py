@@ -105,7 +105,7 @@ def load_player_awards(
         added_rows = 0
         cache_key = f"awards_{pid}"
         cached = load_cache(cache_key)
-        if cached:
+        if cached is not None:
             source = "cache"
             cached_players += 1
             mapped = _player_awards_to_rows(cached)

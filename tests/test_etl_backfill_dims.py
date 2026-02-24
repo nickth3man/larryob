@@ -345,7 +345,7 @@ def test_enrich_from_career_info_resolves_duplicate_name_by_birth_date(
     assert unmatched is None
 
 
-def test_enrich_dim_player_calls_both_internal_sources(
+def test_enrich_dim_player_calls_players_source_only(
     sqlite_con: sqlite3.Connection,
     tmp_path: Path,
 ) -> None:
@@ -354,4 +354,4 @@ def test_enrich_dim_player_calls_both_internal_sources(
             enrich_dim_player(sqlite_con, tmp_path)
 
     players_patch.assert_called_once_with(sqlite_con, tmp_path)
-    career_patch.assert_called_once_with(sqlite_con, tmp_path)
+    career_patch.assert_not_called()

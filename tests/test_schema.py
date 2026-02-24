@@ -28,6 +28,9 @@ def test_all_tables_created(sqlite_con: sqlite3.Connection) -> None:
         "team_game_log",
         "fact_play_by_play",
         "fact_player_award",
+        "fact_all_star",
+        "fact_all_nba",
+        "fact_all_nba_vote",
         "dim_salary_cap",
         "fact_salary",
         "etl_run_log",
@@ -114,6 +117,61 @@ def test_dim_player_columns(sqlite_con: sqlite3.Connection) -> None:
         assert col in cols, f"Missing column '{col}' in dim_player"
 
 
+def test_dim_player_migration_columns(sqlite_con: sqlite3.Connection) -> None:
+    cols = _table_columns(sqlite_con, "dim_player")
+    for col in ["bref_id", "college", "hof"]:
+        assert col in cols, f"Missing migration column '{col}' in dim_player"
+
+
+def test_fact_all_star_columns(sqlite_con: sqlite3.Connection) -> None:
+    cols = _table_columns(sqlite_con, "fact_all_star")
+    required = [
+        "all_star_id",
+        "player_id",
+        "season_id",
+        "team_id",
+        "selection_team",
+        "is_starter",
+        "is_replacement",
+    ]
+    for col in required:
+        assert col in cols, f"Missing column '{col}' in fact_all_star"
+
+
+def test_fact_all_nba_columns(sqlite_con: sqlite3.Connection) -> None:
+    cols = _table_columns(sqlite_con, "fact_all_nba")
+    required = [
+        "selection_id",
+        "player_id",
+        "season_id",
+        "team_type",
+        "team_number",
+        "position",
+    ]
+    for col in required:
+        assert col in cols, f"Missing column '{col}' in fact_all_nba"
+
+
+def test_fact_all_nba_vote_columns(sqlite_con: sqlite3.Connection) -> None:
+    cols = _table_columns(sqlite_con, "fact_all_nba_vote")
+    required = [
+        "vote_id",
+        "player_id",
+        "season_id",
+        "team_type",
+        "team_number",
+        "position",
+        "pts_won",
+        "pts_max",
+        "share",
+        "first_team_votes",
+        "second_team_votes",
+        "third_team_votes",
+    ]
+    for col in required:
+        assert col in cols, f"Missing column '{col}' in fact_all_nba_vote"
+
+
 def test_indexes_created(sqlite_con: sqlite3.Connection) -> None:
     indexes = {
         row[0]
@@ -133,6 +191,10 @@ def test_indexes_created(sqlite_con: sqlite3.Connection) -> None:
         "idx_pbp_player1",
         "idx_roster_player_dates",
         "idx_tgl_team",
+        "idx_player_bref",
+        "idx_allstar_player",
+        "idx_allnba_player",
+        "idx_allnba_vote_player",
     }
     assert expected_indexes.issubset(indexes), f"Missing indexes: {expected_indexes - indexes}"
 

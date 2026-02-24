@@ -18,11 +18,14 @@ from src.etl.backfill._advanced_stats import (
     load_player_pbp_season,
     load_player_shooting,
 )
+from src.etl.backfill._all_nba import load_all_nba_teams, load_all_nba_votes
+from src.etl.backfill._all_star import load_all_star_selections
 from src.etl.backfill._awards import load_awards
 from src.etl.backfill._dims import enrich_dim_player, enrich_dim_team, load_team_history
 from src.etl.backfill._draft import load_draft
 from src.etl.backfill._game_logs import load_player_game_logs, load_team_game_logs
 from src.etl.backfill._games import load_games, load_schedule
+from src.etl.backfill._player_career import enrich_player_career
 from src.etl.backfill._season_stats import (
     load_league_season,
     load_player_season_stats,
@@ -52,6 +55,10 @@ __all__ = [
     "load_player_advanced",
     "load_player_shooting",
     "load_player_pbp_season",
+    "enrich_player_career",
+    "load_all_star_selections",
+    "load_all_nba_teams",
+    "load_all_nba_votes",
     "load_awards",
 ]
 
@@ -116,6 +123,7 @@ _LOADERS: list[LoaderConfig] = [
     LoaderConfig("team_history", "dim_team_history", "load_team_history"),
     LoaderConfig("dim_team_enrich", "dim_team", "enrich_dim_team"),
     LoaderConfig("dim_player_enrich", "dim_player", "enrich_dim_player"),
+    LoaderConfig("player_career", "dim_player", "enrich_player_career"),
     LoaderConfig("games", "fact_game", "load_games"),
     LoaderConfig("schedule", "fact_game", "load_schedule"),
     LoaderConfig("player_game_logs", "player_game_log", "load_player_game_logs"),
@@ -128,6 +136,9 @@ _LOADERS: list[LoaderConfig] = [
     LoaderConfig("player_shooting", "fact_player_shooting_season", "load_player_shooting"),
     LoaderConfig("player_pbp_season", "fact_player_pbp_season", "load_player_pbp_season"),
     LoaderConfig("awards", "fact_player_award", "load_awards"),
+    LoaderConfig("all_star", "fact_all_star", "load_all_star_selections"),
+    LoaderConfig("all_nba", "fact_all_nba", "load_all_nba_teams"),
+    LoaderConfig("all_nba_votes", "fact_all_nba_vote", "load_all_nba_votes"),
 ]
 
 

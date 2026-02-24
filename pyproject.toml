@@ -1,3 +1,7 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
 [project]
 name = "larryob"
 version = "0.1.0"
@@ -13,8 +17,19 @@ dependencies = [
     "pydantic>=2.0.0",
 ]
 
+[tool.hatch.build.targets.wheel]
+packages = ["src"]
+
 [project.scripts]
 ingest = "src.pipeline.cli:main"
+
+[project.optional-dependencies]
+analytics = [
+    "pyarrow>=23.0.1",
+]
+
+[tool.uv]
+package = true
 
 [dependency-groups]
 dev = [

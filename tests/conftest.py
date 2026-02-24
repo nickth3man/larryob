@@ -20,21 +20,28 @@ from src.db.schema import ALTER_STATEMENTS, DDL_STATEMENTS
 
 
 @pytest.fixture
-def sqlite_con():
+def sqlite_con(request):
     """An in-memory SQLite db with the full NBA schema initialised."""
     con = sqlite3.connect(":memory:")
-    con.execute("PRAGMA foreign_keys=ON;")
+    cur = con.execute("PRAGMA foreign_keys=ON;")
+    cur.close()
     for ddl in DDL_STATEMENTS:
-        con.execute(ddl)
+        cur = con.execute(ddl)
+        cur.close()
     # Apply column-addition migrations (swallow duplicate-column errors).
     for alter in ALTER_STATEMENTS:
         try:
-            con.execute(alter)
+            cur = con.execute(alter)
+            cur.close()
         except sqlite3.OperationalError:
             pass
     con.commit()
-    yield con
-    con.close()
+
+    def cleanup():
+        con.close()
+
+    request.addfinalizer(cleanup)
+    return con
 
 
 @pytest.fixture
@@ -165,13 +172,18 @@ def duck_con_with_sqlite(sqlite_con_with_data: sqlite3.Connection, tmp_path: Pat
     """
     # Write the in-memory SQLite db to a temp file
     sqlite_file = tmp_path / "test_nba.db"
-    file_con = sqlite3.connect(sqlite_file)
-    sqlite_con_with_data.backup(file_con)
-    file_con.close()
+    with sqlite3.connect(sqlite_file) as file_con:
+        sqlite_con_with_data.backup(file_con)
 
     duck = duckdb.connect(":memory:")
     duck.execute("INSTALL sqlite;")
     duck.execute("LOAD sqlite;")
     duck.execute(f"ATTACH '{sqlite_file}' AS nba (TYPE sqlite, READ_ONLY);")
     yield duck
+
+    # Detach and close to prevent ResourceWarning
+    try:
+        duck.execute("DETACH nba;")
+    except Exception:
+        pass
     duck.close()

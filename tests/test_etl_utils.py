@@ -75,6 +75,11 @@ def test_setup_logging_with_file_adds_two_handlers(tmp_path: Path) -> None:
     handler_types = [type(h).__name__ for h in root.handlers]
     assert "StreamHandler" in handler_types
     assert "FileHandler" in handler_types
+    # Clean up file handlers to avoid ResourceWarning
+    for h in root.handlers[:]:
+        if isinstance(h, logging.FileHandler):
+            h.close()
+            root.removeHandler(h)
 
 
 # ------------------------------------------------------------------ #
@@ -165,61 +170,92 @@ def test_load_cache_returns_none_for_old_format_when_version_2(monkeypatch, tmp_
 # ------------------------------------------------------------------ #
 
 
+def _create_and_close_memory_db():
+    """Helper to create and properly close an in-memory database."""
+    con = sqlite3.connect(":memory:")
+    try:
+        _make_schema(con)
+        yield con
+    finally:
+        con.close()
+
+
 def test_upsert_rows_returns_zero_for_empty_list() -> None:
     con = sqlite3.connect(":memory:")
-    _make_schema(con)
-    result = upsert_rows(con, "fruits", [])
-    assert result == 0
+    try:
+        _make_schema(con)
+        result = upsert_rows(con, "fruits", [])
+        assert result == 0
+    finally:
+        con.close()
 
 
 def test_upsert_rows_inserts_rows_and_returns_count() -> None:
     con = sqlite3.connect(":memory:")
-    _make_schema(con)
-    rows = [{"name": "apple"}, {"name": "banana"}]
-    inserted = upsert_rows(con, "fruits", rows)
-    assert inserted == 2
-    count = con.execute("SELECT COUNT(*) FROM fruits").fetchone()[0]
-    assert count == 2
+    try:
+        _make_schema(con)
+        rows = [{"name": "apple"}, {"name": "banana"}]
+        inserted = upsert_rows(con, "fruits", rows)
+        assert inserted == 2
+        count = con.execute("SELECT COUNT(*) FROM fruits").fetchone()[0]
+        assert count == 2
+    finally:
+        con.close()
 
 
 def test_upsert_rows_conflict_ignore_skips_duplicates() -> None:
     con = sqlite3.connect(":memory:")
-    _make_schema(con)
-    upsert_rows(con, "fruits", [{"name": "apple"}])
-    upsert_rows(con, "fruits", [{"name": "apple"}])
-    count = con.execute("SELECT COUNT(*) FROM fruits").fetchone()[0]
-    assert count == 1
+    try:
+        _make_schema(con)
+        upsert_rows(con, "fruits", [{"name": "apple"}])
+        upsert_rows(con, "fruits", [{"name": "apple"}])
+        count = con.execute("SELECT COUNT(*) FROM fruits").fetchone()[0]
+        assert count == 1
+    finally:
+        con.close()
 
 
 def test_upsert_rows_conflict_replace_overwrites() -> None:
     con = sqlite3.connect(":memory:")
-    _make_schema(con)
-    upsert_rows(con, "fruits", [{"name": "apple"}])
-    upsert_rows(con, "fruits", [{"name": "apple"}], conflict="REPLACE")
-    count = con.execute("SELECT COUNT(*) FROM fruits").fetchone()[0]
-    assert count == 1
+    try:
+        _make_schema(con)
+        upsert_rows(con, "fruits", [{"name": "apple"}])
+        upsert_rows(con, "fruits", [{"name": "apple"}], conflict="REPLACE")
+        count = con.execute("SELECT COUNT(*) FROM fruits").fetchone()[0]
+        assert count == 1
+    finally:
+        con.close()
 
 
 def test_upsert_rows_autocommit_false_does_not_commit() -> None:
     con = sqlite3.connect(":memory:")
-    _make_schema(con)
-    upsert_rows(con, "fruits", [{"name": "pear"}], autocommit=False)
-    con.rollback()
-    count = con.execute("SELECT COUNT(*) FROM fruits").fetchone()[0]
-    assert count == 0
+    try:
+        _make_schema(con)
+        upsert_rows(con, "fruits", [{"name": "pear"}], autocommit=False)
+        con.rollback()
+        count = con.execute("SELECT COUNT(*) FROM fruits").fetchone()[0]
+        assert count == 0
+    finally:
+        con.close()
 
 
 def test_upsert_rows_returns_zero_when_target_table_missing() -> None:
     con = sqlite3.connect(":memory:")
-    result = upsert_rows(con, "missing_table_xyz", [{"name": "apple"}])
-    assert result == 0
+    try:
+        result = upsert_rows(con, "missing_table_xyz", [{"name": "apple"}])
+        assert result == 0
+    finally:
+        con.close()
 
 
 def test_upsert_rows_raises_for_non_missing_operational_error() -> None:
     con = sqlite3.connect(":memory:")
-    _make_schema(con)
-    with pytest.raises(sqlite3.OperationalError, match="no column named"):
-        upsert_rows(con, "fruits", [{"missing_column": "apple"}])
+    try:
+        _make_schema(con)
+        with pytest.raises(sqlite3.OperationalError, match="no column named"):
+            upsert_rows(con, "fruits", [{"missing_column": "apple"}])
+    finally:
+        con.close()
 
 
 # ------------------------------------------------------------------ #
@@ -249,8 +285,11 @@ def test_already_loaded_with_none_season_id(sqlite_con: sqlite3.Connection) -> N
 
 def test_already_loaded_returns_false_when_table_missing() -> None:
     con = sqlite3.connect(":memory:")
-    result = already_loaded(con, "nonexistent_table", "2023-24", "loader")
-    assert result is False
+    try:
+        result = already_loaded(con, "nonexistent_table", "2023-24", "loader")
+        assert result is False
+    finally:
+        con.close()
 
 
 # ------------------------------------------------------------------ #
@@ -282,7 +321,10 @@ def test_record_run_uses_provided_started_at(sqlite_con: sqlite3.Connection) -> 
 
 def test_record_run_silently_ignores_missing_table() -> None:
     con = sqlite3.connect(":memory:")
-    record_run(con, "fact_game", "2023-24", "loader", 0, "ok")
+    try:
+        record_run(con, "fact_game", "2023-24", "loader", 0, "ok")
+    finally:
+        con.close()
 
 
 # ------------------------------------------------------------------ #
