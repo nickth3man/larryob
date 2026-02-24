@@ -1,55 +1,74 @@
-# src/etl/backfill — Raw CSV Backfill Pipeline
+# CLAUDE.md
 
-## OVERVIEW
+> **Purpose:** This file exists to correct consistent agent mistakes and specify required tooling — nothing more.
+> Do NOT auto-generate or expand this file. If you encounter something surprising or confusing in this codebase,
+> flag it to the developer and suggest an edit here. The developer will decide whether to fix the code or update this file.
 
-Separate sub-pipeline that loads historical data from `raw/` CSV/Parquet files (Basketball-Reference exports). No nba_api calls. Entry point: `run_raw_backfill()`.
+---
 
-## FILES
+## Required Tooling
 
-| File | Loads |
-|------|-------|
-| `_orchestrator.py` | Runs all loaders in dependency order; entry point |
-| `_base.py` | `BaseBackfillLoader` — shared CSV-reading logic, path resolution, row-count delta tracking |
-| `_dims.py` | `enrich_dim_player`, `enrich_dim_team`, `load_team_history` |
-| `_games.py` | `load_games`, `load_schedule` → `fact_game` |
-| `_game_logs.py` | `load_player_game_logs`, `load_team_game_logs` |
-| `_season_stats.py` | `load_player_season_stats`, `load_team_season`, `load_league_season` |
-| `_advanced_stats.py` | `load_player_advanced`, `load_player_shooting`, `load_player_pbp_season` |
-| `_awards.py` | `load_awards` → `fact_player_award` |
-| `_draft.py` | `load_draft` → `fact_draft` |
-| `__init__.py` | Re-exports only `run_raw_backfill` |
+<!-- PLACEHOLDER: List only the non-obvious tools the agent must use.
+     Example: "Always use pnpm (not npm or yarn) to run scripts."
+     If the tool is detectable from package.json or config files, omit it. -->
 
-## LOAD ORDER (dependency-driven, in `_orchestrator.py`)
+- [ ] `[package manager]` — always use `[command]` to run scripts
+- [ ] `[type checker / linter]` — run after every change: `[command]`
+- [ ] `[test runner]` — run affected tests before marking a task complete: `[command]`
 
-```
-team_history → dim_team_enrich → dim_player_enrich
-→ games → schedule
-→ player_game_logs → team_game_logs
-→ team_season → league_season
-→ draft → player_season_stats → player_advanced → player_shooting → player_pbp_season
-→ awards
-```
+---
 
-## ORCHESTRATOR INTERNALS
+## Consistent Mistakes to Avoid
 
-- `_LOADERS` — ordered list of `(name, table_name, loader_func_name)` tuples
-- `run_raw_backfill(con, raw_dir, *, fail_fast=False)` → returns `{"ok": [...], "skipped": [...], "failed": [...]}`
-- Each loader wrapped in try/except — one failure doesn't abort the pipeline (unless `fail_fast=True`)
-- Tracks before/after row counts per table for delta reporting
-- Uses `already_loaded()` / `record_run()` from `utils.py` for idempotency
+<!-- PLACEHOLDER: Only add entries here when the agent repeatedly makes the same error
+     despite the codebase structure making the correct path clear.
+     Each entry should be a single, specific correction. -->
 
-## CONVENTIONS
+<!-- Example format:
+- DO NOT use [X pattern/library] — use [Y] instead. Reason: [one sentence].
+- Always run `[command]` after modifying [area of codebase].
+-->
 
-- All modules are **private** (`_` prefix) — import only via `__init__.py`
-- All loaders accept `(con: sqlite3.Connection, raw_dir: Path)` signature
-- `raw_dir` defaults to `Path("raw")` — override via `--raw-dir` CLI flag
-- All inserts use `INSERT OR IGNORE` or `INSERT OR REPLACE` — safe to re-run
-- bref CSV files use `bref_player_id` and `bref_abbrev` — these do NOT FK to dim tables
-- Uses absolute imports (`from src.etl.backfill._dims import ...`) not relative
+---
 
-## ANTI-PATTERNS
+## Legacy / Deprecated Technologies
 
-- Never import `_dims.py`, `_games.py` etc. directly from outside `backfill/` — only `run_raw_backfill`
-- Never add nba_api calls here — backfill is CSV-only, offline-capable
-- Never change load order without checking FK dependencies (games before game_logs, dims before facts)
-- Never add `fail_fast=True` as default — callers must opt in explicitly via `--raw-backfill-fail-fast`
+<!-- PLACEHOLDER: List technologies still present in the codebase but no longer preferred.
+     This prevents the agent from reaching for outdated patterns it finds in older files. -->
+
+<!-- Example:
+- `[TechA]` — legacy only, exists in [/path]. Do not use for new code; prefer [TechB].
+-->
+
+---
+
+## Project State Context
+
+<!-- PLACEHOLDER: Use this section to intentionally frame the project's current state
+     in a way that steers agent behavior. Update as the project matures.
+     Examples of useful framings:
+     - "This project is early-stage. Schema changes are welcome."
+     - "This app has no production users yet. Don't generate data migration scripts."
+     - "All new features must be backward-compatible — production data exists."
+-->
+
+---
+
+## Agent Self-Reporting
+
+If you encounter anything in this codebase that is surprising, ambiguous, or contradicts your expectations,
+**do not silently work around it**. Instead:
+
+1. Flag it to the developer in your response.
+2. Propose a one-line addition to this file describing the confusion.
+
+The developer will determine whether the fix belongs in the code or here.
+
+---
+
+<!-- MAINTENANCE REMINDER:
+     - Review this file when upgrading major dependencies or refactoring architecture.
+     - If a section has been empty for a long time, delete it.
+     - If the model no longer makes a listed mistake, remove that entry.
+     - Outdated entries actively degrade agent performance.
+-->
