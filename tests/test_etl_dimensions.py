@@ -6,7 +6,7 @@ from unittest.mock import patch
 
 import pytest
 
-from src.etl.dimensions import (
+from src.etl._dimensions_helpers import (
     _height_to_cm,
     _map_common_all_player,
     _map_common_player_info,
@@ -14,8 +14,10 @@ from src.etl.dimensions import (
     _map_nba_team,
     _normalize_position,
     _parse_birth_date,
-    _season_id,
     _weight_to_kg,
+)
+from src.etl.dimensions import (
+    _season_id,
     load_players_bio_enrichment,
     load_players_full,
     load_players_static,

@@ -29,6 +29,8 @@
 - Always run `[command]` after modifying [area of codebase].
 -->
 
+- No Python file should exceed 400 lines. If a file approaches or exceeds this limit, refactor by splitting it into smaller, logically grouped modules. Note: `__init__.py` files are exempt from this rule.
+
 ---
 
 ## Legacy / Deprecated Technologies

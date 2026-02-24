@@ -1,74 +1,74 @@
-# src/db — Database Layer
+# CLAUDE.md
 
-## OVERVIEW
+> **Purpose:** This file exists to correct consistent agent mistakes and specify required tooling — nothing more.
+> Do NOT auto-generate or expand this file. If you encounter something surprising or confusing in this codebase,
+> flag it to the developer and suggest an edit here. The developer will decide whether to fix the code or update this file.
 
-Two-database architecture: SQLite (OLTP writes) + DuckDB (OLAP reads). DuckDB attaches SQLite via `sqlite_scanner` extension — no data duplication.
+---
 
-## FILES
+## Required Tooling
 
-| File | Role |
-|------|------|
-| `schema.py` | All SQLite DDL + migration ALTERs. `init_db()` is the only write path to schema. |
-| `analytics.py` | DuckDB factory + all analytical VIEWs as `(name, SQL)` pairs in `_VIEWS`. |
+<!-- PLACEHOLDER: List only the non-obvious tools the agent must use.
+     Example: "Always use pnpm (not npm or yarn) to run scripts."
+     If the tool is detectable from package.json or config files, omit it. -->
 
-## ANALYTICS VIEWS (`_VIEWS` in analytics.py)
+- [ ] `[package manager]` — always use `[command]` to run scripts
+- [ ] `[type checker / linter]` — run after every change: `[command]`
+- [ ] `[test runner]` — run affected tests before marking a task complete: `[command]`
 
-| View | Purpose |
-|------|---------|
-| `vw_player_shooting` | eFG%, TS%, per-season shooting efficiency |
-| `vw_player_season_totals` | Season totals from `player_game_log` |
-| `vw_player_last10` | Rolling last-10 games stats |
-| `vw_team_standings` | W/L, PCT, GB by season |
-| `vw_team_pace` | Pace and possessions |
-| `vw_pbp_shot_summary` | Play-by-play shot outcomes |
-| `vw_player_awards` | Awards with player names joined |
-| `vw_salary_cap_pct` | Player salary as % of cap |
-| `vw_player_per36` | Per-36-minute stats |
-| `vw_player_usage` | Usage rate and shot distribution |
-| `vw_team_ratings` | Off/Def/Net rating |
-| `vw_player_clutch` | Clutch-time (PBP-derived) stats |
-| `vw_player_season_advanced` | Calculated advanced stats (PER etc.) |
-| `vw_player_per100` | Per-100-possessions stats |
-| `vw_player_advanced_full` | Joins calculated + bref precomputed advanced |
-| `vw_team_four_factors` | Dean Oliver four factors |
-| `vw_draft_class` | Draft history with career stats |
-| `vw_player_shooting_zones` | Zone-level shooting breakdown |
+---
 
-## CONVENTIONS
+## Consistent Mistakes to Avoid
 
-- All view SQL references SQLite tables as `nba.<table>` (DuckDB attachment alias)
-- `get_duck_con()` is NOT thread-safe — uses `threading.local()` internally; each thread gets its own connection
-- Schema is idempotent: `CREATE TABLE IF NOT EXISTS`, `CREATE INDEX IF NOT EXISTS`
-- New column migrations go in `ALTER_STATEMENTS` (not `DDL_STATEMENTS`) — wrapped in try/except for idempotency
-- `ROLLBACK_STATEMENTS` exists for reversing column additions — keep in sync with `ALTER_STATEMENTS`
-- `DB_PATH` resolves to `<repo_root>/nba_raw_data.db`; tests never touch this file (use `:memory:` or `tmp_path`)
-- All tables use `STRICT` mode — SQLite enforces column types strictly
+<!-- PLACEHOLDER: Only add entries here when the agent repeatedly makes the same error
+     despite the codebase structure making the correct path clear.
+     Each entry should be a single, specific correction. -->
 
-## ADDING A NEW VIEW
+<!-- Example format:
+- DO NOT use [X pattern/library] — use [Y] instead. Reason: [one sentence].
+- Always run `[command]` after modifying [area of codebase].
+-->
 
-Append to `_VIEWS` list in `analytics.py`:
-```python
-(
-    "vw_my_view",
-    """
-    SELECT ...
-    FROM nba.player_game_log l
-    JOIN nba.dim_player p ON p.player_id = l.player_id
-    """,
-),
-```
-No migration needed — views are dropped and recreated on each `get_duck_con()` call.
+---
 
-## ADDING A NEW TABLE
+## Legacy / Deprecated Technologies
 
-1. Add `CREATE TABLE IF NOT EXISTS ... STRICT` DDL to `DDL_STATEMENTS` in `schema.py`
-2. Add any column indexes to `DDL_STATEMENTS` as `CREATE INDEX IF NOT EXISTS`
-3. Add `ALTER_STATEMENTS` entries only for subsequent column additions (not initial DDL)
-4. Update `tests/conftest.py` fixtures if the table needs seed data for FK compliance
+<!-- PLACEHOLDER: List technologies still present in the codebase but no longer preferred.
+     This prevents the agent from reaching for outdated patterns it finds in older files. -->
 
-## ANTI-PATTERNS
+<!-- Example:
+- `[TechA]` — legacy only, exists in [/path]. Do not use for new code; prefer [TechB].
+-->
 
-- Never write to SQLite from `analytics.py` — read-only DuckDB layer
-- Never add executable DDL to `ALTER_STATEMENTS` for new tables — use `DDL_STATEMENTS`
-- Never call `get_duck_con()` concurrently from multiple threads without separate connections
-- Never hardcode `DB_PATH` in tests — always use `:memory:` or `tmp_path`
+---
+
+## Project State Context
+
+<!-- PLACEHOLDER: Use this section to intentionally frame the project's current state
+     in a way that steers agent behavior. Update as the project matures.
+     Examples of useful framings:
+     - "This project is early-stage. Schema changes are welcome."
+     - "This app has no production users yet. Don't generate data migration scripts."
+     - "All new features must be backward-compatible — production data exists."
+-->
+
+---
+
+## Agent Self-Reporting
+
+If you encounter anything in this codebase that is surprising, ambiguous, or contradicts your expectations,
+**do not silently work around it**. Instead:
+
+1. Flag it to the developer in your response.
+2. Propose a one-line addition to this file describing the confusion.
+
+The developer will determine whether the fix belongs in the code or here.
+
+---
+
+<!-- MAINTENANCE REMINDER:
+     - Review this file when upgrading major dependencies or refactoring architecture.
+     - If a section has been empty for a long time, delete it.
+     - If the model no longer makes a listed mistake, remove that entry.
+     - Outdated entries actively degrade agent performance.
+-->

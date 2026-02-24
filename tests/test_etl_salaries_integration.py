@@ -31,8 +31,8 @@ def test_load_player_salaries_historical_season(
     </html>
     """
 
-    with patch("src.etl.salaries._get_html", return_value=mock_html):
-        with patch("src.etl.salaries.time.sleep"):
+    with patch("src.etl._salaries_fetch.fetch_html", return_value=mock_html):
+        with patch("src.etl.rate_limit.time.sleep"):
             load_player_salaries(sqlite_con_with_data, "2023-24")
 
     row = sqlite_con_with_data.execute("SELECT player_id, salary FROM fact_salary").fetchone()
@@ -91,8 +91,8 @@ def test_load_player_salaries_current_season(
     </html>
     """
 
-    with patch("src.etl.salaries._get_html", return_value=mock_html):
-        with patch("src.etl.salaries.time.sleep"):
+    with patch("src.etl._salaries_fetch.fetch_html", return_value=mock_html):
+        with patch("src.etl.rate_limit.time.sleep"):
             load_player_salaries(sqlite_con_with_data, season)
 
     row = sqlite_con_with_data.execute(

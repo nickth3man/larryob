@@ -1,86 +1,74 @@
-# src/pipeline — CLI Orchestration Layer
+# CLAUDE.md
 
-## OVERVIEW
+> **Purpose:** This file exists to correct consistent agent mistakes and specify required tooling — nothing more.
+> Do NOT auto-generate or expand this file. If you encounter something surprising or confusing in this codebase,
+> flag it to the developer and suggest an edit here. The developer will decide whether to fix the code or update this file.
 
-CLI entry point and stage orchestration for the NBA ingest pipeline. Manages argument parsing, config building, stage plan construction, checkpoint logging, analytics export, and the full exception hierarchy.
+---
 
-## FILES
+## Required Tooling
 
-| File | Role |
-|------|------|
-| `cli.py` | `main()` entry; argument parser factory, connection lifecycle, exit codes |
-| `executor.py` | `run_ingest_pipeline()`, `_build_stage_plan()`, `_execute_stage()` |
-| `stages.py` | Thin stage runner functions — adapters over `src/etl/` loaders |
-| `models.py` | `Stage` (StrEnum), `IngestConfig` (`__slots__` dataclass), `CheckpointState` |
-| `constants.py` | `DEFAULT_SEASONS`, `*_TABLES` tuples, `StageFn` type alias, compiled regex patterns |
-| `validation.py` | Pure input validators; raises typed exceptions; no I/O, no side effects |
-| `exceptions.py` | `IngestError` → `ReconciliationError`, `AnalyticsError`, `ValidationError` |
-| `checkpoint.py` | `log_checkpoint()` — row-count snapshots + etl_run_log tail between stages |
-| `analytics.py` | `run_analytics_view()` — queries DuckDB views; `EXPORTERS` registry (.csv/.parquet/.json) |
+<!-- PLACEHOLDER: List only the non-obvious tools the agent must use.
+     Example: "Always use pnpm (not npm or yarn) to run scripts."
+     If the tool is detectable from package.json or config files, omit it. -->
 
-## WHERE TO LOOK
+- [ ] `[package manager]` — always use `[command]` to run scripts
+- [ ] `[type checker / linter]` — run after every change: `[command]`
+- [ ] `[test runner]` — run affected tests before marking a task complete: `[command]`
 
-| Task | Location |
-|------|----------|
-| Add a new CLI argument | `cli.py` (parser) **and** `models.py` (`IngestConfig` fields) |
-| Wire a new ETL loader into the run plan | `executor.py` (`_build_stage_plan`) |
-| Define the actual execution step for a stage | `stages.py` |
-| Add pure validation rules for CLI inputs | `validation.py` |
-| Add a new export format (CSV, Parquet, JSON) | `analytics.py` (`EXPORTERS` registry) |
-| Define a new pipeline error type | `exceptions.py` |
-| Update shared regex or default values | `constants.py` |
-| Add a new stage checkpoint | `checkpoint.py` + `constants.py` (add to `*_TABLES`) |
+---
 
-## STAGE PLAN (execution order)
+## Consistent Mistakes to Avoid
 
-```
-DIMENSIONS (always)
-  → RAW_BACKFILL (if --raw-backfill and not --dims-only)
-  → AWARDS (if --awards)
-  → SALARIES (if --salaries)
-  → ROSTERS (if --rosters)
-  → GAME_LOGS (unless --dims-only)
-    → reconciliation (unless --skip-reconciliation)
-    → PBP (if --pbp-limit > 0)
-```
+<!-- PLACEHOLDER: Only add entries here when the agent repeatedly makes the same error
+     despite the codebase structure making the correct path clear.
+     Each entry should be a single, specific correction. -->
 
-Built dynamically by `_build_stage_plan(config)` → list of `(Stage, tables, fn, args, kwargs)`.
+<!-- Example format:
+- DO NOT use [X pattern/library] — use [Y] instead. Reason: [one sentence].
+- Always run `[command]` after modifying [area of codebase].
+-->
 
-## EXCEPTION HIERARCHY
+---
 
-```
-IngestError(RuntimeError)      # base; catch-all for all pipeline errors
-├── ReconciliationError        # PTS/REB/AST player-vs-team mismatch; has .warning_count, .seasons
-├── AnalyticsError             # view query or export failure; has .view_name, .output_path
-└── ValidationError            # bad CLI args; has .argument, .value
-```
+## Legacy / Deprecated Technologies
 
-All exceptions use `__slots__` and include a `context` dict for programmatic access.
+<!-- PLACEHOLDER: List technologies still present in the codebase but no longer preferred.
+     This prevents the agent from reaching for outdated patterns it finds in older files. -->
 
-## EXIT CODES (`cli.py`)
+<!-- Example:
+- `[TechA]` — legacy only, exists in [/path]. Do not use for new code; prefer [TechB].
+-->
 
-| Code | Meaning |
-|------|---------|
-| 0 | Success |
-| 1 | ValidationError |
-| 2 | IngestError (incl. subclasses) |
-| 3 | Unexpected exception |
+---
 
-## CONVENTIONS
+## Project State Context
 
-- `IngestConfig` is immutable (`@dataclass(slots=True)`); never mutate after construction
-- `CheckpointState` is deliberately mutable; call `state.update()` after each stage
-- `Stage` values all have `"post-"` prefix — they mark completion, not start
-- Metrics finalization always runs in `finally` block — never skip
-- `validation.py` functions are pure: no imports from other `pipeline` modules (prevents circular deps with `models.py`)
-- View names validated against `_VALID_IDENTIFIER` regex before any DuckDB query
-- Analytics output paths always resolved with `expanduser` + `resolve`
+<!-- PLACEHOLDER: Use this section to intentionally frame the project's current state
+     in a way that steers agent behavior. Update as the project matures.
+     Examples of useful framings:
+     - "This project is early-stage. Schema changes are welcome."
+     - "This app has no production users yet. Don't generate data migration scripts."
+     - "All new features must be backward-compatible — production data exists."
+-->
 
-## ANTI-PATTERNS
+---
 
-- Don't put I/O or side effects in `validation.py`
-- Don't import other pipeline modules into `validation.py` (circular dep risk with `models.py`)
-- Don't leave DB connections hanging — lifecycle managed explicitly in `cli.py`; clean thread-local cache in `analytics.py`
-- Don't raise generic `ValueError` — use specific subclass from `exceptions.py` with context
-- Don't skip checkpointing — every stage must call `log_checkpoint()` so progress is visible
-- Don't add new stage tables to `executor.py` directly — put them in `constants.py` as `*_TABLES` tuples
+## Agent Self-Reporting
+
+If you encounter anything in this codebase that is surprising, ambiguous, or contradicts your expectations,
+**do not silently work around it**. Instead:
+
+1. Flag it to the developer in your response.
+2. Propose a one-line addition to this file describing the confusion.
+
+The developer will determine whether the fix belongs in the code or here.
+
+---
+
+<!-- MAINTENANCE REMINDER:
+     - Review this file when upgrading major dependencies or refactoring architecture.
+     - If a section has been empty for a long time, delete it.
+     - If the model no longer makes a listed mistake, remove that entry.
+     - Outdated entries actively degrade agent performance.
+-->

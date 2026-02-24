@@ -4,7 +4,7 @@ import sqlite3
 
 import duckdb
 
-from src.db.analytics import _VIEWS
+from src.db.analytics import _load_all_views
 from src.etl.utils import upsert_rows
 
 # ------------------------------------------------------------------ #
@@ -181,10 +181,9 @@ def test_views_are_queryable(duck_con_with_sqlite) -> None:
 
     # Re-attach with views via get_duck_con (using existing sqlite fixture via tmp)
     # This test just ensures the view SQL parses without error.
-    for name, _ in _VIEWS:
-        duck_con_with_sqlite.execute(
-            f"SELECT 1 FROM ({_view_sql(name, duck_con_with_sqlite)}) LIMIT 0"
-        )
+    views = _load_all_views()
+    for name, sql in views:
+        duck_con_with_sqlite.execute(f"SELECT 1 FROM ({sql}) LIMIT 0")
 
 
 def test_get_duck_con_singleton(tmp_path, monkeypatch) -> None:
@@ -327,4 +326,5 @@ def test_get_duck_con_ignores_cached_close_failures(tmp_path, monkeypatch) -> No
 
 def _view_sql(view_name: str, con: duckdb.DuckDBPyConnection) -> str:
     """Retrieve the underlying SQL of a view for wrapping in a subquery."""
-    return dict(_VIEWS)[view_name]
+    views = _load_all_views()
+    return dict(views)[view_name]

@@ -1,48 +1,74 @@
-# tests — Pytest Suite
+# CLAUDE.md
 
-## OVERVIEW
+> **Purpose:** This file exists to correct consistent agent mistakes and specify required tooling — nothing more.
+> Do NOT auto-generate or expand this file. If you encounter something surprising or confusing in this codebase,
+> flag it to the developer and suggest an edit here. The developer will decide whether to fix the code or update this file.
 
-Pytest suite for the NBA analytics pipeline using isolated in-memory and temp-file database fixtures. 30 test files, ~7k lines. No test ever touches `nba_raw_data.db`.
+---
 
-## WHERE TO LOOK
+## Required Tooling
 
-| Task | Location |
-|------|----------|
-| Shared database fixtures | `conftest.py` |
-| Core ETL loader tests | `test_etl_*.py` (e.g., `test_etl_game_logs.py`) |
-| CSV backfill tests | `test_etl_backfill_*.py` |
-| ETL infrastructure | `test_etl_utils.py`, `test_etl_api_client.py` |
-| Pydantic model validation | `test_etl_models.py` |
-| Business rule validation | `test_etl_validate.py` |
-| Pipeline orchestration | `test_ingest_integration.py` |
-| Schema and DDL tests | `test_schema.py` |
-| DuckDB analytics views | `test_analytics.py` |
+<!-- PLACEHOLDER: List only the non-obvious tools the agent must use.
+     Example: "Always use pnpm (not npm or yarn) to run scripts."
+     If the tool is detectable from package.json or config files, omit it. -->
 
-## FIXTURES (`conftest.py`)
+- [ ] `[package manager]` — always use `[command]` to run scripts
+- [ ] `[type checker / linter]` — run after every change: `[command]`
+- [ ] `[test runner]` — run affected tests before marking a task complete: `[command]`
 
-| Fixture | What it provides | When to use |
-|---------|-----------------|-------------|
-| `sqlite_con` | In-memory SQLite with full schema + migrations applied | Default for any loader test |
-| `sqlite_con_with_data` | Extends `sqlite_con` with minimal FK seed rows (Lakers, Warriors, LeBron, Jokic, one game) | When testing FK constraints or joins |
-| `duck_con_with_sqlite` | In-memory DuckDB with the seeded SQLite attached as `nba` via `sqlite_scanner` | For all analytics view tests |
+---
 
-**`duck_con_with_sqlite` mechanics**: DuckDB's sqlite extension requires a file path. The fixture uses `sqlite_con_with_data.backup()` to write the in-memory DB to `tmp_path/test_nba.db`, then attaches it. The fixture cleans up automatically.
+## Consistent Mistakes to Avoid
 
-## CONVENTIONS
+<!-- PLACEHOLDER: Only add entries here when the agent repeatedly makes the same error
+     despite the codebase structure making the correct path clear.
+     Each entry should be a single, specific correction. -->
 
-- **Empty database**: Use `sqlite_con` for a fresh, schema-initialized in-memory database
-- **Seeded database**: Use `sqlite_con_with_data` when testing foreign key constraints
-- **DuckDB testing**: Use `duck_con_with_sqlite` — never test views against empty DB (joins/aggs return nothing)
-- **API mocking**: `unittest.mock.patch` on `src.etl.api_client.APICaller`; also patch `APICaller` sleep methods to avoid `time.sleep()` in tests
-- **Validation testing**: Pass raw dicts directly to `validate_rows()` before DB insertion
-- **Metrics testing**: Clear the in-memory metrics singleton between tests when asserting exact counts
-- **Parametrize**: Use `@pytest.mark.parametrize` for testing multiple season IDs, stat variants, and edge cases
+<!-- Example format:
+- DO NOT use [X pattern/library] — use [Y] instead. Reason: [one sentence].
+- Always run `[command]` after modifying [area of codebase].
+-->
 
-## ANTI-PATTERNS
+---
 
-- Never make real network requests to nba_api or Basketball-Reference — always mock
-- Never let `time.sleep()` run in tests — patch `APICaller.sleep_between_calls` and `APICaller.call_with_backoff`
-- Never hardcode file paths — use `tmp_path` fixture for all temporary data and cache files
-- Never test DuckDB views against an empty database — use `duck_con_with_sqlite`
-- Never swallow `sqlite3.OperationalError` in tests unless specifically testing migration idempotency
-- Never import from `src.etl.backfill._*` modules directly in tests — use the public `run_raw_backfill` API
+## Legacy / Deprecated Technologies
+
+<!-- PLACEHOLDER: List technologies still present in the codebase but no longer preferred.
+     This prevents the agent from reaching for outdated patterns it finds in older files. -->
+
+<!-- Example:
+- `[TechA]` — legacy only, exists in [/path]. Do not use for new code; prefer [TechB].
+-->
+
+---
+
+## Project State Context
+
+<!-- PLACEHOLDER: Use this section to intentionally frame the project's current state
+     in a way that steers agent behavior. Update as the project matures.
+     Examples of useful framings:
+     - "This project is early-stage. Schema changes are welcome."
+     - "This app has no production users yet. Don't generate data migration scripts."
+     - "All new features must be backward-compatible — production data exists."
+-->
+
+---
+
+## Agent Self-Reporting
+
+If you encounter anything in this codebase that is surprising, ambiguous, or contradicts your expectations,
+**do not silently work around it**. Instead:
+
+1. Flag it to the developer in your response.
+2. Propose a one-line addition to this file describing the confusion.
+
+The developer will determine whether the fix belongs in the code or here.
+
+---
+
+<!-- MAINTENANCE REMINDER:
+     - Review this file when upgrading major dependencies or refactoring architecture.
+     - If a section has been empty for a long time, delete it.
+     - If the model no longer makes a listed mistake, remove that entry.
+     - Outdated entries actively degrade agent performance.
+-->

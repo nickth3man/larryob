@@ -5,12 +5,16 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from src.etl._salaries_fetch import _parse_salary
+from src.etl.rate_limit import (
+    _BREF_THROTTLE,
+    BBRRateLimitExceeded,
+    _bref_delay_seconds,
+    fetch_html,
+)
 from src.etl.salaries import (
     _SALARY_CAP_BY_SEASON,
-    BBRRateLimitExceeded,
-    _get_html,
     _normalize_name,
-    _parse_salary,
     _season_team_map,
     load_salary_cap,
 )
@@ -18,12 +22,10 @@ from src.etl.salaries import (
 
 @pytest.fixture(autouse=True)
 def reset_bref_throttle_state():
-    import src.etl.salaries as salaries_mod
-
-    salaries_mod._BREF_THROTTLE.delay = salaries_mod._bref_delay_seconds()
-    salaries_mod._BREF_THROTTLE.next_allowed_at = 0.0
-    salaries_mod._BREF_THROTTLE.success_streak = 0
-    salaries_mod._BREF_THROTTLE.rate_limit_streak = 0
+    _BREF_THROTTLE.delay = _bref_delay_seconds()
+    _BREF_THROTTLE.next_allowed_at = 0.0
+    _BREF_THROTTLE.success_streak = 0
+    _BREF_THROTTLE.rate_limit_streak = 0
 
 
 # ------------------------------------------------------------------ #
@@ -80,30 +82,30 @@ def test_parse_salary_handles_zero() -> None:
 
 
 # ------------------------------------------------------------------ #
-# _get_html                                                           #
+# fetch_html                                                          #
 # ------------------------------------------------------------------ #
 
 
-def test_get_html_returns_text_on_success() -> None:
+def test_fetch_html_returns_text_on_success() -> None:
     mock_resp = MagicMock()
     mock_resp.status_code = 200
     mock_resp.text = "<html>ok</html>"
-    with patch("src.etl.salaries.requests.get", return_value=mock_resp) as mock_get:
-        result = _get_html("http://example.com")
+    with patch("src.etl.rate_limit.requests.get", return_value=mock_resp) as mock_get:
+        result = fetch_html("http://example.com")
     assert result == "<html>ok</html>"
     mock_get.assert_called_once()
 
 
-def test_get_html_returns_none_on_persistent_error() -> None:
+def test_fetch_html_returns_none_on_persistent_error() -> None:
     import requests as req_mod
 
-    with patch("src.etl.salaries.requests.get", side_effect=req_mod.RequestException("timeout")):
-        with patch("src.etl.salaries.time.sleep"):
-            result = _get_html("http://example.com", max_retries=2)
+    with patch("src.etl.rate_limit.requests.get", side_effect=req_mod.RequestException("timeout")):
+        with patch("src.etl.rate_limit.time.sleep"):
+            result = fetch_html("http://example.com", max_retries=2)
     assert result is None
 
 
-def test_get_html_retries_on_429_then_succeeds() -> None:
+def test_fetch_html_retries_on_429_then_succeeds() -> None:
     rate_limited = MagicMock()
     rate_limited.status_code = 429
     rate_limited.headers = {"Retry-After": "1"}
@@ -112,13 +114,13 @@ def test_get_html_retries_on_429_then_succeeds() -> None:
     ok.status_code = 200
     ok.text = "content"
 
-    with patch("src.etl.salaries.requests.get", side_effect=[rate_limited, ok]):
-        with patch("src.etl.salaries.time.sleep"):
-            result = _get_html("http://example.com", max_retries=3)
+    with patch("src.etl.rate_limit.requests.get", side_effect=[rate_limited, ok]):
+        with patch("src.etl.rate_limit.time.sleep"):
+            result = fetch_html("http://example.com", max_retries=3)
     assert result == "content"
 
 
-def test_get_html_handles_invalid_retry_after_header() -> None:
+def test_fetch_html_handles_invalid_retry_after_header() -> None:
     rate_limited = MagicMock()
     rate_limited.status_code = 429
     rate_limited.headers = {"Retry-After": "not-a-number"}
@@ -127,28 +129,28 @@ def test_get_html_handles_invalid_retry_after_header() -> None:
     ok.status_code = 200
     ok.text = "ok"
 
-    with patch("src.etl.salaries.requests.get", side_effect=[rate_limited, ok]):
-        with patch("src.etl.salaries.time.sleep"):
-            result = _get_html("http://example.com", max_retries=3)
+    with patch("src.etl.rate_limit.requests.get", side_effect=[rate_limited, ok]):
+        with patch("src.etl.rate_limit.time.sleep"):
+            result = fetch_html("http://example.com", max_retries=3)
     assert result == "ok"
 
 
-def test_get_html_returns_none_on_404() -> None:
+def test_fetch_html_returns_none_on_404() -> None:
     not_found = MagicMock()
     not_found.status_code = 404
-    with patch("src.etl.salaries.requests.get", return_value=not_found):
-        result = _get_html("http://example.com")
+    with patch("src.etl.rate_limit.requests.get", return_value=not_found):
+        result = fetch_html("http://example.com")
     assert result is None
 
 
-def test_get_html_skips_extreme_retry_after() -> None:
+def test_fetch_html_skips_extreme_retry_after() -> None:
     rate_limited = MagicMock()
     rate_limited.status_code = 429
     rate_limited.headers = {"Retry-After": "3600"}
-    with patch("src.etl.salaries.requests.get", return_value=rate_limited):
-        with patch("src.etl.salaries.time.sleep") as mocked_sleep:
+    with patch("src.etl.rate_limit.requests.get", return_value=rate_limited):
+        with patch("src.etl.rate_limit.time.sleep") as mocked_sleep:
             try:
-                _get_html("http://example.com")
+                fetch_html("http://example.com")
             except BBRRateLimitExceeded:
                 pass
             else:  # pragma: no cover - defensive
