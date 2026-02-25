@@ -14,3 +14,12 @@ ALTER TABLE dim_team ADD COLUMN bref_abbrev TEXT;
 
 -- Indexes on the new columns — must run AFTER the ALTER TABLE statements.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_player_bref ON dim_player(bref_id);
+
+-- ============================================================================
+-- Rollback / Down migration
+-- Run these statements to reverse the changes applied above.
+-- Note: SQLite does not support DROP COLUMN; columns added by ALTER TABLE
+-- cannot be removed without recreating the affected table. The index can be
+-- dropped independently.
+-- ============================================================================
+-- DROP INDEX IF EXISTS idx_player_bref;

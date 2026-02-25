@@ -15,10 +15,10 @@ _VALID_CONFLICT = frozenset({"IGNORE", "REPLACE", "ABORT", "ROLLBACK", "FAIL"})
 def _validate_identifier(name: str) -> None:
     """
     Validate that the given name is a safe SQL identifier containing only ASCII letters, digits, and underscores.
-    
+
     Parameters:
         name (str): Identifier to validate.
-    
+
     Raises:
         ValueError: If `name` contains any characters other than letters, digits, or underscores.
     """
@@ -42,14 +42,14 @@ def upsert_rows(
 ) -> int:
     """
     Insert or upsert multiple rows into a table using batching and an optional conflict resolution clause.
-    
+
     Parameters:
         con (sqlite3.Connection): SQLite database connection.
         table (str): Target table name (validated as a safe SQL identifier).
-        rows (list[dict]): Sequence of row mappings where keys are column names; at least one row is required.
+        rows (list[dict]): Sequence of row mappings where keys are column names. Returns 0 immediately for an empty list.
         conflict (str): Optional SQLite conflict clause; one of "IGNORE", "REPLACE", "ABORT", "ROLLBACK", "FAIL". An empty string disables the clause.
         autocommit (bool): If True, commit the connection after successful insertion.
-    
+
     Returns:
         int: Number of rows inserted.
     """
@@ -92,7 +92,7 @@ def upsert_rows(
 def transaction(con: sqlite3.Connection):
     """
     Context manager that provides an explicit SQLite transaction for a connection.
-    
+
     Yields the given sqlite3.Connection so callers can execute statements inside a transaction.
     Commits the transaction when the context exits normally; on exception, rolls back and re-raises the exception.
     """

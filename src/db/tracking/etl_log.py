@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 def _validate_identifier(name: str) -> None:
     """
     Validate that the given name is a safe SQL identifier containing only ASCII letters, digits, or underscores.
-    
+
     Raises:
         ValueError: If name contains any characters other than A–Z, a–z, 0–9, or underscore.
     """
@@ -28,15 +28,15 @@ def already_loaded(
 ) -> bool:
     """
     Determine whether a prior ETL run for the specified table, season, and loader completed with status 'ok'.
-    
+
     If the etl_run_log table does not exist or an OperationalError occurs, the function returns False.
-    
+
     Parameters:
         con (sqlite3.Connection): Database connection.
         table (str): Target table name as recorded in etl_run_log.table_name.
         season_id (str | None): Season identifier, or None to match a NULL season_id in the log.
         loader (str): Loader name recorded in etl_run_log.loader.
-    
+
     Returns:
         bool: True if an 'ok' run exists for the specified table/season/loader, False otherwise.
     """
@@ -69,10 +69,11 @@ def record_run(
 ) -> None:
     """
     Record an ETL run entry in the etl_run_log table.
-    
+
     Inserts a row with table_name, season_id, loader, started_at (uses provided value or current UTC ISO timestamp), finished_at (current UTC ISO timestamp), row_count, and status, then commits the transaction. If the etl_run_log table does not exist the function returns silently; other sqlite3.OperationalError cases are logged at debug level.
-    
+
     Parameters:
+        con (sqlite3.Connection): Database connection.
         table (str): Target table name.
         season_id (str | None): Season identifier or None.
         loader (str): Name of the loader that performed the run.
@@ -106,15 +107,15 @@ def log_load_summary(
 ) -> int:
     """
     Log the number of rows in a table and warn if the count is below a threshold.
-    
+
     Counts rows in the specified table, optionally filtering by the provided season_id when the table contains a season_id column or by joining fact_game when only a game_id column is present. Logs a warning if the resulting count is less than min_rows; otherwise logs an info message.
-    
+
     Parameters:
         con (sqlite3.Connection): Database connection.
         table (str): Target table name (must be a valid SQL identifier).
         season_id (str | None): Optional season identifier to filter rows.
         min_rows (int): Minimum expected rows; a warning is emitted if the count is less than this.
-    
+
     Returns:
         int: Number of rows counted.
     """

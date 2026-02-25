@@ -21,12 +21,12 @@ logger = logging.getLogger(__name__)
 def _parse_salary(value: object) -> int | None:
     """
     Parse a salary string like "$12,345,678" into an integer.
-    
+
     Parameters:
         value (object): Raw salary value, typically a string such as "$1,234,567".
-    
+
     Returns:
-        int: Parsed salary as an integer (e.g., 1234567), or None if the input is not a string or contains no digits.
+        int | None: Parsed salary as an integer (e.g., 1234567), or None if the input is not a string or contains no digits.
     """
     if not isinstance(value, str):
         return None
@@ -37,11 +37,11 @@ def _parse_salary(value: object) -> int | None:
 def fetch_team_season_salaries(bref_abbr: str, end_year: int) -> list[dict]:
     """
     Fetch per-player salaries for a historical team season from Basketball-Reference.
-    
+
     Parameters:
         bref_abbr (str): Team abbreviation used in BBref URLs (e.g., "LAL").
         end_year (int): Season end year (e.g., 2023 for the 2022-23 season).
-    
+
     Returns:
         list[dict]: A list of records where each record has keys:
             - name (str): Player name trimmed of surrounding whitespace.
@@ -89,12 +89,12 @@ def fetch_team_season_salaries(bref_abbr: str, end_year: int) -> list[dict]:
 def fetch_team_current_contracts(bref_abbr: str) -> list[dict]:
     """
     Fetches active multi-year player contracts for a Basketball-Reference team.
-    
+
     Parses the team's contracts page and returns one entry per non-empty salary cell found, covering current and future seasons.
-    
+
     Parameters:
         bref_abbr (str): Basketball-Reference team abbreviation used to build the contracts page URL.
-    
+
     Returns:
         list[dict]: List of records where each record contains:
             - name (str): Player name.

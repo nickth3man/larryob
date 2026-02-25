@@ -14,12 +14,12 @@ def setup_logging(
 ) -> None:
     """
     Configure the process-wide root logger.
-    
+
     Call early (for example in main()) before any other logging. Sets the root logger level, replaces existing handlers, attaches a stream handler that writes to stdout using the module's log format, and—if provided—adds a UTF-8 file handler that also receives log records.
-    
+
     Parameters:
-    	level (str): Logging level name (e.g., "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"); case-insensitive.
-    	log_file (Path | None): Optional path to a log file. When provided, logs are written to the file in addition to stdout using UTF-8 encoding.
+        level (str): Logging level name (e.g., "DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"); case-insensitive.
+        log_file (Path | None): Optional path to a log file. When provided, logs are written to the file in addition to stdout using UTF-8 encoding.
     """
     root = logging.getLogger()
     root.setLevel(level.upper())
