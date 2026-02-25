@@ -19,6 +19,9 @@ from nba_api.stats.endpoints import commonallplayers, commonplayerinfo
 from nba_api.stats.static import players as nba_players_static
 from nba_api.stats.static import teams as nba_teams_static
 
+from ..db.cache import load_cache, save_cache
+from ..db.operations import upsert_rows
+from ..db.tracking import already_loaded, record_run
 from ._dimensions_helpers import (
     _map_common_all_player,
     _map_common_player_info,
@@ -26,13 +29,6 @@ from ._dimensions_helpers import (
     _map_nba_team,
 )
 from .api_client import APICaller
-from .utils import (
-    already_loaded,
-    load_cache,
-    record_run,
-    save_cache,
-    upsert_rows,
-)
 
 logger = logging.getLogger(__name__)
 

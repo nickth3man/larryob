@@ -39,7 +39,7 @@ def _safe_table_count(con: sqlite3.Connection, table_name: str) -> int | None:
     Returns:
         Row count or None if table doesn't exist or name is invalid.
     """
-    from src.etl.utils import _validate_identifier as _validate_sql_identifier
+    from src.db.operations import _validate_identifier as _validate_sql_identifier
 
     if not _VALID_IDENTIFIER.fullmatch(table_name):
         return None

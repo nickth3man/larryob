@@ -5,7 +5,7 @@ import sqlite3
 import duckdb
 
 from src.db.analytics import _load_all_views
-from src.etl.utils import upsert_rows
+from src.db.operations import upsert_rows
 
 # ------------------------------------------------------------------ #
 # Helpers to seed player game log data                               #

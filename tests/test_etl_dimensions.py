@@ -276,12 +276,12 @@ def test_load_players_full_from_cache(
     sqlite_con: sqlite3.Connection,
     tmp_path: Path,
 ) -> None:
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
     load_seasons(sqlite_con, up_to_start_year=2024)
 
-    from src.etl.utils import save_cache
+    from src.db.cache import save_cache
 
     records = [
         {
@@ -307,11 +307,11 @@ def test_load_players_bio_enrichment_from_cache(
     sqlite_con_with_data: sqlite3.Connection,
     tmp_path: Path,
 ) -> None:
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
-    from src.etl.utils import save_cache
+    from src.db.cache import save_cache
 
     record = {
         "PERSON_ID": "2544",
@@ -337,14 +337,14 @@ def test_load_players_bio_enrichment_api_exception_skips_player(
     sqlite_con_with_data: sqlite3.Connection,
     tmp_path: Path,
 ) -> None:
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     with patch(
         "src.etl.dimensions.commonplayerinfo.CommonPlayerInfo", side_effect=RuntimeError("API down")
     ):
-        with patch("time.sleep"):
+        with patch("src.etl.api_client.time.sleep"):
             result = load_players_bio_enrichment(sqlite_con_with_data, player_ids=["2544"])
     assert result == 0
 

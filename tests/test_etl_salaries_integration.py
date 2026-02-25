@@ -9,9 +9,9 @@ def test_load_player_salaries_historical_season(
     tmp_path,
     monkeypatch,
 ):
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     mock_html = """
     <html>
@@ -45,9 +45,9 @@ def test_load_player_salaries_current_season(
     tmp_path,
     monkeypatch,
 ):
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     import datetime as dt
 

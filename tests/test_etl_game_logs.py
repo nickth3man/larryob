@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
+from src.db.operations import upsert_rows
 from src.etl.game_logs import (
     _build_game_rows,
     _build_player_rows,
@@ -13,7 +14,6 @@ from src.etl.game_logs import (
     _parse_matchup,
     load_season,
 )
-from src.etl.utils import upsert_rows
 
 
 def _make_mock_df() -> pd.DataFrame:
@@ -179,10 +179,10 @@ def test_load_season_skips_when_already_loaded(
     tmp_path: Path,
 ) -> None:
     """When etl_run_log already has a successful entry, load_season returns {}."""
-    import src.etl.utils as utils_mod
-    from src.etl.utils import record_run
+    import src.db.cache.file_cache as cache_mod
+    from src.db.tracking import record_run
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     record_run(
         sqlite_con_with_data,
@@ -202,16 +202,15 @@ def test_load_season_returns_empty_dict_for_empty_api_response(
     tmp_path: Path,
 ) -> None:
     """Empty API DataFrame → load_season returns {}."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     mock_ep = MagicMock()
     mock_ep.get_data_frames.return_value = [pd.DataFrame()]
 
     with patch("src.etl.game_logs.playergamelogs.PlayerGameLogs", return_value=mock_ep):
-        with patch("src.etl.utils.time.sleep"):
-            result = load_season(sqlite_con_with_data, "2099-00")
+        result = load_season(sqlite_con_with_data, "2099-00")
     assert result == {}
 
 
@@ -221,9 +220,9 @@ def test_load_season_returns_counts_dict_on_success(
     tmp_path: Path,
 ) -> None:
     """load_season returns a dict with fact_game/player_game_log/team_game_log keys on success."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     df = pd.DataFrame(
         {
@@ -254,7 +253,7 @@ def test_load_season_returns_counts_dict_on_success(
             "PLUS_MINUS": [10],
         }
     )
-    from src.etl.utils import save_cache
+    from src.db.cache import save_cache
 
     save_cache("pgl_2023-24_Regular_Season", df.to_dict(orient="records"))
 

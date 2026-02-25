@@ -36,11 +36,11 @@ def test_load_team_roster_from_cache_inserts_rows(
     tmp_path: Path,
 ) -> None:
     """When cache is warm, roster rows are inserted without any API call."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
-    from src.etl.utils import save_cache
+    from src.db.cache import save_cache
 
     cached_rows = [
         {
@@ -68,11 +68,11 @@ def test_load_team_roster_deduplication_from_cache(
     tmp_path: Path,
 ) -> None:
     """Calling twice with the same cached data must not create duplicates."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
-    from src.etl.utils import save_cache
+    from src.db.cache import save_cache
 
     cached_rows = [
         {
@@ -100,23 +100,22 @@ def test_load_team_roster_returns_zero_for_empty_api_result(
     tmp_path: Path,
 ) -> None:
     """When API returns no valid players for a team, returns 0."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     mock_ep = MagicMock()
     mock_ep.get_data_frames.return_value = [
         pd.DataFrame([{"PLAYER_ID": "99999", "TeamID": "1610612747"}])
     ]
     with patch("src.etl.roster.commonteamroster.CommonTeamRoster", return_value=mock_ep):
-        with patch("src.etl.utils.time.sleep"):
-            inserted = load_team_roster(
-                sqlite_con_with_data,
-                "1610612747",
-                "2023-24",
-                valid_players=set(),
-                valid_teams={"1610612747"},
-            )
+        inserted = load_team_roster(
+            sqlite_con_with_data,
+            "1610612747",
+            "2023-24",
+            valid_players=set(),
+            valid_teams={"1610612747"},
+        )
     assert inserted == 0
 
 
@@ -126,11 +125,11 @@ def test_load_team_roster_uses_cached_empty_list_without_api_call(
     tmp_path: Path,
 ) -> None:
     """A cached empty list is honoured and does not trigger an API call."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
-    from src.etl.utils import save_cache
+    from src.db.cache import save_cache
 
     save_cache("roster_1610612747_2023-24", [])
 
@@ -157,9 +156,9 @@ def test_load_team_roster_from_api_success(
     tmp_path: Path,
 ) -> None:
     """When there is no cache, the API is called and rows inserted."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     mock_df = pd.DataFrame(
         [
@@ -170,14 +169,13 @@ def test_load_team_roster_from_api_success(
     mock_ep.get_data_frames.return_value = [mock_df]
 
     with patch("src.etl.roster.commonteamroster.CommonTeamRoster", return_value=mock_ep):
-        with patch("src.etl.utils.time.sleep"):
-            inserted = load_team_roster(
-                sqlite_con_with_data,
-                "1610612747",
-                "2023-24",
-                valid_players={"2544"},
-                valid_teams={"1610612747"},
-            )
+        inserted = load_team_roster(
+            sqlite_con_with_data,
+            "1610612747",
+            "2023-24",
+            valid_players={"2544"},
+            valid_teams={"1610612747"},
+        )
     assert inserted == 1
 
 
@@ -187,9 +185,9 @@ def test_load_team_roster_filters_out_unknown_players(
     tmp_path: Path,
 ) -> None:
     """Players not in valid_players set must be filtered out."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     mock_df = pd.DataFrame(
         [
@@ -200,14 +198,13 @@ def test_load_team_roster_filters_out_unknown_players(
     mock_ep.get_data_frames.return_value = [mock_df]
 
     with patch("src.etl.roster.commonteamroster.CommonTeamRoster", return_value=mock_ep):
-        with patch("src.etl.utils.time.sleep"):
-            inserted = load_team_roster(
-                sqlite_con_with_data,
-                "1610612747",
-                "2023-24",
-                valid_players={"2544"},
-                valid_teams={"1610612747"},
-            )
+        inserted = load_team_roster(
+            sqlite_con_with_data,
+            "1610612747",
+            "2023-24",
+            valid_players={"2544"},
+            valid_teams={"1610612747"},
+        )
     assert inserted == 0
 
 
@@ -217,15 +214,15 @@ def test_load_team_roster_returns_zero_on_api_exception(
     tmp_path: Path,
 ) -> None:
     """API failure is caught; returns 0 without raising."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     with patch(
         "src.etl.roster.commonteamroster.CommonTeamRoster",
         side_effect=RuntimeError("API unavailable"),
     ):
-        with patch("src.etl.utils.time.sleep"):
+        with patch("src.etl.api_client.time.sleep"):
             inserted = load_team_roster(sqlite_con_with_data, "1610612747", "2023-24")
     assert inserted == 0
 
@@ -236,16 +233,15 @@ def test_load_team_roster_returns_zero_on_empty_api_response(
     tmp_path: Path,
 ) -> None:
     """Empty DataFrame from API → returns 0."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     mock_ep = MagicMock()
     mock_ep.get_data_frames.return_value = [pd.DataFrame()]
 
     with patch("src.etl.roster.commonteamroster.CommonTeamRoster", return_value=mock_ep):
-        with patch("src.etl.utils.time.sleep"):
-            inserted = load_team_roster(sqlite_con_with_data, "1610612747", "2023-24")
+        inserted = load_team_roster(sqlite_con_with_data, "1610612747", "2023-24")
     assert inserted == 0
 
 
@@ -260,9 +256,9 @@ def test_load_team_roster_queries_players_from_db_when_not_provided(
     tmp_path: Path,
 ) -> None:
     """When valid_players is None, queries dim_player table."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     mock_df = pd.DataFrame(
         [
@@ -273,14 +269,13 @@ def test_load_team_roster_queries_players_from_db_when_not_provided(
     mock_ep.get_data_frames.return_value = [mock_df]
 
     with patch("src.etl.roster.commonteamroster.CommonTeamRoster", return_value=mock_ep):
-        with patch("src.etl.utils.time.sleep"):
-            inserted = load_team_roster(
-                sqlite_con_with_data,
-                "1610612747",
-                "2023-24",
-                # valid_players=None - should query DB
-                valid_teams={"1610612747"},
-            )
+        inserted = load_team_roster(
+            sqlite_con_with_data,
+            "1610612747",
+            "2023-24",
+            # valid_players=None - should query DB
+            valid_teams={"1610612747"},
+        )
     assert inserted == 1
 
 
@@ -290,9 +285,9 @@ def test_load_team_roster_queries_teams_from_db_when_not_provided(
     tmp_path: Path,
 ) -> None:
     """When valid_teams is None, queries dim_team table."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     mock_df = pd.DataFrame(
         [
@@ -303,14 +298,13 @@ def test_load_team_roster_queries_teams_from_db_when_not_provided(
     mock_ep.get_data_frames.return_value = [mock_df]
 
     with patch("src.etl.roster.commonteamroster.CommonTeamRoster", return_value=mock_ep):
-        with patch("src.etl.utils.time.sleep"):
-            inserted = load_team_roster(
-                sqlite_con_with_data,
-                "1610612747",
-                "2023-24",
-                valid_players={"2544"},
-                # valid_teams=None - should query DB
-            )
+        inserted = load_team_roster(
+            sqlite_con_with_data,
+            "1610612747",
+            "2023-24",
+            valid_players={"2544"},
+            # valid_teams=None - should query DB
+        )
     assert inserted == 1
 
 
@@ -320,9 +314,9 @@ def test_load_team_roster_filters_by_valid_players_set(
     tmp_path: Path,
 ) -> None:
     """Only players in valid_players set are inserted."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     # API returns multiple players
     mock_df = pd.DataFrame(
@@ -336,14 +330,13 @@ def test_load_team_roster_filters_by_valid_players_set(
     mock_ep.get_data_frames.return_value = [mock_df]
 
     with patch("src.etl.roster.commonteamroster.CommonTeamRoster", return_value=mock_ep):
-        with patch("src.etl.utils.time.sleep"):
-            inserted = load_team_roster(
-                sqlite_con_with_data,
-                "1610612747",
-                "2023-24",
-                valid_players={"2544", "203999"},
-                valid_teams={"1610612747"},
-            )
+        inserted = load_team_roster(
+            sqlite_con_with_data,
+            "1610612747",
+            "2023-24",
+            valid_players={"2544", "203999"},
+            valid_teams={"1610612747"},
+        )
     assert inserted == 2
 
     # Verify invalid player was not inserted
@@ -359,9 +352,9 @@ def test_load_team_roster_filters_by_valid_teams_set(
     tmp_path: Path,
 ) -> None:
     """Only teams in valid_teams set are inserted."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     # API returns player for team not in valid_teams
     mock_df = pd.DataFrame(
@@ -373,14 +366,13 @@ def test_load_team_roster_filters_by_valid_teams_set(
     mock_ep.get_data_frames.return_value = [mock_df]
 
     with patch("src.etl.roster.commonteamroster.CommonTeamRoster", return_value=mock_ep):
-        with patch("src.etl.utils.time.sleep"):
-            inserted = load_team_roster(
-                sqlite_con_with_data,
-                "1610612747",
-                "2023-24",
-                valid_players={"2544"},
-                valid_teams={"1610612747"},  # 9999999999 not in valid set
-            )
+        inserted = load_team_roster(
+            sqlite_con_with_data,
+            "1610612747",
+            "2023-24",
+            valid_players={"2544"},
+            valid_teams={"1610612747"},  # 9999999999 not in valid set
+        )
     assert inserted == 0
 
 
@@ -390,9 +382,9 @@ def test_load_team_roster_filters_by_both_players_and_teams(
     tmp_path: Path,
 ) -> None:
     """Both player and team must be valid to insert."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     mock_df = pd.DataFrame(
         [
@@ -406,14 +398,13 @@ def test_load_team_roster_filters_by_both_players_and_teams(
     mock_ep.get_data_frames.return_value = [mock_df]
 
     with patch("src.etl.roster.commonteamroster.CommonTeamRoster", return_value=mock_ep):
-        with patch("src.etl.utils.time.sleep"):
-            inserted = load_team_roster(
-                sqlite_con_with_data,
-                "1610612747",
-                "2023-24",
-                valid_players={"2544"},
-                valid_teams={"1610612747"},
-            )
+        inserted = load_team_roster(
+            sqlite_con_with_data,
+            "1610612747",
+            "2023-24",
+            valid_players={"2544"},
+            valid_teams={"1610612747"},
+        )
     assert inserted == 1
 
 
@@ -428,9 +419,9 @@ def test_load_team_roster_api_failure_retries_and_succeeds(
     tmp_path: Path,
 ) -> None:
     """API fails on first call but succeeds on retry."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     mock_df = pd.DataFrame([{"PLAYER_ID": "2544", "TeamID": "1610612747"}])
     mock_ep = MagicMock()
@@ -449,7 +440,7 @@ def test_load_team_roster_api_failure_retries_and_succeeds(
         "src.etl.roster.commonteamroster.CommonTeamRoster",
         side_effect=side_effect,
     ):
-        with patch("src.etl.utils.time.sleep"):
+        with patch("src.etl.api_client.time.sleep"):
             inserted = load_team_roster(
                 sqlite_con_with_data,
                 "1610612747",
@@ -467,9 +458,9 @@ def test_load_team_roster_api_max_retries_exceeded(
     tmp_path: Path,
 ) -> None:
     """API fails persistently; returns 0 after max retries."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     def side_effect(*args, **kwargs):
         raise RuntimeError("API unavailable")
@@ -478,7 +469,7 @@ def test_load_team_roster_api_max_retries_exceeded(
         "src.etl.roster.commonteamroster.CommonTeamRoster",
         side_effect=side_effect,
     ):
-        with patch("src.etl.utils.time.sleep"):
+        with patch("src.etl.api_client.time.sleep"):
             inserted = load_team_roster(sqlite_con_with_data, "1610612747", "2023-24")
     assert inserted == 0
 
@@ -490,15 +481,15 @@ def test_load_team_roster_api_error_is_caught_and_logged(
     caplog,
 ) -> None:
     """API errors are caught, logged, and return 0."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     with patch(
         "src.etl.roster.commonteamroster.CommonTeamRoster",
         side_effect=ValueError("Bad request"),
     ):
-        with patch("src.etl.utils.time.sleep"):
+        with patch("src.etl.api_client.time.sleep"):
             inserted = load_team_roster(sqlite_con_with_data, "1610612747", "2023-24")
 
     assert inserted == 0
@@ -516,11 +507,11 @@ def test_load_team_roster_cache_hit_skips_api_call(
     tmp_path: Path,
 ) -> None:
     """When cache has data, API is not called."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
-    from src.etl.utils import save_cache
+    from src.db.cache import save_cache
 
     cached_rows = [
         {
@@ -552,23 +543,22 @@ def test_load_team_roster_cache_miss_calls_api_and_caches(
     tmp_path: Path,
 ) -> None:
     """When cache miss, API is called and result is cached."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     mock_df = pd.DataFrame([{"PLAYER_ID": "2544", "TeamID": "1610612747"}])
     mock_ep = MagicMock()
     mock_ep.get_data_frames.return_value = [mock_df]
 
     with patch("src.etl.roster.commonteamroster.CommonTeamRoster", return_value=mock_ep):
-        with patch("src.etl.utils.time.sleep"):
-            inserted = load_team_roster(
-                sqlite_con_with_data,
-                "1610612747",
-                "2023-24",
-                valid_players={"2544"},
-                valid_teams={"1610612747"},
-            )
+        inserted = load_team_roster(
+            sqlite_con_with_data,
+            "1610612747",
+            "2023-24",
+            valid_players={"2544"},
+            valid_teams={"1610612747"},
+        )
     assert inserted == 1
 
     # Verify cache was written
@@ -616,9 +606,9 @@ def test_load_team_roster_uses_team_id_from_api_response(
     tmp_path: Path,
 ) -> None:
     """TeamID from API response is used, not the parameter."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     # API returns different team_id than parameter
     mock_df = pd.DataFrame([{"PLAYER_ID": "2544", "TeamID": "1610612744"}])
@@ -626,14 +616,13 @@ def test_load_team_roster_uses_team_id_from_api_response(
     mock_ep.get_data_frames.return_value = [mock_df]
 
     with patch("src.etl.roster.commonteamroster.CommonTeamRoster", return_value=mock_ep):
-        with patch("src.etl.utils.time.sleep"):
-            inserted = load_team_roster(
-                sqlite_con_with_data,
-                "1610612747",  # Parameter team_id
-                "2023-24",
-                valid_players={"2544"},
-                valid_teams={"1610612744"},  # API response team_id
-            )
+        inserted = load_team_roster(
+            sqlite_con_with_data,
+            "1610612747",  # Parameter team_id
+            "2023-24",
+            valid_players={"2544"},
+            valid_teams={"1610612744"},  # API response team_id
+        )
 
     # Should insert with team_id from API response
     assert inserted == 1
@@ -649,9 +638,9 @@ def test_load_team_roster_handles_missing_player_id(
     tmp_path: Path,
 ) -> None:
     """Handles records with missing PLAYER_ID gracefully."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     # Mix of valid and missing PLAYER_ID
     mock_df = pd.DataFrame(
@@ -664,14 +653,13 @@ def test_load_team_roster_handles_missing_player_id(
     mock_ep.get_data_frames.return_value = [mock_df]
 
     with patch("src.etl.roster.commonteamroster.CommonTeamRoster", return_value=mock_ep):
-        with patch("src.etl.utils.time.sleep"):
-            inserted = load_team_roster(
-                sqlite_con_with_data,
-                "1610612747",
-                "2023-24",
-                valid_players={"2544"},
-                valid_teams={"1610612747"},
-            )
+        inserted = load_team_roster(
+            sqlite_con_with_data,
+            "1610612747",
+            "2023-24",
+            valid_players={"2544"},
+            valid_teams={"1610612747"},
+        )
 
     # Only valid record inserted
     assert inserted == 1
@@ -683,23 +671,22 @@ def test_load_team_roster_sets_end_date_to_null(
     tmp_path: Path,
 ) -> None:
     """end_date is always set to NULL for current stints."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     mock_df = pd.DataFrame([{"PLAYER_ID": "2544", "TeamID": "1610612747"}])
     mock_ep = MagicMock()
     mock_ep.get_data_frames.return_value = [mock_df]
 
     with patch("src.etl.roster.commonteamroster.CommonTeamRoster", return_value=mock_ep):
-        with patch("src.etl.utils.time.sleep"):
-            inserted = load_team_roster(
-                sqlite_con_with_data,
-                "1610612747",
-                "2023-24",
-                valid_players={"2544"},
-                valid_teams={"1610612747"},
-            )
+        inserted = load_team_roster(
+            sqlite_con_with_data,
+            "1610612747",
+            "2023-24",
+            valid_players={"2544"},
+            valid_teams={"1610612747"},
+        )
 
     assert inserted == 1
     row = sqlite_con_with_data.execute(
@@ -719,12 +706,12 @@ def test_load_season_rosters_skips_when_already_loaded(
     tmp_path: Path,
 ) -> None:
     """Skips loading when etl_run_log shows already loaded."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     # Mark as already loaded
-    from src.etl.utils import record_run
+    from src.db.tracking import record_run
 
     record_run(
         sqlite_con_with_data,
@@ -748,9 +735,9 @@ def test_load_season_rosters_loads_all_teams(
     tmp_path: Path,
 ) -> None:
     """Loads rosters for all teams in dim_team."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     # Add the test season to dim_season to avoid FK constraint errors
     sqlite_con_with_data.execute(
@@ -792,9 +779,9 @@ def test_load_season_rosters_records_metrics(
     tmp_path: Path,
 ) -> None:
     """Records ETL metrics in etl_run_log."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     # Add the test season to dim_season to avoid FK constraint errors
     sqlite_con_with_data.execute(
@@ -842,9 +829,9 @@ def test_load_season_rosters_records_error_on_failure(
     tmp_path: Path,
 ) -> None:
     """Records error status when loading fails."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     mock_caller = MagicMock()
 
@@ -884,9 +871,9 @@ def test_load_season_rosters_uses_shared_api_caller(
     tmp_path: Path,
 ) -> None:
     """All team loads use the same API caller instance."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     # Add the test season to dim_season to avoid FK constraint errors
     sqlite_con_with_data.execute(
@@ -935,9 +922,9 @@ def test_load_rosters_for_seasons_multiple_seasons(
     tmp_path: Path,
 ) -> None:
     """Loads rosters for multiple seasons."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     mock_caller = MagicMock()
     call_count = 0
@@ -987,9 +974,9 @@ def test_load_rosters_for_seasons_returns_cumulative_total(
     tmp_path: Path,
 ) -> None:
     """Returns total across all seasons."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     mock_caller = MagicMock()
     call_count = 0
@@ -1040,9 +1027,9 @@ def test_load_season_rosters_logs_progress_every_5_teams(
     caplog,
 ) -> None:
     """Logs progress message every 5 teams processed."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     # Add 3 more teams to trigger the progress log (total = 5 teams)
     for i in range(3):

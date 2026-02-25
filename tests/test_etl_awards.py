@@ -172,11 +172,11 @@ def test_load_player_awards_from_cache(
     tmp_path,
 ) -> None:
     """When cache is warm, no API call is made and rows are inserted."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
-    from src.etl.utils import save_cache
+    from src.db.cache import save_cache
 
     save_cache(
         "awards_2544",
@@ -200,11 +200,11 @@ def test_load_player_awards_filters_rows_missing_fk_targets(
     sqlite_con_with_data: sqlite3.Connection,
     tmp_path,
 ) -> None:
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
-    from src.etl.utils import save_cache
+    from src.db.cache import save_cache
 
     save_cache(
         "awards_2544",
@@ -248,15 +248,14 @@ def test_load_player_awards_returns_zero_for_no_awards(
     tmp_path,
 ) -> None:
     """No awards in cache or API → returns 0."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     mock_ep = MagicMock()
     mock_ep.get_data_frames.return_value = [pd.DataFrame()]
     with patch("src.etl.awards.playerawards.PlayerAwards", return_value=mock_ep):
-        with patch("src.etl.utils.time.sleep"):
-            inserted = load_player_awards(sqlite_con_with_data, ["2544"])
+        inserted = load_player_awards(sqlite_con_with_data, ["2544"])
     assert inserted == 0
 
 
@@ -266,12 +265,12 @@ def test_load_player_awards_handles_api_exception(
     tmp_path,
 ) -> None:
     """API failure is logged and skipped; function returns 0."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     with patch("src.etl.awards.playerawards.PlayerAwards", side_effect=RuntimeError("API down")):
-        with patch("src.etl.utils.time.sleep"):
+        with patch("src.etl.api_client.time.sleep"):
             inserted = load_player_awards(sqlite_con_with_data, ["2544"])
     assert inserted == 0
 
@@ -286,9 +285,9 @@ def test_load_all_awards_returns_zero_when_no_players(
     monkeypatch,
     tmp_path,
 ) -> None:
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
     result = load_all_awards(sqlite_con, active_only=True)
     assert result == 0
 
@@ -299,10 +298,10 @@ def test_load_all_awards_active_only_queries_active_players(
     tmp_path,
 ) -> None:
     """active_only=True should not raise; no API calls because cache returns empty."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
     with patch("src.etl.awards.playerawards.PlayerAwards", side_effect=RuntimeError("no API")):
-        with patch("src.etl.utils.time.sleep"):
+        with patch("src.etl.api_client.time.sleep"):
             result = load_all_awards(sqlite_con_with_data, active_only=True)
     assert result == 0

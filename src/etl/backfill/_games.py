@@ -11,6 +11,8 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+from src.db.operations import upsert_rows
+from src.db.tracking import log_load_summary
 from src.etl.backfill._base import (
     RAW_DIR,
     csv_path,
@@ -20,7 +22,6 @@ from src.etl.backfill._base import (
     safe_str,
 )
 from src.etl.helpers import pad_game_id, season_id_from_date, season_type_from_game_id
-from src.etl.utils import log_load_summary, upsert_rows
 from src.etl.validate import validate_rows
 
 logger = logging.getLogger(__name__)

@@ -2,7 +2,7 @@ import sqlite3
 
 import pytest
 
-from src.etl.utils import load_cache, save_cache
+from src.db.cache import load_cache, save_cache
 from src.etl.validate import (
     check_game_stat_consistency,
     run_consistency_checks,
@@ -213,9 +213,12 @@ def test_check_game_stat_consistency(sqlite_con_with_data: sqlite3.Connection):
 
 def test_cache_versioning_and_ttl(tmp_path, monkeypatch):
     # Point CACHE_DIR to temp path
-    from src.etl import utils
+    from src.db.cache import file_cache
+    from src.etl.config import CacheConfig
 
-    monkeypatch.setattr(utils, "CACHE_DIR", tmp_path)
+    CACHE_VERSION = CacheConfig.CACHE_VERSION
+
+    monkeypatch.setattr(file_cache, "CACHE_DIR", tmp_path)
 
     key = "test_key"
     data = {"hello": "world"}
@@ -241,7 +244,7 @@ def test_cache_versioning_and_ttl(tmp_path, monkeypatch):
 
     # 4. Version mismatch fails
     payload["ts"] += 86400 * 2  # restore time
-    payload["v"] = utils.CACHE_VERSION - 1
+    payload["v"] = CACHE_VERSION - 1
     p.write_text(json.dumps(payload))
 
     assert load_cache(key) is None

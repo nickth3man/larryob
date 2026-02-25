@@ -14,11 +14,13 @@ import sqlite3
 import time
 from datetime import UTC
 
+from ..db.cache import load_cache
+from ..db.operations import upsert_rows
+from ..db.tracking import already_loaded, record_run
 from ._salaries_fetch import fetch_team_current_contracts, fetch_team_season_salaries
 from .config import get_all_salary_caps, nba_abbr_to_bref
 from .helpers import _norm_name
 from .rate_limit import _BREF_THROTTLE, BBRRateLimitExceeded
-from .utils import already_loaded, load_cache, record_run, upsert_rows
 from .validate import validate_rows
 
 logger = logging.getLogger(__name__)
@@ -267,7 +269,7 @@ def load_player_salaries(
         record_run(con, "fact_salary", season_id, loader_id, 0, status, started_at)
         return 0
 
-    from .utils import transaction
+    from ..db.operations import transaction
 
     with transaction(con):
         inserted = upsert_rows(

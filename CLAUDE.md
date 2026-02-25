@@ -12,9 +12,9 @@
      Example: "Always use pnpm (not npm or yarn) to run scripts."
      If the tool is detectable from package.json or config files, omit it. -->
 
-- [ ] `[package manager]` — always use `[command]` to run scripts
-- [ ] `[type checker / linter]` — run after every change: `[command]`
-- [ ] `[test runner]` — run affected tests before marking a task complete: `[command]`
+- [x] `uv` — always use `uv run` to run scripts
+- [x] `ruff` — run after every change: `ruff check . && ruff format .`
+- [x] `pytest` — run affected tests before marking a task complete: `uv run pytest tests/`
 
 ---
 
@@ -52,7 +52,13 @@
      - "This project is early-stage. Schema changes are welcome."
      - "This app has no production users yet. Don't generate data migration scripts."
      - "All new features must be backward-compatible — production data exists."
--->
+     -->
+
+- This project uses a modular architecture with SQL/JSON data extraction
+- Schema DDL is in `src/db/schema/*.sql` files
+- Analytics views are in `src/db/views/*.sql` files
+- Static data is in `src/etl/data/*.json` files
+- Helper modules use underscore prefix (e.g., `_helpers.py`)
 
 ---
 

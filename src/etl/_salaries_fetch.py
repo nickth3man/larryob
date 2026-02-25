@@ -12,8 +12,8 @@ from typing import cast
 
 import pandas as pd
 
+from ..db.cache import load_cache, save_cache
 from .rate_limit import BREF_BASE, fetch_html
-from .utils import load_cache, save_cache
 
 logger = logging.getLogger(__name__)
 

@@ -7,18 +7,13 @@ from pathlib import Path
 
 import pytest
 
-from src.etl.utils import (
-    CACHE_VERSION,
-    already_loaded,
-    cache_path,
-    load_cache,
-    log_load_summary,
-    record_run,
-    save_cache,
-    setup_logging,
-    transaction,
-    upsert_rows,
-)
+from src.db.cache import cache_path, load_cache, save_cache
+from src.db.operations import transaction, upsert_rows
+from src.db.tracking import already_loaded, log_load_summary, record_run
+from src.etl.config import CacheConfig
+from src.etl.logging import setup_logging
+
+CACHE_VERSION = CacheConfig.CACHE_VERSION
 
 # ------------------------------------------------------------------ #
 # Helpers                                                             #
@@ -88,9 +83,9 @@ def test_setup_logging_with_file_adds_two_handlers(tmp_path: Path) -> None:
 
 
 def test_cache_path_returns_json_path(monkeypatch, tmp_path: Path) -> None:
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
     result = cache_path("my_key")
     assert result == tmp_path / "my_key.json"
 
@@ -101,25 +96,25 @@ def test_cache_path_returns_json_path(monkeypatch, tmp_path: Path) -> None:
 
 
 def test_save_and_load_cache_roundtrip(monkeypatch, tmp_path: Path) -> None:
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
     save_cache("roundtrip", {"x": 1})
     result = load_cache("roundtrip")
     assert result == {"x": 1}
 
 
 def test_load_cache_returns_none_for_missing_file(monkeypatch, tmp_path: Path) -> None:
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
     assert load_cache("nonexistent_key") is None
 
 
 def test_load_cache_returns_none_for_stale_ttl(monkeypatch, tmp_path: Path) -> None:
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
     save_cache("ttl_key", [1, 2, 3])
     p = tmp_path / "ttl_key.json"
     payload = json.loads(p.read_text())
@@ -129,17 +124,17 @@ def test_load_cache_returns_none_for_stale_ttl(monkeypatch, tmp_path: Path) -> N
 
 
 def test_load_cache_returns_data_when_ttl_not_expired(monkeypatch, tmp_path: Path) -> None:
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
     save_cache("fresh_key", "hello")
     assert load_cache("fresh_key", ttl_days=30) == "hello"
 
 
 def test_load_cache_returns_none_for_wrong_version(monkeypatch, tmp_path: Path) -> None:
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
     save_cache("ver_key", "data")
     p = tmp_path / "ver_key.json"
     payload = json.loads(p.read_text())
@@ -149,18 +144,18 @@ def test_load_cache_returns_none_for_wrong_version(monkeypatch, tmp_path: Path) 
 
 
 def test_load_cache_returns_none_for_corrupt_json(monkeypatch, tmp_path: Path) -> None:
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
     (tmp_path / "bad.json").write_text("{not valid json}", encoding="utf-8")
     assert load_cache("bad") is None
 
 
 def test_load_cache_returns_none_for_old_format_when_version_2(monkeypatch, tmp_path: Path) -> None:
     """Files with no 'v'/'ts' keys (old v1 format) must return None when CACHE_VERSION >= 2."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
     (tmp_path / "oldformat.json").write_text(json.dumps({"key": "value"}), encoding="utf-8")
     assert load_cache("oldformat") is None
 
