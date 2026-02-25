@@ -177,7 +177,11 @@ def test_ts_pct_calculation(
 
 
 def test_views_are_queryable(duck_con_with_sqlite) -> None:
-    """All views must be defined; querying them must not raise."""
+    """
+    Ensure every view definition loads and can be queried without error.
+    
+    This runs a minimal bounded query against each view's SQL (SELECT 1 FROM (<view_sql>) LIMIT 0) to verify the view parses and executes.
+    """
 
     # Re-attach with views via get_duck_con (using existing sqlite fixture via tmp)
     # This test just ensures the view SQL parses without error.
@@ -325,6 +329,18 @@ def test_get_duck_con_ignores_cached_close_failures(tmp_path, monkeypatch) -> No
 
 
 def _view_sql(view_name: str, con: duckdb.DuckDBPyConnection) -> str:
-    """Retrieve the underlying SQL of a view for wrapping in a subquery."""
+    """
+    Get the SQL definition for a named view.
+    
+    Parameters:
+    	view_name (str): The name of the view to retrieve.
+    	con (duckdb.DuckDBPyConnection): DuckDB connection object (present for interface compatibility).
+    
+    Returns:
+    	view_sql (str): The SQL string that defines the specified view.
+    
+    Raises:
+    	KeyError: If no view with the given name exists.
+    """
     views = _load_all_views()
     return dict(views)[view_name]

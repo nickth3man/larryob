@@ -19,7 +19,15 @@ logger = logging.getLogger(__name__)
 
 
 def _parse_salary(value: object) -> int | None:
-    """Convert '$12,345,678' → 12345678, or None if unparseable."""
+    """
+    Parse a salary string like "$12,345,678" into an integer.
+    
+    Parameters:
+        value (object): Raw salary value, typically a string such as "$1,234,567".
+    
+    Returns:
+        int: Parsed salary as an integer (e.g., 1234567), or None if the input is not a string or contains no digits.
+    """
     if not isinstance(value, str):
         return None
     cleaned = re.sub(r"[^\d]", "", value)
@@ -28,10 +36,16 @@ def _parse_salary(value: object) -> int | None:
 
 def fetch_team_season_salaries(bref_abbr: str, end_year: int) -> list[dict]:
     """
-    Scrape per-player salaries for a historical season from the BBref team
-    season page.  BBref embeds the salary table inside an HTML comment.
-
-    Returns list of dicts: {name, salary}.
+    Fetch per-player salaries for a historical team season from Basketball-Reference.
+    
+    Parameters:
+        bref_abbr (str): Team abbreviation used in BBref URLs (e.g., "LAL").
+        end_year (int): Season end year (e.g., 2023 for the 2022-23 season).
+    
+    Returns:
+        list[dict]: A list of records where each record has keys:
+            - name (str): Player name trimmed of surrounding whitespace.
+            - salary (int): Parsed salary in whole dollars.
     """
     cache_key = f"bref_season_sal_{bref_abbr}_{end_year}"
     cached = load_cache(cache_key)
@@ -74,9 +88,18 @@ def fetch_team_season_salaries(bref_abbr: str, end_year: int) -> list[dict]:
 
 def fetch_team_current_contracts(bref_abbr: str) -> list[dict]:
     """
-    Scrape multi-year contracts from the BBref team contract page.
-    Returns list of dicts: {name, season_id, salary}.
-    Used for current/future seasons (the page only shows active contracts).
+    Fetches active multi-year player contracts for a Basketball-Reference team.
+    
+    Parses the team's contracts page and returns one entry per non-empty salary cell found, covering current and future seasons.
+    
+    Parameters:
+        bref_abbr (str): Basketball-Reference team abbreviation used to build the contracts page URL.
+    
+    Returns:
+        list[dict]: List of records where each record contains:
+            - name (str): Player name.
+            - season_id (str): Season identifier extracted from the salary column header.
+            - salary (int): Parsed salary for that season.
     """
     cache_key = f"bref_contracts_{bref_abbr}"
     cached = load_cache(cache_key)

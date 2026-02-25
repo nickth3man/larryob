@@ -39,20 +39,17 @@ VIEWS_DIR = Path(__file__).parent / "views"
 
 def _load_views_from_sql_file(sql_path: Path) -> list[tuple[str, str]]:
     """
-    Parse a SQL file and extract (view_name, view_sql) tuples.
-
-    Expects SQL files with statements in the format:
-        CREATE OR REPLACE VIEW view_name AS <select statement>;
-
-    Parameters
-    ----------
-    sql_path : Path
-        Path to the SQL file to parse.
-
-    Returns
-    -------
-    list[tuple[str, str]]
-        List of (view_name, sql_statement) pairs.
+    Extracts CREATE OR REPLACE VIEW definitions from a SQL file and returns them as (view_name, view_sql) pairs.
+    
+    Parses the file at sql_path for statements of the form
+        CREATE OR REPLACE VIEW <name> AS <select statement>;
+    and for each match returns the view name and the SQL that follows `AS` with surrounding whitespace trimmed and trailing semicolons or trailing comments removed.
+    
+    Parameters:
+        sql_path (Path): Path to the SQL file to parse.
+    
+    Returns:
+        list[tuple[str, str]]: A list of (view_name, view_sql) tuples where `view_sql` is the body of the view definition (without a trailing semicolon).
     """
     views: list[tuple[str, str]] = []
 
@@ -92,11 +89,11 @@ def _load_views_from_sql_file(sql_path: Path) -> list[tuple[str, str]]:
 def _load_all_views() -> list[tuple[str, str]]:
     """
     Load all SQL view definitions from the views directory.
-
-    Returns
-    -------
-    list[tuple[str, str]]
-        Combined list of (view_name, sql_statement) pairs from all SQL files.
+    
+    Files are processed in sorted filename order; each SQL file may contain one or more CREATE OR REPLACE VIEW statements.
+    
+    Returns:
+        list[tuple[str, str]]: Combined list of (view_name, sql_statement) pairs extracted from all SQL files in VIEWS_DIR.
     """
     all_views: list[tuple[str, str]] = []
 
@@ -123,18 +120,17 @@ def get_duck_con(
     force_refresh: bool = False,
 ) -> duckdb.DuckDBPyConnection:
     """
-    Return an open DuckDB connection with the SQLite database attached
-    as schema 'nba' and all analytical views installed.
-
-    Parameters
-    ----------
-    sqlite_path : Path
-        Path to the SQLite `nba_raw_data.db` file.
-    duck_db_path : str
-        ':memory:' for ephemeral analytics, or a file path to persist
-        DuckDB's own native columnar store alongside SQLite.
-    force_refresh : bool
-        If True, recreates the connection and all views even if cached.
+    Create an open DuckDB connection with the SQLite database attached as schema 'nba' and with analytical views installed.
+    
+    This function uses a per-thread cache to reuse an existing connection when sqlite_path and duck_db_path match the cached values; set force_refresh to True to recreate the connection and reinstall views.
+    
+    Parameters:
+        sqlite_path (Path): Path to the SQLite `nba_raw_data.db` file to attach as schema `nba`.
+        duck_db_path (str): DuckDB store location, `':memory:'` for in-memory or a file path for persistent storage.
+        force_refresh (bool): If True, close any cached connection and recreate it along with all views.
+    
+    Returns:
+        duckdb.DuckDBPyConnection: An open DuckDB connection with the specified DuckDB store, the SQLite database attached as schema `nba`, and all analytical views created.
     """
     if not hasattr(_local, "cached_con"):
         _local.cached_con = None

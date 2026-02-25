@@ -11,6 +11,17 @@ from src.etl.play_by_play import _fetch_pbp, _transform_pbp, load_game, load_gam
 
 
 def _make_pbp_df() -> pd.DataFrame:
+    """
+    Create a sample play-by-play pandas DataFrame containing four events for game "0022300001".
+    
+    Returns:
+        pd.DataFrame: A DataFrame with 4 rows and the following columns:
+            GAME_ID, EVENTNUM, PERIOD, PCTIMESTRING, WCTIMESTRING,
+            EVENTMSGTYPE, EVENTMSGACTIONTYPE, PLAYER1_ID, PLAYER2_ID,
+            PLAYER3_ID, PLAYER1_TEAM_ID, PLAYER2_TEAM_ID,
+            HOMEDESCRIPTION, VISITORDESCRIPTION, NEUTRALDESCRIPTION,
+            SCORE, SCOREMARGIN. PLAYER IDs are strings; zero-valued player IDs indicate team-level events.
+    """
     return pd.DataFrame(
         {
             "GAME_ID": ["0022300001"] * 4,

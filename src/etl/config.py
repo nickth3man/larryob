@@ -21,7 +21,15 @@ _DATA_DIR = Path(__file__).parent / "data"
 
 
 def _load_json(filename: str) -> dict:
-    """Load JSON data from the data directory."""
+    """
+    Load and parse a JSON file from the module's data directory.
+    
+    Parameters:
+        filename (str): Name of the JSON file located in the module data directory (relative path).
+    
+    Returns:
+        dict: The parsed JSON object.
+    """
     filepath = _DATA_DIR / filename
     with open(filepath, encoding="utf-8") as f:
         return json.load(f)
@@ -79,7 +87,15 @@ _TEAM_METADATA: dict[str, dict] = _load_json("team_metadata.json")
 
 
 def get_team_metadata(team_id: str) -> dict[str, Any] | None:
-    """Get metadata for a team by ID."""
+    """
+    Retrieve metadata for a team given its identifier.
+    
+    Parameters:
+        team_id (str): Team identifier key used in the loaded team metadata.
+    
+    Returns:
+        dict[str, Any] | None: The team's metadata dictionary if present, `None` if the team_id is not found.
+    """
     return _TEAM_METADATA.get(team_id)
 
 
@@ -91,7 +107,12 @@ _SALARY_CAP_BY_SEASON: dict[str, int] = _load_json("salary_cap.json")
 
 
 def get_salary_cap(season_id: str) -> int | None:
-    """Get salary cap amount for a season."""
+    """
+    Retrieve the salary cap for a given NBA season.
+    
+    @param season_id: Season identifier used as key in the salary cap data (e.g., "2024-25").
+    @returns: `int` salary cap in dollars for the specified season, `None` if the season is not present.
+    """
     return _SALARY_CAP_BY_SEASON.get(season_id)
 
 
@@ -108,7 +129,15 @@ _ABBR_TO_BREF: dict[str, str] = _load_json("abbr_mappings.json")
 
 
 def nba_abbr_to_bref(abbr: str) -> str | None:
-    """Convert NBA abbreviation to Basketball-Reference abbreviation."""
+    """
+    Map an NBA team abbreviation to its Basketball-Reference equivalent.
+    
+    Parameters:
+        abbr (str): NBA team abbreviation to convert (case-sensitive).
+    
+    Returns:
+        str | None: Basketball-Reference abbreviation if found, None otherwise.
+    """
     return _ABBR_TO_BREF.get(abbr)
 
 

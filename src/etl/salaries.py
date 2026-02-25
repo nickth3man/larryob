@@ -31,7 +31,12 @@ _SALARY_CAP_BY_SEASON = get_all_salary_caps()
 
 # Helper function for abbreviation conversion (uses centralized config)
 def _abbr_to_bref(abbr: str) -> str:
-    """Convert NBA abbreviation to Basketball-Reference abbreviation."""
+    """
+    Map an NBA team abbreviation to the Basketball-Reference equivalent.
+    
+    Returns:
+        The Basketball-Reference abbreviation for `abbr`, or `abbr` unchanged if no mapping is available.
+    """
     result = nba_abbr_to_bref(abbr)
     return result if result is not None else abbr
 
@@ -40,7 +45,14 @@ _LOADER_ID = "salaries.load_player_salaries.v2"
 
 
 def load_salary_cap(con: sqlite3.Connection) -> int:
-    """Seed dim_salary_cap from hardcoded historical values."""
+    """
+    Seed the dim_salary_cap table with historical salary cap amounts and ensure referenced seasons exist.
+    
+    This ensures dim_season contains seasons up to the latest start year present in the hardcoded cap data, then upserts season_id/cap_amount rows into dim_salary_cap.
+    
+    Returns:
+        inserted (int): Number of rows inserted or replaced into dim_salary_cap.
+    """
     # Ensure dim_season has the seasons we need (FK constraint)
     from .dimensions import load_seasons
 
@@ -53,7 +65,15 @@ def load_salary_cap(con: sqlite3.Connection) -> int:
 
 
 def _normalize_name(name: str) -> str:
-    """Compatibility wrapper around shared helper normalization."""
+    """
+    Normalize a person name for consistent matching by removing accents, lowercasing, and stripping non-alphabetic characters.
+    
+    Parameters:
+        name (str): Raw name to normalize.
+    
+    Returns:
+        str: Normalized name suitable for lookup and comparison.
+    """
     return _norm_name(name, strip_non_alpha=True)
 
 
@@ -62,10 +82,15 @@ def _season_team_map(
     season_id: str,
 ) -> tuple[dict[str, str], str]:
     """
-    Resolve season-specific Basketball-Reference team abbreviations to team IDs.
-
-    Prefers fact_team_season coverage (historical abbreviations like MNL/PHW/etc.).
-    Falls back to dim_team -> current abbrev mapping for seasons not present there.
+    Map Basketball-Reference team abbreviations for a given season to internal team IDs.
+    
+    Looks up season-specific mappings from fact_team_season joined to dim_team_history and, if none are found, falls back to current abbreviations from dim_team.
+    
+    Parameters:
+        season_id (str): Season identifier in the form "YYYY-YY" (e.g., "2023-24"); the start year is used to resolve historical mappings.
+    
+    Returns:
+        tuple[dict[str, str], str]: A pair where the first element is a dict mapping Basketball-Reference abbreviations (uppercased strings) to team_id strings, and the second element is the source label: either "fact_team_season" when historical season mappings were used or "dim_team" when the current-team fallback was used.
     """
     start_year = int(season_id.split("-")[0])
 
@@ -113,27 +138,16 @@ def load_player_salaries(
     season_id: str,
 ) -> int:
     """
-    Scrape fact_salary from Basketball-Reference.
-
-    Strategy
-    --------
-    * Past seasons (end_year ≤ current year – 1): team season page
-      ``/teams/{ABBR}/{end_year}.html`` — salary table is in an HTML comment.
-    * Current / future season: team contract page ``/contracts/{ABBR}.html``.
-
-    Each page is fetched once and cached to JSON so subsequent runs skip HTTP.
-    Players are matched to dim_player by normalized name (accent-stripped,
-    lower-cased). Unmatched players are logged at DEBUG level and skipped.
-
-    Parameters
-    ----------
-    season_id : str
-        Season string e.g. '2023-24' or '2025-26'.
-
-    Returns
-    -------
-    int
-        Number of rows inserted/replaced.
+    Load and upsert player salary records for a given NBA season into the fact_salary table.
+    
+    Builds salary rows by fetching Basketball-Reference team salary or contracts pages for the season, matching scraped player names to dim_player by a normalized name, validating the resulting rows, and upserting them into fact_salary. Records run metadata (status and counts) and may short-circuit returning 0 when the season is already loaded, when no valid rows are found, or when a rate limit prevents fetching data.
+    
+    Parameters:
+        con (sqlite3.Connection): Database connection used for lookups, validation, and upsert.
+        season_id (str): Season identifier like "2023-24" or "2025-26".
+    
+    Returns:
+        int: Number of rows inserted or replaced into fact_salary; returns 0 if nothing was inserted.
     """
     loader_id = _LOADER_ID
     if already_loaded(con, "fact_salary", season_id, loader_id):

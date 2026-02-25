@@ -22,6 +22,11 @@ from src.etl.salaries import (
 
 @pytest.fixture(autouse=True)
 def reset_bref_throttle_state():
+    """
+    Reset the global BREF rate-limit throttle state to its initial defaults.
+    
+    Sets the throttle's delay to the configured default, clears the next-allowed timestamp, and resets success and rate-limit streak counters to zero.
+    """
     _BREF_THROTTLE.delay = _bref_delay_seconds()
     _BREF_THROTTLE.next_allowed_at = 0.0
     _BREF_THROTTLE.success_streak = 0
