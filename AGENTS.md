@@ -59,6 +59,8 @@
 - Analytics views are in `src/db/views/*.sql` files
 - Static data is in `src/etl/data/*.json` files
 - Helper modules use underscore prefix (e.g., `_helpers.py`)
+- Database operations are in `src/db/operations/`, caching in `src/db/cache/`, tracking in `src/db/tracking/`
+- ETL logging setup is in `src/etl/logging.py`
 
 ---
 
