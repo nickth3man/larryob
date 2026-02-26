@@ -229,3 +229,110 @@ def test_load_season_pbp_processes_games(
             result = load_season_pbp(sqlite_con_with_data, "2023-24")
     assert result == 10
     mock_lg.assert_called_once()
+
+
+# ------------------------------------------------------------------ #
+# load_season_pbp: source parameter                                   #
+# ------------------------------------------------------------------ #
+
+
+def test_load_season_pbp_source_api_skips_bulk(
+    sqlite_con_with_data: sqlite3.Connection,
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    """source='api' must not call load_bulk_pbp_season at all."""
+    import src.db.cache.file_cache as cache_mod
+
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
+
+    with patch("src.etl.play_by_play.load_games", return_value=5):
+        with patch("src.etl.play_by_play.log_load_summary"):
+            with patch(
+                "src.etl.backfill._pbp_bulk.load_bulk_pbp_season"
+            ) as mock_bulk:
+                result = load_season_pbp(sqlite_con_with_data, "2023-24", source="api")
+
+    assert result == 5
+    mock_bulk.assert_not_called()
+
+
+def test_load_season_pbp_source_bulk_calls_bulk_only(
+    sqlite_con_with_data: sqlite3.Connection,
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    """source='bulk' must call load_bulk_pbp_season and skip load_games."""
+    import src.db.cache.file_cache as cache_mod
+
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
+
+    with patch(
+        "src.etl.play_by_play.load_games"
+    ) as mock_api:
+        with patch("src.etl.play_by_play.log_load_summary"):
+            # Patch the import-time name inside the function's local scope
+            with patch(
+                "src.etl.backfill._pbp_bulk.load_bulk_pbp_season", return_value=42
+            ):
+                result = load_season_pbp(sqlite_con_with_data, "2023-24", source="bulk")
+
+    assert result == 42
+    mock_api.assert_not_called()
+
+
+def test_load_season_pbp_source_auto_deduplicates(
+    sqlite_con_with_data: sqlite3.Connection,
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    """
+    source='auto': after bulk load, game_ids already in fact_play_by_play
+    must be excluded from the API call.
+    """
+    import src.db.cache.file_cache as cache_mod
+
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
+
+    # The fixture seeds fact_game with game_id "0022300001" for season "2023-24".
+    # Pre-populate fact_play_by_play with that game so it is skipped by auto mode.
+    from src.db.operations import upsert_rows as _upsert
+
+    row = {
+        "event_id": "0022300001_000001",
+        "game_id": "0022300001",
+        "period": 1,
+        "pc_time_string": "12:00",
+        "wc_time_string": "8:00 PM",
+        "eventmsgtype": 12,
+        "eventmsgactiontype": 0,
+        "player1_id": None,
+        "player2_id": None,
+        "player3_id": None,
+        "person1type": None,
+        "person2type": None,
+        "person3type": None,
+        "team1_id": None,
+        "team2_id": None,
+        "home_description": None,
+        "visitor_description": None,
+        "neutral_description": None,
+        "score": None,
+        "score_margin": None,
+    }
+    _upsert(sqlite_con_with_data, "fact_play_by_play", [row])
+
+    with patch(
+        "src.etl.play_by_play.load_games", return_value=0
+    ) as mock_api:
+        with patch("src.etl.play_by_play.log_load_summary"):
+            with patch(
+                "src.etl.backfill._pbp_bulk.load_bulk_pbp_season", return_value=1
+            ):
+                load_season_pbp(sqlite_con_with_data, "2023-24", source="auto")
+
+    # load_games was called, but game "0022300001" should NOT be in its args
+    # because it was already present after the bulk load.
+    call_args = mock_api.call_args
+    game_ids_passed = call_args[0][1]  # positional arg: (con, game_ids, ...)
+    assert "0022300001" not in game_ids_passed

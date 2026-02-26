@@ -180,33 +180,44 @@ def load_player_salaries(
         # _salary_history imports _normalize_name from this module.
         from src.etl.backfill._salary_history import load_salary_history
 
-        inserted = load_salary_history(con, open_file=open_file, raw_dir=Path("raw"))
+        load_salary_history(con, open_file=open_file, raw_dir=Path("raw"))
+        # Return season-scoped count; load_salary_history processes the whole CSV
+        # across all seasons, so we query only the requested season for accuracy.
+        inserted: int = con.execute(
+            "SELECT COUNT(*) FROM fact_salary WHERE season_id = ?", (season_id,)
+        ).fetchone()[0]
         record_run(con, "fact_salary", season_id, loader_id, inserted, "ok", started_at)
         return inserted
 
     # ------------------------------------------------------------------ #
-    # "auto" source: try open first; fall back to bref when 0 rows        #
+    # "auto" source: try open first; fall back to bref when 0 new rows    #
     # ------------------------------------------------------------------ #
     if source == "auto":
         from src.etl.backfill._salary_history import load_salary_history  # local import
 
-        load_salary_history(con, open_file=open_file, raw_dir=Path("raw"))
-
-        season_rows: int = con.execute(
+        # Snapshot row count BEFORE open-source load so stale/partial rows from a
+        # prior bref run don't falsely indicate the season is covered.
+        pre_count: int = con.execute(
             "SELECT COUNT(*) FROM fact_salary WHERE season_id = ?", (season_id,)
         ).fetchone()[0]
+        load_salary_history(con, open_file=open_file, raw_dir=Path("raw"))
 
-        if season_rows > 0:
+        post_count: int = con.execute(
+            "SELECT COUNT(*) FROM fact_salary WHERE season_id = ?", (season_id,)
+        ).fetchone()[0]
+        delta = post_count - pre_count
+
+        if delta > 0:
             logger.info(
-                "fact_salary (%s): open-source load supplied %d rows — skipping bref scrape",
+                "fact_salary (%s): open-source load supplied %d new rows — skipping bref scrape",
                 season_id,
-                season_rows,
+                delta,
             )
-            record_run(con, "fact_salary", season_id, loader_id, season_rows, "ok", started_at)
-            return season_rows
+            record_run(con, "fact_salary", season_id, loader_id, post_count, "ok", started_at)
+            return post_count
 
         logger.info(
-            "fact_salary (%s): open-source data has 0 rows for this season — falling back to bref",
+            "fact_salary (%s): open-source data has 0 new rows for this season — falling back to bref",
             season_id,
         )
         # Fall through to bref scraping below.
