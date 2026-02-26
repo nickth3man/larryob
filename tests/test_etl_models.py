@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from src.etl.models import PlayerGameLogRow, TeamGameLogRow
+from src.etl.schemas import PlayerGameLogRow, TeamGameLogRow
 
 # ------------------------------------------------------------------ #
 # PlayerGameLogRow — happy path                                       #

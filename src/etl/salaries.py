@@ -13,6 +13,8 @@ import logging
 import sqlite3
 import time
 from datetime import UTC
+from pathlib import Path
+from typing import Literal
 
 from ..db.cache import load_cache
 from ..db.operations import upsert_rows
@@ -21,7 +23,7 @@ from ._salaries_fetch import fetch_team_current_contracts, fetch_team_season_sal
 from .config import get_all_salary_caps, nba_abbr_to_bref
 from .helpers import _norm_name
 from .rate_limit import _BREF_THROTTLE, BBRRateLimitExceeded
-from .validate import validate_rows
+from .validation import validate_rows
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +35,7 @@ _SALARY_CAP_BY_SEASON = get_all_salary_caps()
 def _abbr_to_bref(abbr: str) -> str:
     """
     Map an NBA team abbreviation to the Basketball-Reference equivalent.
-    
+
     Returns:
         The Basketball-Reference abbreviation for `abbr`, or `abbr` unchanged if no mapping is available.
     """
@@ -47,9 +49,9 @@ _LOADER_ID = "salaries.load_player_salaries.v2"
 def load_salary_cap(con: sqlite3.Connection) -> int:
     """
     Seed the dim_salary_cap table with historical salary cap amounts and ensure referenced seasons exist.
-    
+
     This ensures dim_season contains seasons up to the latest start year present in the hardcoded cap data, then upserts season_id/cap_amount rows into dim_salary_cap.
-    
+
     Returns:
         inserted (int): Number of rows inserted or replaced into dim_salary_cap.
     """
@@ -67,10 +69,10 @@ def load_salary_cap(con: sqlite3.Connection) -> int:
 def _normalize_name(name: str) -> str:
     """
     Normalize a person name for consistent matching by removing accents, lowercasing, and stripping non-alphabetic characters.
-    
+
     Parameters:
         name (str): Raw name to normalize.
-    
+
     Returns:
         str: Normalized name suitable for lookup and comparison.
     """
@@ -83,12 +85,12 @@ def _season_team_map(
 ) -> tuple[dict[str, str], str]:
     """
     Map Basketball-Reference team abbreviations for a given season to internal team IDs.
-    
+
     Looks up season-specific mappings from fact_team_season joined to dim_team_history and, if none are found, falls back to current abbreviations from dim_team.
-    
+
     Parameters:
         season_id (str): Season identifier in the form "YYYY-YY" (e.g., "2023-24"); the start year is used to resolve historical mappings.
-    
+
     Returns:
         tuple[dict[str, str], str]: A pair where the first element is a dict mapping Basketball-Reference abbreviations (uppercased strings) to team_id strings, and the second element is the source label: either "fact_team_season" when historical season mappings were used or "dim_team" when the current-team fallback was used.
     """
@@ -136,16 +138,28 @@ def _season_team_map(
 def load_player_salaries(
     con: sqlite3.Connection,
     season_id: str,
+    source: Literal["bref", "open", "auto"] = "auto",
+    open_file: Path | None = None,
 ) -> int:
     """
     Load and upsert player salary records for a given NBA season into the fact_salary table.
-    
-    Builds salary rows by fetching Basketball-Reference team salary or contracts pages for the season, matching scraped player names to dim_player by a normalized name, validating the resulting rows, and upserting them into fact_salary. Records run metadata (status and counts) and may short-circuit returning 0 when the season is already loaded, when no valid rows are found, or when a rate limit prevents fetching data.
-    
+
+    Builds salary rows by fetching Basketball-Reference team salary or contracts pages for the season, matching scraped
+    player names to dim_player by a normalized name, validating the resulting rows, and upserting them into fact_salary.
+    Records run metadata (status and counts) and may short-circuit returning 0 when the season is already loaded, when
+    no valid rows are found, or when a rate limit prevents fetching data.
+
     Parameters:
         con (sqlite3.Connection): Database connection used for lookups, validation, and upsert.
         season_id (str): Season identifier like "2023-24" or "2025-26".
-    
+        source (Literal["bref", "open", "auto"]): Data source strategy.
+            - "bref": scrape Basketball-Reference only (existing behaviour).
+            - "open": load from open-source CSV only (via load_salary_history).
+            - "auto": try open-source CSV first; fall back to bref if 0 rows returned for
+              this season.
+        open_file (Path | None): Explicit CSV path forwarded to load_salary_history when
+            source is "open" or "auto". Defaults to raw/open_salaries.csv when None.
+
     Returns:
         int: Number of rows inserted or replaced into fact_salary; returns 0 if nothing was inserted.
     """
@@ -157,6 +171,60 @@ def load_player_salaries(
     from datetime import datetime
 
     started_at = datetime.now(UTC).isoformat()
+
+    # ------------------------------------------------------------------ #
+    # "open" source: delegate entirely to load_salary_history             #
+    # ------------------------------------------------------------------ #
+    if source == "open":
+        # Local import avoids circular dependency:
+        # _salary_history imports _normalize_name from this module.
+        from src.etl.backfill._salary_history import load_salary_history
+
+        load_salary_history(con, open_file=open_file, raw_dir=Path("raw"))
+        # Return season-scoped count; load_salary_history processes the whole CSV
+        # across all seasons, so we query only the requested season for accuracy.
+        inserted: int = con.execute(
+            "SELECT COUNT(*) FROM fact_salary WHERE season_id = ?", (season_id,)
+        ).fetchone()[0]
+        record_run(con, "fact_salary", season_id, loader_id, inserted, "ok", started_at)
+        return inserted
+
+    # ------------------------------------------------------------------ #
+    # "auto" source: try open first; fall back to bref when 0 new rows    #
+    # ------------------------------------------------------------------ #
+    if source == "auto":
+        from src.etl.backfill._salary_history import load_salary_history  # local import
+
+        # Snapshot row count BEFORE open-source load so stale/partial rows from a
+        # prior bref run don't falsely indicate the season is covered.
+        pre_count: int = con.execute(
+            "SELECT COUNT(*) FROM fact_salary WHERE season_id = ?", (season_id,)
+        ).fetchone()[0]
+        load_salary_history(con, open_file=open_file, raw_dir=Path("raw"))
+
+        post_count: int = con.execute(
+            "SELECT COUNT(*) FROM fact_salary WHERE season_id = ?", (season_id,)
+        ).fetchone()[0]
+        delta = post_count - pre_count
+
+        if delta > 0:
+            logger.info(
+                "fact_salary (%s): open-source load supplied %d new rows — skipping bref scrape",
+                season_id,
+                delta,
+            )
+            record_run(con, "fact_salary", season_id, loader_id, post_count, "ok", started_at)
+            return post_count
+
+        logger.info(
+            "fact_salary (%s): open-source data has 0 new rows for this season — falling back to bref",
+            season_id,
+        )
+        # Fall through to bref scraping below.
+
+    # ------------------------------------------------------------------ #
+    # "bref" (and fallback from "auto"): scrape Basketball-Reference      #
+    # ------------------------------------------------------------------ #
     import datetime as dt
 
     current_year = dt.date.today().year
@@ -299,12 +367,22 @@ def load_player_salaries(
 def load_salaries_for_seasons(
     con: sqlite3.Connection,
     season_ids: list[str],
+    source: Literal["bref", "open", "auto"] = "auto",
+    open_file: Path | None = None,
 ) -> int:
-    """Load salary cap + player salaries for given seasons."""
+    """Load salary cap + player salaries for given seasons.
+
+    Parameters:
+        con: Database connection.
+        season_ids: List of season identifiers to process (e.g. ["2022-23", "2023-24"]).
+        source: Data source strategy forwarded to load_player_salaries for each season.
+        open_file: Explicit CSV path forwarded to load_player_salaries when source is
+            "open" or "auto".
+    """
     load_salary_cap(con)
     total = 0
     for sid in season_ids:
-        total += load_player_salaries(con, sid)
+        total += load_player_salaries(con, sid, source=source, open_file=open_file)
         pause = _BREF_THROTTLE.inter_season_pause()
         if pause > 0:
             logger.info("fact_salary (%s): adaptive inter-season pause %.2fs", sid, pause)

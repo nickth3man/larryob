@@ -9,7 +9,7 @@ Provides a single `get_duck_con()` factory that:
 
 Usage
 -----
-    from src.db.analytics import get_duck_con
+    from src.db.olap import get_duck_con
 
     con = get_duck_con()
     df = con.execute("SELECT * FROM vw_player_season_totals LIMIT 10").df()
@@ -40,14 +40,14 @@ VIEWS_DIR = Path(__file__).parent / "views"
 def _load_views_from_sql_file(sql_path: Path) -> list[tuple[str, str]]:
     """
     Extracts CREATE OR REPLACE VIEW definitions from a SQL file and returns them as (view_name, view_sql) pairs.
-    
+
     Parses the file at sql_path for statements of the form
         CREATE OR REPLACE VIEW <name> AS <select statement>;
     and for each match returns the view name and the SQL that follows `AS` with surrounding whitespace trimmed and trailing semicolons or trailing comments removed.
-    
+
     Parameters:
         sql_path (Path): Path to the SQL file to parse.
-    
+
     Returns:
         list[tuple[str, str]]: A list of (view_name, view_sql) tuples where `view_sql` is the body of the view definition (without a trailing semicolon).
     """
@@ -76,10 +76,8 @@ def _load_views_from_sql_file(sql_path: Path) -> list[tuple[str, str]]:
         # Extract the SQL and clean it up
         view_sql = content[start_pos:end_pos].strip()
 
-        # Remove trailing semicolon and any trailing comments
-        # Split by semicolon and take only the first part (the actual SQL)
-        if ";" in view_sql:
-            view_sql = view_sql.split(";")[0].strip()
+        # Remove trailing semicolons and comments
+        view_sql = view_sql.split(";")[0].strip()
 
         views.append((view_name, view_sql))
 
@@ -89,9 +87,9 @@ def _load_views_from_sql_file(sql_path: Path) -> list[tuple[str, str]]:
 def _load_all_views() -> list[tuple[str, str]]:
     """
     Load all SQL view definitions from the views directory.
-    
+
     Files are processed in sorted filename order; each SQL file may contain one or more CREATE OR REPLACE VIEW statements.
-    
+
     Returns:
         list[tuple[str, str]]: Combined list of (view_name, sql_statement) pairs extracted from all SQL files in VIEWS_DIR.
     """
@@ -121,14 +119,14 @@ def get_duck_con(
 ) -> duckdb.DuckDBPyConnection:
     """
     Create an open DuckDB connection with the SQLite database attached as schema 'nba' and with analytical views installed.
-    
+
     This function uses a per-thread cache to reuse an existing connection when sqlite_path and duck_db_path match the cached values; set force_refresh to True to recreate the connection and reinstall views.
-    
+
     Parameters:
         sqlite_path (Path): Path to the SQLite `nba_raw_data.db` file to attach as schema `nba`.
         duck_db_path (str): DuckDB store location, `':memory:'` for in-memory or a file path for persistent storage.
         force_refresh (bool): If True, close any cached connection and recreate it along with all views.
-    
+
     Returns:
         duckdb.DuckDBPyConnection: An open DuckDB connection with the specified DuckDB store, the SQLite database attached as schema `nba`, and all analytical views created.
     """

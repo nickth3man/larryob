@@ -91,9 +91,9 @@ def test_commit_gate_has_quality_job() -> None:
 
 def test_commit_gate_runs_ruff_and_pytest() -> None:
     """Verify commit-gate.yml runs expected quality checks."""
-    try:
-        import yaml
-    except ImportError:
+    import importlib.util
+
+    if importlib.util.find_spec("yaml") is None:
         pytest.skip("PyYAML not available")
 
     workflow = Path(".github/workflows/commit-gate.yml")
@@ -111,40 +111,37 @@ def test_commit_gate_runs_ruff_and_pytest() -> None:
 
 def test_opencode_workflows_use_correct_action() -> None:
     """Verify opencode workflows use the anomalyco/opencode/github action."""
-    try:
-        import yaml
-    except ImportError:
+    import importlib.util
+
+    if importlib.util.find_spec("yaml") is None:
         pytest.skip("PyYAML not available")
 
     workflow_dir = Path(".github/workflows")
     if not workflow_dir.exists():
         pytest.skip("workflow directory not found")
 
-    opencode_workflows = [
-        f for f in workflow_dir.glob("opencode-*.yml")
-    ]
+    opencode_workflows = [f for f in workflow_dir.glob("opencode-*.yml")]
 
     for workflow in opencode_workflows:
         content = workflow.read_text()
-        assert "anomalyco/opencode/github@latest" in content, (
+        assert "anomalyco/opencode/github@" in content, (
             f"{workflow.name} should use anomalyco/opencode/github action"
         )
 
 
 def test_opencode_workflows_have_required_secrets() -> None:
     """Verify opencode workflows reference required secrets."""
-    try:
-        import yaml
-    except ImportError:
+    import importlib.util
+
+    if importlib.util.find_spec("yaml") is None:
         pytest.skip("PyYAML not available")
+    import yaml
 
     workflow_dir = Path(".github/workflows")
     if not workflow_dir.exists():
         pytest.skip("workflow directory not found")
 
-    opencode_workflows = [
-        f for f in workflow_dir.glob("opencode-*.yml")
-    ]
+    opencode_workflows = [f for f in workflow_dir.glob("opencode-*.yml")]
 
     for workflow in opencode_workflows:
         content = workflow.read_text()
@@ -187,9 +184,9 @@ def test_workflow_permissions_are_minimal() -> None:
 
 def test_workflows_use_specific_action_versions() -> None:
     """Verify workflows pin action versions (not 'latest' for critical actions)."""
-    try:
-        import yaml
-    except ImportError:
+    import importlib.util
+
+    if importlib.util.find_spec("yaml") is None:
         pytest.skip("PyYAML not available")
 
     workflow_dir = Path(".github/workflows")

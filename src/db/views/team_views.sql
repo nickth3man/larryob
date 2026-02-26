@@ -33,21 +33,21 @@ SELECT
     t.abbreviation,
     t.full_name,
     g.season_id,
-    SUM(l.fga)                                     AS total_fga,
-    SUM(COALESCE(l.fta, 0))                        AS total_fta,
-    SUM(COALESCE(l.oreb, 0))                       AS total_oreb,
-    SUM(COALESCE(l.tov, 0))                        AS total_tov,
-    SUM(COALESCE(l.fgm, 0))                        AS total_fgm,
+    COALESCE(SUM(l.fga), 0)                         AS total_fga,
+    COALESCE(SUM(l.fta), 0)                         AS total_fta,
+    COALESCE(SUM(l.oreb), 0)                        AS total_oreb,
+    COALESCE(SUM(l.tov), 0)                         AS total_tov,
+    COALESCE(SUM(l.fgm), 0)                         AS total_fgm,
     -- Possession estimate:
     -- Poss ≈ FGA + 0.4*FTA - 1.07*(ORB/(ORB+Opp_DRB))*(FGA-FGM) + TOV
     ROUND(
         0.5 * (
-            SUM(l.fga)
+            COALESCE(SUM(l.fga), 0)
             + 0.4 * COALESCE(SUM(l.fta), 0)
             - 1.07 * (
                 COALESCE(SUM(l.oreb), 0)
                 / NULLIF(COALESCE(SUM(l.oreb), 0) + COALESCE(SUM(opp.dreb), 0), 0)
-            ) * (SUM(l.fga) - COALESCE(SUM(l.fgm), 0))
+            ) * (COALESCE(SUM(l.fga), 0) - COALESCE(SUM(l.fgm), 0))
             + COALESCE(SUM(l.tov), 0)
         ),
     1) AS poss_estimate

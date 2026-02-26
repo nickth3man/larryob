@@ -10,20 +10,20 @@ SELECT
     p.full_name,
     g.season_id,
     COUNT(*)                                                AS games,
-    SUM(l.minutes_played)                                   AS total_minutes,
-    SUM(l.fgm)  AS fgm,  SUM(l.fga)  AS fga,
-    SUM(l.fg3m) AS fg3m, SUM(l.fg3a) AS fg3a,
-    SUM(l.ftm)  AS ftm,  SUM(l.fta)  AS fta,
-    SUM(l.pts)  AS pts,
+    COALESCE(SUM(l.minutes_played), 0)                      AS total_minutes,
+    COALESCE(SUM(l.fgm), 0)  AS fgm,  COALESCE(SUM(l.fga), 0)  AS fga,
+    COALESCE(SUM(l.fg3m), 0) AS fg3m, COALESCE(SUM(l.fg3a), 0) AS fg3a,
+    COALESCE(SUM(l.ftm), 0)  AS ftm,  COALESCE(SUM(l.fta), 0)  AS fta,
+    COALESCE(SUM(l.pts), 0)  AS pts,
     -- eFG% = (FGM + 0.5 * FG3M) / FGA
     ROUND(
-        (SUM(l.fgm) + 0.5 * COALESCE(SUM(l.fg3m), 0))
-        / NULLIF(SUM(l.fga), 0),
+        (COALESCE(SUM(l.fgm), 0) + 0.5 * COALESCE(SUM(l.fg3m), 0))
+        / NULLIF(COALESCE(SUM(l.fga), 0), 0),
     3) AS efg_pct,
     -- TS% = PTS / (2 * (FGA + 0.44 * FTA))
     ROUND(
-        SUM(l.pts)
-        / NULLIF(2.0 * (SUM(l.fga) + 0.44 * COALESCE(SUM(l.fta), 0)), 0),
+        COALESCE(SUM(l.pts), 0)
+        / NULLIF(2.0 * (COALESCE(SUM(l.fga), 0) + 0.44 * COALESCE(SUM(l.fta), 0)), 0),
     3) AS ts_pct
 FROM nba.player_game_log l
 JOIN nba.dim_player p USING (player_id)
@@ -113,10 +113,10 @@ WITH team_totals AS (
     SELECT
         l.game_id,
         l.team_id,
-        SUM(l.minutes_played) AS tm_mp,
-        SUM(l.fga) AS tm_fga,
-        SUM(COALESCE(l.fta, 0)) AS tm_fta,
-        SUM(COALESCE(l.tov, 0)) AS tm_tov
+        COALESCE(SUM(l.minutes_played), 0) AS tm_mp,
+        COALESCE(SUM(l.fga), 0) AS tm_fga,
+        COALESCE(SUM(l.fta), 0) AS tm_fta,
+        COALESCE(SUM(l.tov), 0) AS tm_tov
     FROM nba.player_game_log l
     GROUP BY l.game_id, l.team_id
 )
@@ -127,10 +127,10 @@ SELECT
     COUNT(*) AS gp,
     ROUND(
         100.0 * AVG(
-            (l.fga + 0.44 * COALESCE(l.fta, 0) + COALESCE(l.tov, 0))
+            (COALESCE(l.fga, 0) + 0.44 * COALESCE(l.fta, 0) + COALESCE(l.tov, 0))
             * (tt.tm_mp / 5.0)
             / NULLIF(
-                l.minutes_played
+                COALESCE(l.minutes_played, 0)
                 * (tt.tm_fga + 0.44 * tt.tm_fta + tt.tm_tov),
                 0
             )
@@ -206,7 +206,7 @@ WITH base AS (
 poss_est AS (
     SELECT
         b.*,
-        NULLIF(b.fga - b.oreb + b.tov + 0.44 * b.fta, 0) AS poss
+        NULLIF(COALESCE(b.fga,0) - COALESCE(b.oreb,0) + COALESCE(b.tov,0) + 0.44 * COALESCE(b.fta,0), 0) AS poss
     FROM base b
 )
 SELECT

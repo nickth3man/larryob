@@ -116,6 +116,32 @@ def create_argument_parser() -> argparse.ArgumentParser:
         default=0,
         help="Number of games to load PBP for (0 = skip PBP)",
     )
+    parser.add_argument(
+        "--pbp-source",
+        choices=["api", "bulk", "auto"],
+        default="auto",
+        help="PBP data source strategy",
+    )
+    parser.add_argument(
+        "--pbp-bulk-dir",
+        type=str,
+        default=None,
+        help="Path to raw/pbp/ directory for bulk PBP loading",
+    )
+
+    # Salary source options
+    parser.add_argument(
+        "--salary-source",
+        choices=["bref", "open", "auto"],
+        default="auto",
+        help="Salary data source strategy",
+    )
+    parser.add_argument(
+        "--salary-open-file",
+        type=str,
+        default=None,
+        help="Path to open-source salary CSV",
+    )
 
     # Reconciliation options
     parser.add_argument(
@@ -243,6 +269,18 @@ def validate_arguments(parser: argparse.ArgumentParser, args: argparse.Namespace
             parser.error(f"--raw-dir does not exist: {raw_dir}")
         if not raw_dir.is_dir():
             parser.error(f"--raw-dir must be a directory: {raw_dir}")
+
+    # Path validation for source-dispatch flags
+    if args.pbp_source == "bulk" and args.pbp_bulk_dir:
+        pbp_bulk_dir = Path(args.pbp_bulk_dir)
+        if not pbp_bulk_dir.exists():
+            parser.error(f"--pbp-bulk-dir does not exist: {pbp_bulk_dir}")
+    if args.salary_source == "open" and args.salary_open_file:
+        salary_open_file = Path(args.salary_open_file)
+        if not salary_open_file.exists():
+            parser.error(f"--salary-open-file does not exist: {salary_open_file}")
+        if not salary_open_file.is_file():
+            parser.error(f"--salary-open-file must be a file, not a directory: {salary_open_file}")
 
     # Complex validation via typed validators
     try:

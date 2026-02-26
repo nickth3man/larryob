@@ -19,9 +19,9 @@ from src.etl.game_logs import (
 def _make_mock_df() -> pd.DataFrame:
     """
     Create a small mock pandas DataFrame representing per-player game log records for unit tests.
-    
+
     The DataFrame contains three rows (three player-game entries across two games) with typical game-log fields such as GAME_ID, PLAYER_ID, PLAYER_NAME, TEAM_ID, TEAM_ABBREVIATION, GAME_DATE, MATCHUP, WL, MIN, FGM, FGA, FG3M, FG3A, FTM, FTA, OREB, DREB, REB, AST, STL, BLK, TOV, PF, PTS, and PLUS_MINUS. Column values are suitable for testing parsing, row-building, and deduplication logic.
-    
+
     Returns:
         pd.DataFrame: A DataFrame with the columns described above and three sample rows.
     """
@@ -229,7 +229,7 @@ def test_load_season_returns_counts_dict_on_success(
 ) -> None:
     """
     Check that load_season produces a counts dictionary containing fact_game, player_game_log, and team_game_log for a valid cached season.
-    
+
     Sets a temporary cache directory, saves a minimal player-game-log cache for the 2023-24 regular season, runs load_season against a test SQLite database populated with required FK fixtures, and asserts the result is a dict that includes the "fact_game" key.
     """
     import src.db.cache.file_cache as cache_mod

@@ -6,6 +6,7 @@ Player Career Info.csv into dim_player.
 """
 
 import logging
+import re
 import sqlite3
 from pathlib import Path
 from typing import Any
@@ -43,15 +44,30 @@ def _parse_hof_flag(value: Any) -> int:
     return 0 if str(value).strip().lower() in {"false", "nan", "0", ""} else 1
 
 
+_SUFFIX_RE = re.compile(r"\s+(?:jr|sr|ii|iii|iv|v)\.?$", re.IGNORECASE)
+
+
+def _strip_suffixes(name: str) -> str:
+    """Return *name* with common generational suffixes (Jr, Sr, II, III, IV, V) stripped."""
+    return _SUFFIX_RE.sub("", name).strip()
+
+
 def _resolve_player_id(
     raw_name: str,
     raw_birth_date: Any,
     name_lookup: dict[str, list[tuple[str, str | None]]],
+    ambiguous_out: list[str] | None = None,
 ) -> str | None:
     key = _norm_name(raw_name)
     candidates = name_lookup.get(key, [])
+
     if not candidates:
-        return None
+        # Try again with generational suffixes stripped (e.g. "John Smith Jr." → "John Smith")
+        stripped = _strip_suffixes(key)
+        if stripped != key:
+            candidates = name_lookup.get(stripped, [])
+        if not candidates:
+            return None
 
     if len(candidates) == 1:
         return candidates[0][0]
@@ -65,7 +81,11 @@ def _resolve_player_id(
     if matched:
         return matched[0]
 
-    return candidates[0][0]
+    # Conservative policy: do NOT auto-link when multiple candidates exist and
+    # birth date does not uniquely disambiguate.  Unresolved is better than wrong.
+    if ambiguous_out is not None:
+        ambiguous_out.append(raw_name)
+    return None
 
 
 def enrich_player_career(
@@ -91,6 +111,7 @@ def enrich_player_career(
 
     updated = 0
     unmatched = 0
+    ambiguous: list[str] = []
 
     for row in df.to_dict("records"):
         bref_id = safe_str(row.get("player_id"))
@@ -99,7 +120,7 @@ def enrich_player_career(
             unmatched += 1
             continue
 
-        player_id = _resolve_player_id(raw_name, row.get("birth_date"), name_lookup)
+        player_id = _resolve_player_id(raw_name, row.get("birth_date"), name_lookup, ambiguous)
         if player_id is None:
             unmatched += 1
             continue
@@ -127,5 +148,12 @@ def enrich_player_career(
         updated += cur.rowcount
 
     con.commit()
+    if ambiguous:
+        logger.warning(
+            "dim_player (career info): %d ambiguous name(s) skipped "
+            "(multiple candidates, no birth-date match): %s",
+            len(ambiguous),
+            ", ".join(sorted(set(ambiguous))),
+        )
     logger.info("dim_player (career info): %d rows enriched, %d unmatched", updated, unmatched)
     return updated

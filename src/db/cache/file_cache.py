@@ -13,7 +13,7 @@ from ...etl.config import CacheConfig
 logger = logging.getLogger(__name__)
 
 CACHE_DIR = CacheConfig.cache_dir()
-CACHE_DIR.mkdir(exist_ok=True)
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 CACHE_VERSION = CacheConfig.CACHE_VERSION
 
@@ -21,10 +21,10 @@ CACHE_VERSION = CacheConfig.CACHE_VERSION
 def cache_path(key: str) -> Path:
     """
     Compute the filesystem path for the cache file corresponding to the given cache key.
-    
+
     Parameters:
         key (str): Cache key used as the filename; ".json" is appended.
-    
+
     Returns:
         Path: Path to the cache file located inside CACHE_DIR.
     """
@@ -34,11 +34,11 @@ def cache_path(key: str) -> Path:
 def load_cache(key: str, ttl_days: float | None = None) -> Any | None:
     """
     Retrieve the cached value for a given key, validating stored cache version and optional TTL.
-    
+
     Parameters:
         key (str): Cache key (filename without the ".json" extension).
         ttl_days (float | None): Time-to-live in days; if None, the cached entry does not expire.
-    
+
     Returns:
         Any | None: The cached data if present, matches the current cache version, and is not expired; `None` if the file is missing, expired, has a different version, or is corrupted.
     """
@@ -65,7 +65,7 @@ def load_cache(key: str, ttl_days: float | None = None) -> Any | None:
 def save_cache(key: str, data: Any) -> None:
     """
     Persist `data` under the given cache `key` on disk with an atomic update and include cache version and timestamp.
-    
+
     Parameters:
         key (str): Cache key used to derive the on-disk filename (stored as "<key>.json" in the cache directory).
         data (Any): JSON-serializable value to store as the cached payload; the saved file will contain the cache `v` (version), `ts` (timestamp), and `data` fields.

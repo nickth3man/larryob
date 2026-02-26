@@ -7,7 +7,7 @@ import sqlite3
 
 from pydantic import ValidationError
 
-from .models import (
+from .schemas import (
     FactGameRow,
     FactPlayerAdvancedSeasonRow,
     FactPlayerSeasonStatsRow,

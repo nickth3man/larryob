@@ -30,7 +30,7 @@ from contextlib import suppress
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from src.db.analytics import get_duck_con
+from src.db.olap import get_duck_con
 from src.pipeline.exceptions import AnalyticsError
 from src.pipeline.validation import SUPPORTED_ANALYTICS_EXTENSIONS, validate_view_name
 
@@ -155,13 +155,13 @@ def _cleanup_duck_connection(duck: duckdb.DuckDBPyConnection) -> None:
     with suppress(Exception):
         duck.close()
 
-    # Lazy import to avoid a module-level cycle with src.db.analytics
-    from src.db import analytics as analytics_mod
+    # Lazy import to avoid a module-level cycle with src.db.olap
+    from src.db import olap as olap_mod
 
-    if hasattr(analytics_mod, "_local"):
-        analytics_mod._local.cached_con = None
-        analytics_mod._local.cached_sqlite_path = None
-        analytics_mod._local.cached_duck_db_path = None
+    if hasattr(olap_mod, "_local"):
+        olap_mod._local.cached_con = None
+        olap_mod._local.cached_sqlite_path = None
+        olap_mod._local.cached_duck_db_path = None
 
 
 def export_dataframe(

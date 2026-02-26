@@ -26,6 +26,7 @@ from src.etl.backfill._dims import enrich_dim_player, enrich_dim_team, load_team
 from src.etl.backfill._draft import load_draft
 from src.etl.backfill._game_logs import load_player_game_logs, load_team_game_logs
 from src.etl.backfill._games import load_games, load_schedule
+from src.etl.backfill._pbp_bulk import load_bulk_pbp
 from src.etl.backfill._player_career import enrich_player_career
 from src.etl.backfill._season_stats import (
     load_league_season,
@@ -60,7 +61,15 @@ __all__ = [
     "load_all_nba_teams",
     "load_all_nba_votes",
     "load_awards",
+    "load_bulk_pbp",
+    "_load_salary_history_adapter",
 ]
+
+
+def _load_salary_history_adapter(con: sqlite3.Connection, raw_dir: Path) -> int:
+    from src.etl.backfill._salary_history import load_salary_history
+
+    return load_salary_history(con, raw_dir=raw_dir)
 
 
 @dataclass
@@ -135,6 +144,8 @@ _LOADERS: list[LoaderConfig] = [
     LoaderConfig("player_advanced", "fact_player_advanced_season", "load_player_advanced"),
     LoaderConfig("player_shooting", "fact_player_shooting_season", "load_player_shooting"),
     LoaderConfig("player_pbp_season", "fact_player_pbp_season", "load_player_pbp_season"),
+    LoaderConfig("bulk_pbp", "fact_play_by_play", "load_bulk_pbp"),
+    LoaderConfig("salary_history", "fact_salary", "_load_salary_history_adapter"),
     LoaderConfig("awards", "fact_player_award", "load_awards"),
     LoaderConfig("all_star", "fact_all_star", "load_all_star_selections"),
     LoaderConfig("all_nba", "fact_all_nba", "load_all_nba_teams"),

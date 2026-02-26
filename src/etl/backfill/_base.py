@@ -16,7 +16,7 @@ import pandas as pd
 from src.db.operations import upsert_rows
 from src.db.tracking import log_load_summary
 from src.etl.helpers import _isna
-from src.etl.validate import validate_rows
+from src.etl.validation import validate_rows
 
 logger = logging.getLogger(__name__)
 
