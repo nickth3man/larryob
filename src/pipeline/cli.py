@@ -279,6 +279,8 @@ def validate_arguments(parser: argparse.ArgumentParser, args: argparse.Namespace
         salary_open_file = Path(args.salary_open_file)
         if not salary_open_file.exists():
             parser.error(f"--salary-open-file does not exist: {salary_open_file}")
+        if not salary_open_file.is_file():
+            parser.error(f"--salary-open-file must be a file, not a directory: {salary_open_file}")
 
     # Complex validation via typed validators
     try:
