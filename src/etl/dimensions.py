@@ -77,7 +77,12 @@ def load_seasons(con: sqlite3.Connection, up_to_start_year: int = 2024) -> int:
 
 
 def load_teams(con: sqlite3.Connection) -> int:
-    """Seed dim_team from nba_api static data (all 30 franchises)."""
+    """
+    Seed the dim_team table using nba_api static team data.
+
+    Returns:
+        int: Number of rows upserted into dim_team.
+    """
     loader_id = "dimensions.load_teams"
     if already_loaded(con, "dim_team", None, loader_id):
         logger.info("Skipping dim_team (already loaded)")
@@ -114,8 +119,12 @@ def load_teams(con: sqlite3.Connection) -> int:
 
 def load_players_static(con: sqlite3.Connection) -> int:
     """
-    Fast seed of dim_player using nba_api static data.
-    Covers all historical + active players without any HTTP calls.
+    Seed dim_player from NBA static player data.
+
+    Builds dim_player rows using local nba_api static player data (no HTTP). If the loader has already run, no work is performed. Records the loader run and returns the number of rows upserted.
+
+    Returns:
+        int: Number of rows upserted into the dim_player table.
     """
     loader_id = "dimensions.load_players_static"
     if already_loaded(con, "dim_player", None, loader_id):

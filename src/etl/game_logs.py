@@ -63,8 +63,16 @@ def _fetch_player_game_logs(
     api_caller: APICaller | None = None,
 ) -> pd.DataFrame:
     """
-    Pull all player game logs for *season* (e.g. '2023-24').
-    Returns a raw DataFrame with original nba_api column names.
+    Retrieve raw NBA player game logs for a given season and season type.
+    
+    Loads results from a local cache when available and saves fetched results to cache after a successful API call.
+    
+    Parameters:
+        season (str): Season string (e.g., "2023-24").
+        season_type (str): Season type label, commonly "Regular Season" or "Playoffs". Defaults to "Regular Season".
+    
+    Returns:
+        pd.DataFrame: Raw player game log rows with the original nba_api column names.
     """
     cache_key = f"pgl_{season}_{season_type.replace(' ', '_')}"
     cached = load_cache(cache_key)
@@ -106,8 +114,22 @@ def load_season(
     api_caller: APICaller | None = None,
 ) -> dict[str, int]:
     """
-    Fetch and load all game-log data for *season* (e.g. '2023-24').
-    Returns a dict with counts of rows inserted per table.
+    Load game-log data for a given season and season type into the database.
+    
+    Fetches player game logs for the specified season/season_type, transforms and validates them into
+    rows for `fact_game`, `player_game_log`, and `team_game_log`, applies a foreign-key pre-filter,
+    and upserts the validated rows into the corresponding tables. Records run metadata and ETL metrics.
+    
+    Parameters:
+        con (sqlite3.Connection): Database connection used for upserts and run recording.
+        season (str): Season identifier (e.g., "2023-24").
+        season_type (str): Season type (e.g., "Regular Season" or "Playoffs").
+        api_caller (APICaller | None): Optional API caller to fetch data; a default is created if omitted.
+    
+    Returns:
+        dict[str, int]: Mapping of table name to number of rows inserted, e.g.
+            {"fact_game": n_games, "player_game_log": n_players, "team_game_log": n_teams}.
+            Returns an empty dict if no rows were inserted (for example, when no data is returned or the season was already loaded).
     """
     loader_id = f"game_logs.load_season.{season_type}"
     if already_loaded(con, "player_game_log", season, loader_id):

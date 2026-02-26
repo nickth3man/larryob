@@ -16,7 +16,7 @@ uv run ingest --seasons 2023-24 2024-25
 uv run ingest --dims-only
 
 # Run analytics query and export
-uv run ingest --analytics player_shooting --limit 100 --output results.csv
+uv run ingest --analytics-view player_shooting --analytics-limit 100 --analytics-output results.csv
 ```
 
 ## Project Structure

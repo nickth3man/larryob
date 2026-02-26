@@ -13,7 +13,15 @@ _VALID_CONFLICT = frozenset({"IGNORE", "REPLACE", "ABORT", "ROLLBACK", "FAIL"})
 
 
 def _validate_identifier(name: str) -> None:
-    """Validate SQL identifier to prevent injection."""
+    """
+    Validate that the given name is a safe SQL identifier containing only ASCII letters, digits, and underscores.
+
+    Parameters:
+        name (str): Identifier to validate.
+
+    Raises:
+        ValueError: If `name` contains any characters other than letters, digits, or underscores.
+    """
     if not re.fullmatch(r"^[a-zA-Z0-9_]+$", name):
         raise ValueError(f"Invalid SQL identifier: {name!r}")
 
@@ -33,26 +41,17 @@ def upsert_rows(
     autocommit: bool = True,
 ) -> int:
     """
-    INSERT OR <conflict> a list of dicts into *table* with batching.
-    Returns the number of rows inserted.
+    Insert or upsert multiple rows into a table using batching and an optional conflict resolution clause.
 
-    Parameters
-    ----------
-    con : sqlite3.Connection
-        Database connection
-    table : str
-        Target table name
-    rows : list[dict]
-        Rows to upsert
-    conflict : str
-        SQLite conflict clause (IGNORE, REPLACE, ABORT, ROLLBACK, FAIL)
-    autocommit : bool
-        Whether to commit after insertion
+    Parameters:
+        con (sqlite3.Connection): SQLite database connection.
+        table (str): Target table name (validated as a safe SQL identifier).
+        rows (list[dict]): Sequence of row mappings where keys are column names. Returns 0 immediately for an empty list.
+        conflict (str): Optional SQLite conflict clause; one of "IGNORE", "REPLACE", "ABORT", "ROLLBACK", "FAIL". An empty string disables the clause.
+        autocommit (bool): If True, commit the connection after successful insertion.
 
-    Returns
-    -------
-    int
-        Number of rows inserted
+    Returns:
+        int: Number of rows inserted.
     """
     if not rows:
         return 0
@@ -92,8 +91,10 @@ def upsert_rows(
 @contextmanager
 def transaction(con: sqlite3.Connection):
     """
-    Context manager for explicit SQLite transactions.
-    Yields the connection. Commits on success, rolls back on exception.
+    Context manager that provides an explicit SQLite transaction for a connection.
+
+    Yields the given sqlite3.Connection so callers can execute statements inside a transaction.
+    Commits the transaction when the context exits normally; on exception, rolls back and re-raises the exception.
     """
     try:
         yield con

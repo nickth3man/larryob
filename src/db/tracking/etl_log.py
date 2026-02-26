@@ -10,7 +10,12 @@ logger = logging.getLogger(__name__)
 
 
 def _validate_identifier(name: str) -> None:
-    """Validate SQL identifier to prevent injection."""
+    """
+    Validate that the given name is a safe SQL identifier containing only ASCII letters, digits, or underscores.
+
+    Raises:
+        ValueError: If name contains any characters other than A–Z, a–z, 0–9, or underscore.
+    """
     if not re.fullmatch(r"^[a-zA-Z0-9_]+$", name):
         raise ValueError(f"Invalid SQL identifier: {name!r}")
 
@@ -22,23 +27,18 @@ def already_loaded(
     loader: str,
 ) -> bool:
     """
-    Check if an ETL run completed successfully for this table/season/loader combination.
+    Determine whether a prior ETL run for the specified table, season, and loader completed with status 'ok'.
 
-    Parameters
-    ----------
-    con : sqlite3.Connection
-        Database connection
-    table : str
-        Target table name
-    season_id : str | None
-        Season identifier
-    loader : str
-        Loader name (e.g., 'nba_api', 'basketball_reference')
+    If the etl_run_log table does not exist or an OperationalError occurs, the function returns False.
 
-    Returns
-    -------
-    bool
-        True if data already loaded, False otherwise
+    Parameters:
+        con (sqlite3.Connection): Database connection.
+        table (str): Target table name as recorded in etl_run_log.table_name.
+        season_id (str | None): Season identifier, or None to match a NULL season_id in the log.
+        loader (str): Loader name recorded in etl_run_log.loader.
+
+    Returns:
+        bool: True if an 'ok' run exists for the specified table/season/loader, False otherwise.
     """
     try:
         sql = "SELECT 1 FROM etl_run_log WHERE table_name = ? AND loader = ? AND status = 'ok'"
@@ -68,24 +68,18 @@ def record_run(
     started_at: str | None = None,
 ) -> None:
     """
-    Log an ETL run in the etl_run_log table.
+    Record an ETL run entry in the etl_run_log table.
 
-    Parameters
-    ----------
-    con : sqlite3.Connection
-        Database connection
-    table : str
-        Target table name
-    season_id : str | None
-        Season identifier
-    loader : str
-        Loader name
-    row_count : int | None
-        Number of rows loaded
-    status : str
-        Load status ('ok', 'failed', etc.)
-    started_at : str | None
-        ISO timestamp of when the run started
+    Inserts a row with table_name, season_id, loader, started_at (uses provided value or current UTC ISO timestamp), finished_at (current UTC ISO timestamp), row_count, and status, then commits the transaction. If the etl_run_log table does not exist the function returns silently; other sqlite3.OperationalError cases are logged at debug level.
+
+    Parameters:
+        con (sqlite3.Connection): Database connection.
+        table (str): Target table name.
+        season_id (str | None): Season identifier or None.
+        loader (str): Name of the loader that performed the run.
+        row_count (int | None): Number of rows loaded, or None if unknown.
+        status (str): Load status (for example 'ok' or 'failed').
+        started_at (str | None): ISO timestamp to record as the run start; if None, the current UTC ISO timestamp is used.
     """
     try:
         now = datetime.now(UTC).isoformat()
@@ -112,23 +106,18 @@ def log_load_summary(
     min_rows: int = 0,
 ) -> int:
     """
-    Log actual row count for table (optionally filtered by season_id).
+    Log the number of rows in a table and warn if the count is below a threshold.
 
-    Parameters
-    ----------
-    con : sqlite3.Connection
-        Database connection
-    table : str
-        Target table name
-    season_id : str | None
-        Season identifier to filter by
-    min_rows : int
-        Minimum expected rows (will warn if below this threshold)
+    Counts rows in the specified table, optionally filtering by the provided season_id when the table contains a season_id column or by joining fact_game when only a game_id column is present. Logs a warning if the resulting count is less than min_rows; otherwise logs an info message.
 
-    Returns
-    -------
-    int
-        Number of rows loaded
+    Parameters:
+        con (sqlite3.Connection): Database connection.
+        table (str): Target table name (must be a valid SQL identifier).
+        season_id (str | None): Optional season identifier to filter rows.
+        min_rows (int): Minimum expected rows; a warning is emitted if the count is less than this.
+
+    Returns:
+        int: Number of rows counted.
     """
     _validate_identifier(table)
     sql = f"SELECT COUNT(*) FROM {table}"

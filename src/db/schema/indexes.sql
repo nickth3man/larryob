@@ -65,3 +65,41 @@ CREATE INDEX IF NOT EXISTS idx_ppbp_player ON fact_player_pbp_season(bref_player
 
 -- ETL run log index
 CREATE INDEX IF NOT EXISTS idx_runlog_table_season ON etl_run_log(table_name, season_id);
+
+-- ============================================================================
+-- Rollback / Down migration
+-- Run these statements to remove all indexes created above.
+-- ============================================================================
+-- DROP INDEX IF EXISTS idx_pgl_player;
+-- DROP INDEX IF EXISTS idx_pgl_team;
+-- DROP INDEX IF EXISTS idx_pgl_game;
+-- DROP INDEX IF EXISTS idx_pgl_player_game;
+-- DROP INDEX IF EXISTS idx_game_date;
+-- DROP INDEX IF EXISTS idx_game_season;
+-- DROP INDEX IF EXISTS idx_game_home;
+-- DROP INDEX IF EXISTS idx_game_away;
+-- DROP INDEX IF EXISTS idx_pbp_game;
+-- DROP INDEX IF EXISTS idx_pbp_game_period;
+-- DROP INDEX IF EXISTS idx_pbp_player1;
+-- DROP INDEX IF EXISTS idx_roster_player;
+-- DROP INDEX IF EXISTS idx_roster_player_dates;
+-- DROP INDEX IF EXISTS idx_roster_unique;
+-- DROP INDEX IF EXISTS idx_tgl_team;
+-- DROP INDEX IF EXISTS idx_allstar_player;
+-- DROP INDEX IF EXISTS idx_allstar_season;
+-- DROP INDEX IF EXISTS idx_allnba_player;
+-- DROP INDEX IF EXISTS idx_allnba_season;
+-- DROP INDEX IF EXISTS idx_allnba_vote_player;
+-- DROP INDEX IF EXISTS idx_allnba_vote_season;
+-- DROP INDEX IF EXISTS idx_team_hist_team;
+-- DROP INDEX IF EXISTS idx_fts_season;
+-- DROP INDEX IF EXISTS idx_fts_abbrev;
+-- DROP INDEX IF EXISTS idx_draft_season;
+-- DROP INDEX IF EXISTS idx_draft_player;
+-- DROP INDEX IF EXISTS idx_pss_player;
+-- DROP INDEX IF EXISTS idx_pss_season;
+-- DROP INDEX IF EXISTS idx_pas_player;
+-- DROP INDEX IF EXISTS idx_pas_season;
+-- DROP INDEX IF EXISTS idx_pshoot_player;
+-- DROP INDEX IF EXISTS idx_ppbp_player;
+-- DROP INDEX IF EXISTS idx_runlog_table_season;

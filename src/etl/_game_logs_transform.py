@@ -95,8 +95,21 @@ TEAM_SUM_COLS: list[str] = [
 
 def parse_matchup(matchup: str) -> tuple[str | None, str | None, bool]:
     """
-    Parse 'LAL vs. BOS' or 'LAL @ BOS' into (home_abbr, away_abbr, is_home).
-    Returns (None, None, False) if the string is malformed.
+    Parse a matchup string into team abbreviations and a home/away flag.
+
+    The first returned abbreviation is always the team listed first in the matchup
+    string. For "vs." games that team is the home team; for "@" games it is the
+    away (visiting) team.
+
+    Parameters:
+        matchup (str): Matchup text in the form "HOME vs. AWAY" or "AWAY @ HOME".
+
+    Returns:
+        tuple[str | None, str | None, bool]: (first_abbr, second_abbr, is_home).
+            - first_abbr: Abbreviation of the team listed first, or `None` if malformed.
+            - second_abbr: Abbreviation of the team listed second, or `None` if malformed.
+            - is_home: `True` if the string used " vs. " (first team is home),
+              `False` if it used " @ " (first team is away) or the input was malformed.
     """
     if " vs. " in matchup:
         parts = matchup.split(" vs. ")
@@ -109,7 +122,26 @@ def parse_matchup(matchup: str) -> tuple[str | None, str | None, bool]:
 
 def build_game_rows(df: pd.DataFrame, season_id: str, season_type: str) -> list[dict[str, Any]]:
     """
-    Derive fact_game rows from the flat player-game-log DataFrame using vectorized operations.
+    Builds game-level rows (fact_game) from a player-game-log DataFrame.
+
+    Parameters:
+        df (pd.DataFrame): Player-game-log table containing at least the columns "GAME_ID", "TEAM_ID", and "MATCHUP". "GAME_DATE" is used to populate game_date when present.
+        season_id (str): Season identifier to assign to each game row.
+        season_type (str): Season type to assign to each game row (e.g., "Regular Season", "Playoffs").
+
+    Returns:
+        list[dict[str, Any]]: A list of dictionaries, one per resolved game, with keys:
+            - game_id: game identifier (string)
+            - season_id: provided season_id
+            - game_date: date string in "YYYY-MM-DD" format (empty string if unavailable)
+            - home_team_id: home team id (string)
+            - away_team_id: away team id (string)
+            - home_score: None (placeholder)
+            - away_score: None (placeholder)
+            - season_type: provided season_type
+            - status: game status (set to "Final")
+            - arena: None (placeholder)
+            - attendance: None (placeholder)
     """
     game_rows: dict[str, dict[str, Any]] = {}
     dropped = 0
@@ -180,6 +212,15 @@ def build_game_rows(df: pd.DataFrame, season_id: str, season_type: str) -> list[
 
 
 def build_player_rows(df: pd.DataFrame) -> list[dict[str, Any]]:
+    """
+    Produce normalized player-level rows conforming to the target schema from a player-game-log DataFrame.
+
+    Parameters:
+        df (pd.DataFrame): Input DataFrame of player game logs (expected nba_api-style column names or already-renamed columns).
+
+    Returns:
+        list[dict[str, Any]]: A list of player row dictionaries containing all required player columns (PGL_COLS) plus a `starter` column. Missing columns are added with value `None`, player/game/team IDs are coerced to strings, and any NaN values are converted to `None`.
+    """
     df = df.rename(columns=PGL_RENAME)
     available = [c for c in PGL_COLS if c in df.columns]
     df_clean = df[available].copy()
