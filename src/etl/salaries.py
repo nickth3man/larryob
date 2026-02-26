@@ -21,7 +21,7 @@ from ._salaries_fetch import fetch_team_current_contracts, fetch_team_season_sal
 from .config import get_all_salary_caps, nba_abbr_to_bref
 from .helpers import _norm_name
 from .rate_limit import _BREF_THROTTLE, BBRRateLimitExceeded
-from .validate import validate_rows
+from .validation import validate_rows
 
 logger = logging.getLogger(__name__)
 

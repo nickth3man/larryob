@@ -33,7 +33,7 @@ from ..db.operations import transaction, upsert_rows
 from ..db.tracking import already_loaded, log_load_summary, record_run
 from .api_client import APICaller
 from .metrics import ETLTimer, record_etl_rows
-from .validate import validate_rows
+from .validation import validate_rows
 
 logger = logging.getLogger(__name__)
 

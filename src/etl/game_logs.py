@@ -38,7 +38,7 @@ from ._game_logs_transform import (
 )
 from .api_client import APICaller
 from .metrics import ETLTimer, record_etl_rows
-from .validate import validate_rows
+from .validation import validate_rows
 
 logger = logging.getLogger(__name__)
 

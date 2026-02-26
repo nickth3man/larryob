@@ -4,7 +4,7 @@ import sqlite3
 
 import duckdb
 
-from src.db.analytics import _load_all_views
+from src.db.olap import _load_all_views
 from src.db.operations import upsert_rows
 
 # ------------------------------------------------------------------ #
@@ -188,18 +188,18 @@ def test_views_are_queryable(duck_con_with_sqlite) -> None:
 
 def test_get_duck_con_singleton(tmp_path, monkeypatch) -> None:
     """Ensure get_duck_con returns the cached connection when called twice."""
-    import src.db.analytics as analytics
-    from src.db.analytics import get_duck_con
+    import src.db.olap as olap
+    from src.db.olap import get_duck_con
 
     # reset singleton for test
-    if not hasattr(analytics._local, "cached_con"):
-        analytics._local.cached_con = None
-        analytics._local.cached_sqlite_path = None
-        analytics._local.cached_duck_db_path = None
+    if not hasattr(olap._local, "cached_con"):
+        olap._local.cached_con = None
+        olap._local.cached_sqlite_path = None
+        olap._local.cached_duck_db_path = None
 
-    monkeypatch.setattr(analytics._local, "cached_con", None)
-    monkeypatch.setattr(analytics._local, "cached_sqlite_path", None)
-    monkeypatch.setattr(analytics._local, "cached_duck_db_path", None)
+    monkeypatch.setattr(olap._local, "cached_con", None)
+    monkeypatch.setattr(olap._local, "cached_sqlite_path", None)
+    monkeypatch.setattr(olap._local, "cached_duck_db_path", None)
 
     sqlite_file = tmp_path / "test_singleton.db"
     import sqlite3
@@ -247,8 +247,8 @@ def test_get_duck_con_initializes_threadlocal_cache_when_attributes_missing(
     tmp_path,
     monkeypatch,
 ) -> None:
-    import src.db.analytics as analytics
-    from src.db.analytics import get_duck_con
+    import src.db.olap as olap
+    from src.db.olap import get_duck_con
     from src.db.schema import ALTER_STATEMENTS, DDL_STATEMENTS
 
     sqlite_file = tmp_path / "test_threadlocal_init.db"
@@ -263,24 +263,24 @@ def test_get_duck_con_initializes_threadlocal_cache_when_attributes_missing(
     con.close()
 
     for attr in ("cached_con", "cached_sqlite_path", "cached_duck_db_path"):
-        if hasattr(analytics._local, attr):
-            delattr(analytics._local, attr)
+        if hasattr(olap._local, attr):
+            delattr(olap._local, attr)
 
     fake = _FakeDuckCon()
-    monkeypatch.setattr(analytics.duckdb, "connect", lambda _: fake)
+    monkeypatch.setattr(olap.duckdb, "connect", lambda _: fake)
 
     result = get_duck_con(sqlite_path=sqlite_file, duck_db_path=":memory:")
 
     assert result is fake
-    assert getattr(analytics._local, "cached_con", None) is fake
-    analytics._local.cached_con = None
-    analytics._local.cached_sqlite_path = None
-    analytics._local.cached_duck_db_path = None
+    assert getattr(olap._local, "cached_con", None) is fake
+    olap._local.cached_con = None
+    olap._local.cached_sqlite_path = None
+    olap._local.cached_duck_db_path = None
 
 
 def test_get_duck_con_rebuilds_after_stale_cached_connection(tmp_path, monkeypatch) -> None:
-    import src.db.analytics as analytics
-    from src.db.analytics import get_duck_con
+    import src.db.olap as olap
+    from src.db.olap import get_duck_con
 
     sqlite_file = tmp_path / "stale_cached.db"
     sqlite_file.touch()
@@ -288,22 +288,22 @@ def test_get_duck_con_rebuilds_after_stale_cached_connection(tmp_path, monkeypat
     stale = _FakeDuckCon(fail_select=True)
     fresh = _FakeDuckCon()
 
-    analytics._local.cached_con = stale
-    analytics._local.cached_sqlite_path = str(sqlite_file)
-    analytics._local.cached_duck_db_path = ":memory:"
-    monkeypatch.setattr(analytics.duckdb, "connect", lambda _: fresh)
+    olap._local.cached_con = stale
+    olap._local.cached_sqlite_path = str(sqlite_file)
+    olap._local.cached_duck_db_path = ":memory:"
+    monkeypatch.setattr(olap.duckdb, "connect", lambda _: fresh)
 
     result = get_duck_con(sqlite_path=sqlite_file, duck_db_path=":memory:")
 
     assert result is fresh
-    analytics._local.cached_con = None
-    analytics._local.cached_sqlite_path = None
-    analytics._local.cached_duck_db_path = None
+    olap._local.cached_con = None
+    olap._local.cached_sqlite_path = None
+    olap._local.cached_duck_db_path = None
 
 
 def test_get_duck_con_ignores_cached_close_failures(tmp_path, monkeypatch) -> None:
-    import src.db.analytics as analytics
-    from src.db.analytics import get_duck_con
+    import src.db.olap as olap
+    from src.db.olap import get_duck_con
 
     sqlite_file = tmp_path / "close_failure.db"
     sqlite_file.touch()
@@ -311,17 +311,17 @@ def test_get_duck_con_ignores_cached_close_failures(tmp_path, monkeypatch) -> No
     old = _FakeDuckCon(fail_close=True)
     fresh = _FakeDuckCon()
 
-    analytics._local.cached_con = old
-    analytics._local.cached_sqlite_path = "different.db"
-    analytics._local.cached_duck_db_path = ":memory:"
-    monkeypatch.setattr(analytics.duckdb, "connect", lambda _: fresh)
+    olap._local.cached_con = old
+    olap._local.cached_sqlite_path = "different.db"
+    olap._local.cached_duck_db_path = ":memory:"
+    monkeypatch.setattr(olap.duckdb, "connect", lambda _: fresh)
 
     result = get_duck_con(sqlite_path=sqlite_file, duck_db_path=":memory:")
 
     assert result is fresh
-    analytics._local.cached_con = None
-    analytics._local.cached_sqlite_path = None
-    analytics._local.cached_duck_db_path = None
+    olap._local.cached_con = None
+    olap._local.cached_sqlite_path = None
+    olap._local.cached_duck_db_path = None
 
 
 def _view_sql(view_name: str, con: duckdb.DuckDBPyConnection) -> str:

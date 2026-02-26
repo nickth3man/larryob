@@ -22,7 +22,7 @@ from src.etl.backfill._base import (
     safe_str,
 )
 from src.etl.helpers import pad_game_id, season_id_from_date, season_type_from_game_id
-from src.etl.validate import validate_rows
+from src.etl.validation import validate_rows
 
 logger = logging.getLogger(__name__)
 

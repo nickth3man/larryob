@@ -474,30 +474,30 @@ def test_cleanup_duck_connection_handles_close_failure():
 
 def test_cleanup_duck_connection_clears_cache():
     """Test connection cleanup clears thread-local cache."""
-    import src.db.analytics as analytics_mod
+    import src.db.olap as olap_mod
 
     # Setup: create mock cached connection
     mock_conn = MagicMock(spec=duckdb.DuckDBPyConnection)
-    analytics_mod._local.cached_con = mock_conn
-    analytics_mod._local.cached_sqlite_path = "/path/to/sqlite.db"
-    analytics_mod._local.cached_duck_db_path = ":memory:"
+    olap_mod._local.cached_con = mock_conn
+    olap_mod._local.cached_sqlite_path = "/path/to/sqlite.db"
+    olap_mod._local.cached_duck_db_path = ":memory:"
 
     _cleanup_duck_connection(mock_conn)
 
     # Verify cache was cleared
-    assert analytics_mod._local.cached_con is None
-    assert analytics_mod._local.cached_sqlite_path is None
-    assert analytics_mod._local.cached_duck_db_path is None
+    assert olap_mod._local.cached_con is None
+    assert olap_mod._local.cached_sqlite_path is None
+    assert olap_mod._local.cached_duck_db_path is None
 
 
 def test_cleanup_duck_connection_handles_missing_cache():
     """Test cleanup handles missing thread-local attributes."""
-    import src.db.analytics as analytics_mod
+    import src.db.olap as olap_mod
 
     # Remove cache attributes if they exist
     for attr in ["cached_con", "cached_sqlite_path", "cached_duck_db_path"]:
-        if hasattr(analytics_mod._local, attr):
-            delattr(analytics_mod._local, attr)
+        if hasattr(olap_mod._local, attr):
+            delattr(olap_mod._local, attr)
 
     mock_conn = MagicMock(spec=duckdb.DuckDBPyConnection)
 

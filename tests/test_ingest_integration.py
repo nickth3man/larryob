@@ -84,7 +84,7 @@ def test_ingest_full_pipeline_mocked(tmp_path, monkeypatch):
 
     # Clean up singleton connections from any duckdb imports that might have happened
     try:
-        import src.db.analytics as analytics
+        import src.db.olap as analytics
 
         cached_con = getattr(analytics._local, "cached_con", None)
         if cached_con is not None:

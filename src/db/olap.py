@@ -9,7 +9,7 @@ Provides a single `get_duck_con()` factory that:
 
 Usage
 -----
-    from src.db.analytics import get_duck_con
+    from src.db.olap import get_duck_con
 
     con = get_duck_con()
     df = con.execute("SELECT * FROM vw_player_season_totals LIMIT 10").df()
