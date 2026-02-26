@@ -24,6 +24,8 @@ import logging
 import sqlite3
 from collections.abc import Iterable
 from datetime import UTC
+from pathlib import Path
+from typing import Literal
 
 import pandas as pd
 from nba_api.stats.endpoints import playbyplayv2
@@ -198,6 +200,8 @@ def load_season_pbp(
     season: str,
     limit: int | None = None,
     api_caller: APICaller | None = None,
+    source: Literal["api", "bulk", "auto"] = "auto",
+    bulk_dir: Path = Path("raw/pbp"),
 ) -> int:
     """
     Load play-by-play for all games in *season* that are already in fact_game.
@@ -206,6 +210,17 @@ def load_season_pbp(
     ----------
     limit : int | None
         If set, only process the first *limit* games (useful for testing).
+    source : {"api", "bulk", "auto"}
+        Data source strategy:
+
+        - ``"api"``  – call the NBA API for every game_id (original behaviour).
+        - ``"bulk"`` – call :func:`load_bulk_pbp_season` only; no API calls.
+        - ``"auto"`` – run bulk load first, then API-fetch any games that still
+          have no events in ``fact_play_by_play``.
+    bulk_dir : Path
+        Directory that contains bulk CSV files (default: ``raw/pbp``).
+        Its *parent* is passed as ``raw_dir`` to
+        :func:`load_bulk_pbp_season`.
     """
     loader_id = "play_by_play.load_season"
     if already_loaded(con, "fact_play_by_play", season, loader_id):
@@ -216,18 +231,52 @@ def load_season_pbp(
 
     started_at = datetime.now(UTC).isoformat()
 
+    # ── "bulk" only ────────────────────────────────────────────────── #
+    if source == "bulk":
+        from src.etl.backfill._pbp_bulk import load_bulk_pbp_season
+
+        total = load_bulk_pbp_season(con, season, bulk_dir.parent)
+        status = "partial" if limit else "ok"
+        record_run(con, "fact_play_by_play", season, loader_id, total, status, started_at)
+        record_etl_rows("fact_play_by_play", season, total)
+        log_load_summary(con, "fact_play_by_play", season)
+        return total
+
+    # ── Resolve all game_ids for the season ────────────────────────── #
     cursor = con.execute(
         "SELECT game_id FROM fact_game WHERE season_id = ? ORDER BY game_date",
         (season,),
     )
-    game_ids = [row[0] for row in cursor.fetchall()]
-    if limit:
-        game_ids = game_ids[:limit]
-    logger.info("Loading PBP for %d games in season %s.", len(game_ids), season)
+    all_game_ids: list[str] = [row[0] for row in cursor.fetchall()]
+
+    # ── "auto": bulk load first, then find games still missing data ── #
+    bulk_total = 0
+    if source == "auto":
+        from src.etl.backfill._pbp_bulk import load_bulk_pbp_season
+
+        bulk_total = load_bulk_pbp_season(con, season, bulk_dir.parent)
+        if all_game_ids:
+            placeholders = ",".join("?" * len(all_game_ids))
+            loaded_cursor = con.execute(
+                f"SELECT DISTINCT game_id FROM fact_play_by_play"  # noqa: S608
+                f" WHERE game_id IN ({placeholders})",
+                all_game_ids,
+            )
+            loaded_ids = {row[0] for row in loaded_cursor.fetchall()}
+            all_game_ids = [gid for gid in all_game_ids if gid not in loaded_ids]
+
+    game_ids = all_game_ids[:limit] if limit else all_game_ids
+    logger.info(
+        "Loading PBP via API for %d games in season %s (source=%s).",
+        len(game_ids),
+        season,
+        source,
+    )
 
     with ETLTimer("fact_play_by_play", season):
-        total = load_games(con, game_ids, api_caller)
+        api_total = load_games(con, game_ids, api_caller)
 
+    total = bulk_total + api_total
     status = "partial" if limit else "ok"
     record_run(con, "fact_play_by_play", season, loader_id, total, status, started_at)
     record_etl_rows("fact_play_by_play", season, total)

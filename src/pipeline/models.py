@@ -79,6 +79,10 @@ class IngestConfig:
         rosters: If True, load fact_roster
         include_playoffs: If True, also ingest Playoffs game logs
         pbp_limit: Max games to load PBP for (0 = skip PBP)
+        pbp_source: PBP data source strategy ("api", "bulk", or "auto")
+        pbp_bulk_dir: Path to raw/pbp/ directory for bulk PBP loading
+        salary_source: Salary data source strategy ("bref", "open", or "auto")
+        salary_open_file: Path to open-source salary CSV
         skip_reconciliation: If True, skip post-boxscore reconciliation
         reconciliation_warn_only: If True, don't fail on reconciliation errors
         raw_backfill: If True, seed tables from raw/ CSVs
@@ -102,6 +106,10 @@ class IngestConfig:
     rosters: bool = False
     include_playoffs: bool = False
     pbp_limit: int = 0
+    pbp_source: str = "auto"
+    pbp_bulk_dir: Path | None = None
+    salary_source: str = "auto"
+    salary_open_file: Path | None = None
     skip_reconciliation: bool = False
     reconciliation_warn_only: bool = False
     raw_backfill: bool = False
@@ -143,6 +151,10 @@ class IngestConfig:
             rosters=args.rosters,
             include_playoffs=args.include_playoffs,
             pbp_limit=args.pbp_limit,
+            pbp_source=args.pbp_source,
+            pbp_bulk_dir=Path(args.pbp_bulk_dir) if args.pbp_bulk_dir else None,
+            salary_source=args.salary_source,
+            salary_open_file=Path(args.salary_open_file) if args.salary_open_file else None,
             skip_reconciliation=args.skip_reconciliation,
             reconciliation_warn_only=args.reconciliation_warn_only,
             raw_backfill=args.raw_backfill,
