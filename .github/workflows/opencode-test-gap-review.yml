@@ -1,0 +1,39 @@
+name: opencode-test-gap-review
+
+on:
+  pull_request:
+    types: [opened]
+
+concurrency:
+  group: opencode-test-gap-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: anomalyco/opencode/github@0cf0294787322664c6d668fa5ab0a9ce26796f78
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: openrouter/mistralai/devstral-2512
+          use_github_token: true
+          prompt: |
+            Review this pull request only for test quality and coverage gaps.
+            Identify:
+            - changed behaviors lacking test coverage
+            - weak assertions that miss failure modes
+            - edge cases not represented in fixtures
+            - likely flaky patterns in tests
+
+            Provide an explicit proposed test list with file-level targets.

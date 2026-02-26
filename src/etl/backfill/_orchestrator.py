@@ -13,6 +13,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from src.db.tracking import already_loaded, record_run
 from src.etl.backfill._advanced_stats import (
     load_player_advanced,
     load_player_pbp_season,
@@ -31,7 +32,6 @@ from src.etl.backfill._season_stats import (
     load_player_season_stats,
     load_team_season,
 )
-from src.etl.utils import already_loaded, record_run
 
 logger = logging.getLogger(__name__)
 

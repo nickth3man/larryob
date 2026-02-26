@@ -19,100 +19,37 @@ Rate-limit notes
 import logging
 import sqlite3
 import time
-from datetime import UTC
+from datetime import UTC, datetime
 
 import pandas as pd
 from nba_api.stats.endpoints import playergamelogs
 
+from ..db.cache import load_cache, save_cache
+from ..db.operations import transaction, upsert_rows
+from ..db.tracking import already_loaded, log_load_summary, record_run
+from ._game_logs_transform import (
+    PGL_COLS,
+    PGL_RENAME,
+    TEAM_SUM_COLS,
+    build_game_rows,
+    build_player_rows,
+    build_team_rows,
+    parse_matchup,
+)
 from .api_client import APICaller
 from .metrics import ETLTimer, record_etl_rows
-from .utils import (
-    already_loaded,
-    load_cache,
-    log_load_summary,
-    record_run,
-    save_cache,
-    transaction,
-    upsert_rows,
-)
 from .validate import validate_rows
 
 logger = logging.getLogger(__name__)
 
-
-# ------------------------------------------------------------------ #
-# Column mappings                                                     #
-# ------------------------------------------------------------------ #
-
-# nba_api PlayerGameLogs column → our schema column
-_PGL_RENAME = {
-    "GAME_ID": "game_id",
-    "PLAYER_ID": "player_id",
-    "TEAM_ID": "team_id",
-    "GAME_DATE": "game_date",
-    "MATCHUP": "matchup",
-    "WL": "wl",
-    "MIN": "minutes_played",
-    "FGM": "fgm",
-    "FGA": "fga",
-    "FG3M": "fg3m",
-    "FG3A": "fg3a",
-    "FTM": "ftm",
-    "FTA": "fta",
-    "OREB": "oreb",
-    "DREB": "dreb",
-    "REB": "reb",
-    "AST": "ast",
-    "STL": "stl",
-    "BLK": "blk",
-    "TOV": "tov",
-    "PF": "pf",
-    "PTS": "pts",
-    "PLUS_MINUS": "plus_minus",
-}
-
-# Columns required for player_game_log insert
-_PGL_COLS = [
-    "game_id",
-    "player_id",
-    "team_id",
-    "minutes_played",
-    "fgm",
-    "fga",
-    "fg3m",
-    "fg3a",
-    "ftm",
-    "fta",
-    "oreb",
-    "dreb",
-    "reb",
-    "ast",
-    "stl",
-    "blk",
-    "tov",
-    "pf",
-    "pts",
-    "plus_minus",
-]
-
-# Team aggregate columns (sum across players in the same game/team)
-_TEAM_SUM_COLS = [
-    "fgm",
-    "fga",
-    "fg3m",
-    "fg3a",
-    "ftm",
-    "fta",
-    "oreb",
-    "dreb",
-    "reb",
-    "ast",
-    "stl",
-    "blk",
-    "tov",
-    "pf",
-    "pts",
-]
+# Re-export for backward compatibility with tests
+_PGL_RENAME = PGL_RENAME
+_PGL_COLS = PGL_COLS
+_TEAM_SUM_COLS = TEAM_SUM_COLS
+_parse_matchup = parse_matchup
+_build_game_rows = build_game_rows
+_build_player_rows = build_player_rows
+_build_team_rows = build_team_rows
 
 
 # ------------------------------------------------------------------ #
@@ -126,8 +63,16 @@ def _fetch_player_game_logs(
     api_caller: APICaller | None = None,
 ) -> pd.DataFrame:
     """
-    Pull all player game logs for *season* (e.g. '2023-24').
-    Returns a raw DataFrame with original nba_api column names.
+    Retrieve raw NBA player game logs for a given season and season type.
+    
+    Loads results from a local cache when available and saves fetched results to cache after a successful API call.
+    
+    Parameters:
+        season (str): Season string (e.g., "2023-24").
+        season_type (str): Season type label, commonly "Regular Season" or "Playoffs". Defaults to "Regular Season".
+    
+    Returns:
+        pd.DataFrame: Raw player game log rows with the original nba_api column names.
     """
     cache_key = f"pgl_{season}_{season_type.replace(' ', '_')}"
     cached = load_cache(cache_key)
@@ -158,126 +103,6 @@ def _fetch_player_game_logs(
 
 
 # ------------------------------------------------------------------ #
-# Transform                                                           #
-# ------------------------------------------------------------------ #
-
-
-def _parse_matchup(matchup: str) -> tuple[str | None, str | None, bool]:
-    """
-    Parse 'LAL vs. BOS' or 'LAL @ BOS' into (home_abbr, away_abbr, is_home).
-    Returns (None, None, False) if the string is malformed.
-    """
-    if " vs. " in matchup:
-        parts = matchup.split(" vs. ")
-        return parts[0].strip(), parts[1].strip(), True
-    if " @ " in matchup:
-        parts = matchup.split(" @ ")
-        return parts[0].strip(), parts[1].strip(), False
-    return None, None, False
-
-
-def _build_game_rows(df: pd.DataFrame, season_id: str, season_type: str) -> list[dict]:
-    """
-    Derive fact_game rows from the flat player-game-log DataFrame using vectorized operations.
-    """
-    game_rows: dict[str, dict] = {}
-    dropped = 0
-
-    # Ensure columns exist and fill na to avoid string matching errors
-    if "MATCHUP" not in df.columns or "TEAM_ID" not in df.columns:
-        return []
-
-    df_clean = df.copy()
-    df_clean["MATCHUP"] = df_clean["MATCHUP"].fillna("")
-
-    # Vectorized boolean masks
-    is_home = df_clean["MATCHUP"].str.contains(" vs. ")
-    is_away = df_clean["MATCHUP"].str.contains(" @ ")
-
-    for game_id, grp in df_clean.groupby("GAME_ID", sort=False):
-        gid = str(game_id)
-
-        # Get team IDs where conditions are met for this game group
-        home_teams = grp.loc[is_home, "TEAM_ID"].unique()
-        away_teams = grp.loc[is_away, "TEAM_ID"].unique()
-        all_teams = grp["TEAM_ID"].unique()
-
-        home_team_id = str(home_teams[0]) if len(home_teams) > 0 else None
-        away_team_id = str(away_teams[0]) if len(away_teams) > 0 else None
-
-        # Fallback resolution if string parsing failed but exactly 2 teams exist
-        if len(all_teams) == 2:
-            all_teams_str = [str(t) for t in all_teams]
-            if home_team_id is None and away_team_id is not None:
-                home_team_id = next(t for t in all_teams_str if t != away_team_id)
-            elif away_team_id is None and home_team_id is not None:
-                away_team_id = next(t for t in all_teams_str if t != home_team_id)
-
-        if home_team_id is None or away_team_id is None:
-            dropped += 1
-            logger.warning(
-                "build_game_rows: dropping game_id=%s unresolved teams (home=%s away=%s)",
-                gid,
-                home_team_id,
-                away_team_id,
-            )
-            continue
-
-        first = grp.iloc[0]
-        game_rows[gid] = {
-            "game_id": gid,
-            "season_id": season_id,
-            "game_date": str(first.get("GAME_DATE", ""))[:10],
-            "home_team_id": home_team_id,
-            "away_team_id": away_team_id,
-            "home_score": None,
-            "away_score": None,
-            "season_type": season_type,
-            "status": "Final",
-            "arena": None,
-            "attendance": None,
-        }
-
-    if dropped > 0:
-        logger.warning(
-            "build_game_rows: dropped %d/%d games due to unresolved team mapping",
-            dropped,
-            len(df_clean["GAME_ID"].unique()),
-        )
-
-    return list(game_rows.values())
-
-
-def _build_player_rows(df: pd.DataFrame) -> list[dict]:
-    df = df.rename(columns=_PGL_RENAME)
-    available = [c for c in _PGL_COLS if c in df.columns]
-    df_clean = df[available].copy()
-    # Add missing columns as None
-    for c in _PGL_COLS:
-        if c not in df_clean.columns:
-            df_clean[c] = None
-    df_clean["starter"] = None
-    df_clean["game_id"] = df_clean["game_id"].astype(str)
-    df_clean["player_id"] = df_clean["player_id"].astype(str)
-    df_clean["team_id"] = df_clean["team_id"].astype(str)
-    # Replace NaN → None for SQLite compatibility
-    return df_clean.where(pd.notna(df_clean), None).to_dict(orient="records")
-
-
-def _build_team_rows(df: pd.DataFrame) -> list[dict]:
-    """Aggregate player stats per (game_id, team_id) to form team box scores."""
-    df2 = df.rename(columns=_PGL_RENAME)
-    df2["game_id"] = df2["game_id"].astype(str)
-    df2["team_id"] = df2["team_id"].astype(str)
-    agg = (
-        df2.groupby(["game_id", "team_id"])[_TEAM_SUM_COLS]
-        .agg(lambda s: None if s.isna().all() else s.sum())
-        .reset_index()
-    )
-    return agg.where(pd.notna(agg), None).to_dict(orient="records")
-
-
-# ------------------------------------------------------------------ #
 # Load                                                                #
 # ------------------------------------------------------------------ #
 
@@ -289,15 +114,27 @@ def load_season(
     api_caller: APICaller | None = None,
 ) -> dict[str, int]:
     """
-    Fetch and load all game-log data for *season* (e.g. '2023-24').
-    Returns a dict with counts of rows inserted per table.
+    Load game-log data for a given season and season type into the database.
+    
+    Fetches player game logs for the specified season/season_type, transforms and validates them into
+    rows for `fact_game`, `player_game_log`, and `team_game_log`, applies a foreign-key pre-filter,
+    and upserts the validated rows into the corresponding tables. Records run metadata and ETL metrics.
+    
+    Parameters:
+        con (sqlite3.Connection): Database connection used for upserts and run recording.
+        season (str): Season identifier (e.g., "2023-24").
+        season_type (str): Season type (e.g., "Regular Season" or "Playoffs").
+        api_caller (APICaller | None): Optional API caller to fetch data; a default is created if omitted.
+    
+    Returns:
+        dict[str, int]: Mapping of table name to number of rows inserted, e.g.
+            {"fact_game": n_games, "player_game_log": n_players, "team_game_log": n_teams}.
+            Returns an empty dict if no rows were inserted (for example, when no data is returned or the season was already loaded).
     """
     loader_id = f"game_logs.load_season.{season_type}"
     if already_loaded(con, "player_game_log", season, loader_id):
         logger.info("Skipping game logs for %s %s (already loaded)", season, season_type)
         return {}
-
-    from datetime import datetime
 
     started_at = datetime.now(UTC).isoformat()
     started_perf = time.perf_counter()
@@ -318,9 +155,9 @@ def load_season(
         record_run(con, "team_game_log", season, loader_id, 0, "empty", started_at)
         return {}
 
-    game_rows = _build_game_rows(df, season, season_type)
-    player_rows = _build_player_rows(df)
-    team_rows = _build_team_rows(df)
+    game_rows = build_game_rows(df, season, season_type)
+    player_rows = build_player_rows(df)
+    team_rows = build_team_rows(df)
     raw_counts = {
         "fact_game": len(game_rows),
         "player_game_log": len(player_rows),

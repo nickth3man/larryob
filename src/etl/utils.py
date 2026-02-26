@@ -1,267 +1,39 @@
 """
 Shared ETL utilities: caching, upsert helpers, logging, and ETL run tracking.
+
+BACKWARD COMPATIBILITY LAYER: This module re-exports functions from their new locations.
+After all imports are migrated, this file will be removed.
 """
 
-import json
-import logging
-import os
-import re
-import sqlite3
-import sys
-import tempfile
-import time
-from collections.abc import Iterable
-from contextlib import contextmanager
-from datetime import UTC, date, datetime
-from itertools import islice
-from pathlib import Path
-from typing import Any
+# Re-export from new locations for backward compatibility
+from ..db.cache.file_cache import cache_path, load_cache, save_cache
+from ..db.operations.upsert import (
+    _chunked,
+    _validate_identifier,
+    transaction,
+    upsert_rows,
+)
+from ..db.tracking.etl_log import already_loaded, log_load_summary, record_run
+from .logging import LOG_DATE_FORMAT, LOG_FORMAT, setup_logging
 
-from .config import CacheConfig
+__all__ = [
+    "setup_logging",
+    "LOG_FORMAT",
+    "LOG_DATE_FORMAT",
+    "load_cache",
+    "save_cache",
+    "cache_path",
+    "transaction",
+    "upsert_rows",
+    "_validate_identifier",
+    "_chunked",
+    "already_loaded",
+    "record_run",
+    "log_load_summary",
+]
 
-# Register SQLite adapters for Python 3.12+ to silence DeprecationWarning
-sqlite3.register_adapter(date, lambda d: d.isoformat())
-sqlite3.register_adapter(datetime, lambda d: d.isoformat())
-
-logger = logging.getLogger(__name__)
-
-LOG_FORMAT = "%(asctime)s  %(levelname)-8s  %(name)s  %(message)s"
-LOG_DATE_FORMAT = "%H:%M:%S"
-
-
-def setup_logging(
-    level: str = "INFO",
-    log_file: Path | None = None,
-) -> None:
-    """
-    Configure the root logger once.
-    Call early (e.g. in main()) before any other logging.
-    """
-    root = logging.getLogger()
-    root.setLevel(level.upper())
-    for h in root.handlers[:]:
-        root.removeHandler(h)
-    fmt = logging.Formatter(LOG_FORMAT, datefmt=LOG_DATE_FORMAT)
-    sh = logging.StreamHandler(sys.stdout)
-    sh.setFormatter(fmt)
-    root.addHandler(sh)
-    if log_file:
-        fh = logging.FileHandler(log_file, encoding="utf-8")
-        fh.setFormatter(fmt)
-        root.addHandler(fh)
-
-
-CACHE_DIR = CacheConfig.cache_dir()
-CACHE_DIR.mkdir(exist_ok=True)
-
-CACHE_VERSION = CacheConfig.CACHE_VERSION
-
-
-def cache_path(key: str) -> Path:
-    return CACHE_DIR / f"{key}.json"
-
-
-def load_cache(key: str, ttl_days: float | None = None) -> Any | None:
-    p = cache_path(key)
-    if not p.exists():
-        return None
-
-    try:
-        data = json.loads(p.read_text(encoding="utf-8"))
-        if isinstance(data, dict) and "v" in data and "ts" in data and "data" in data:
-            if data["v"] != CACHE_VERSION:
-                return None
-            if ttl_days is not None:
-                age_seconds = time.time() - data["ts"]
-                if age_seconds > ttl_days * 86400:
-                    return None
-            return data["data"]
-    except json.JSONDecodeError as e:
-        logger.warning("Cache file %s is corrupted, treating as cache miss: %s", p, e)
-        return None
-    return None
-
-
-def save_cache(key: str, data: Any) -> None:
-    """Safely write cache using an atomic file replacement."""
-    payload = {
-        "v": CACHE_VERSION,
-        "ts": time.time(),
-        "data": data,
-    }
-    target_path = cache_path(key)
-
-    # Write to a temporary file in the same directory, then rename atomically
-    with tempfile.NamedTemporaryFile(
-        "w", dir=target_path.parent, delete=False, encoding="utf-8"
-    ) as tf:
-        json.dump(payload, tf)
-        tmp_name = tf.name
-
-    os.replace(tmp_name, target_path)
-
-
-_VALID_CONFLICT = frozenset({"IGNORE", "REPLACE", "ABORT", "ROLLBACK", "FAIL"})
-
-
-def _validate_identifier(name: str) -> None:
-    if not re.fullmatch(r"^[a-zA-Z0-9_]+$", name):
-        raise ValueError(f"Invalid SQL identifier: {name!r}")
-
-
-def _chunked(iterable: Iterable, n: int):
-    """Yield successive n-sized chunks from iterable."""
-    it = iter(iterable)
-    while batch := list(islice(it, n)):
-        yield batch
-
-
-def upsert_rows(
-    con: sqlite3.Connection,
-    table: str,
-    rows: list[dict],
-    conflict: str = "IGNORE",
-    autocommit: bool = True,
-) -> int:
-    """
-    INSERT OR <conflict> a list of dicts into *table* with batching.
-    Returns the number of rows inserted.
-    """
-    if not rows:
-        return 0
-    if conflict and conflict.upper() not in _VALID_CONFLICT:
-        raise ValueError(f"Invalid conflict clause: {conflict!r}")
-    _validate_identifier(table)
-    for c in rows[0].keys():
-        _validate_identifier(c)
-
-    columns = list(rows[0].keys())
-    placeholders = ", ".join("?" * len(columns))
-    col_list = ", ".join(columns)
-    or_clause = f" OR {conflict}" if conflict else ""
-    sql = f"INSERT{or_clause} INTO {table} ({col_list}) VALUES ({placeholders})"
-
-    # SQLite maximum host parameters safeguard (safe default: 999 max vars per batch)
-    chunk_size = max(1, 900 // len(columns))
-
-    total_inserted = 0
-    try:
-        for chunk in _chunked(rows, chunk_size):
-            data = [tuple(r[c] for c in columns) for r in chunk]
-            cur = con.executemany(sql, data)
-            total_inserted += cur.rowcount
-
-        if autocommit:
-            con.commit()
-        return total_inserted
-    except sqlite3.OperationalError as e:
-        if "no such table" in str(e).lower():
-            logger.warning("Skipping upsert into missing table '%s': %s", table, e)
-            return 0
-        logger.error("OperationalError in upsert_rows for table '%s': %s", table, e)
-        raise
-
-
-def already_loaded(
-    con: sqlite3.Connection,
-    table: str,
-    season_id: str | None,
-    loader: str,
-) -> bool:
-    """Check if an ETL run completed successfully for this table/season/loader combination."""
-    try:
-        sql = "SELECT 1 FROM etl_run_log WHERE table_name = ? AND loader = ? AND status = 'ok'"
-        params: list[Any] = [table, loader]
-        if season_id:
-            sql += " AND season_id = ?"
-            params.append(season_id)
-        else:
-            sql += " AND season_id IS NULL"
-
-        cur = con.execute(sql, params)
-        return cur.fetchone() is not None
-    except sqlite3.OperationalError as e:
-        if "no such table" in str(e).lower():
-            return False
-        logger.debug("OperationalError in already_loaded: %s", e)
-        return False
-
-
-def record_run(
-    con: sqlite3.Connection,
-    table: str,
-    season_id: str | None,
-    loader: str,
-    row_count: int | None,
-    status: str,
-    started_at: str | None = None,
-) -> None:
-    """Log an ETL run in the etl_run_log table."""
-    try:
-        now = datetime.now(UTC).isoformat()
-        start = started_at or now
-        con.execute(
-            """
-            INSERT INTO etl_run_log (
-                table_name, season_id, loader, started_at, finished_at, row_count, status
-            ) VALUES (?, ?, ?, ?, ?, ?, ?)
-            """,
-            (table, season_id, loader, start, now, row_count, status),
-        )
-        con.commit()
-    except sqlite3.OperationalError as e:
-        if "no such table" in str(e).lower():
-            return
-        logger.debug("OperationalError in record_run: %s", e)
-
-
-def log_load_summary(
-    con: sqlite3.Connection,
-    table: str,
-    season_id: str | None = None,
-    min_rows: int = 0,
-) -> int:
-    """Log actual row count for table (optionally filtered by season_id)."""
-    _validate_identifier(table)
-    sql = f"SELECT COUNT(*) FROM {table}"
-    params: list[Any] = []
-    if season_id:
-        cols = {row[1] for row in con.execute(f"PRAGMA table_info({table})").fetchall()}
-        if "season_id" in cols:
-            sql += " WHERE season_id = ?"
-            params.append(season_id)
-        elif "game_id" in cols:
-            sql = (
-                f"SELECT COUNT(*) FROM {table} t"
-                f" JOIN fact_game g ON g.game_id = t.game_id"
-                f" WHERE g.season_id = ?"
-            )
-            params.append(season_id)
-
-    count = con.execute(sql, params).fetchone()[0]
-
-    msg = f"Table {table}"
-    if season_id:
-        msg += f" (season {season_id})"
-    msg += f" loaded {count:,} rows"
-
-    if count < min_rows:
-        logger.warning("%s (Expected minimum %d rows!)", msg, min_rows)
-    else:
-        logger.info(msg)
-
-    return count
-
-
-@contextmanager
-def transaction(con: sqlite3.Connection):
-    """
-    Context manager for explicit SQLite transactions.
-    Yields the connection. Commits on success, rolls back on exception.
-    """
-    try:
-        yield con
-        con.commit()
-    except Exception:
-        con.rollback()
-        raise
+# Note: Original implementations removed - now re-exported from:
+# - src/etl/logging.py (setup_logging, LOG_FORMAT, LOG_DATE_FORMAT)
+# - src/db/cache/file_cache.py (cache_path, load_cache, save_cache)
+# - src/db/operations/upsert.py (transaction, upsert_rows, _validate_identifier, _chunked)
+# - src/db/tracking/etl_log.py (already_loaded, record_run, log_load_summary)

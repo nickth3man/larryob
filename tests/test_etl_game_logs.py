@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 
 import pandas as pd
 
+from src.db.operations import upsert_rows
 from src.etl.game_logs import (
     _build_game_rows,
     _build_player_rows,
@@ -13,10 +14,17 @@ from src.etl.game_logs import (
     _parse_matchup,
     load_season,
 )
-from src.etl.utils import upsert_rows
 
 
 def _make_mock_df() -> pd.DataFrame:
+    """
+    Create a small mock pandas DataFrame representing per-player game log records for unit tests.
+    
+    The DataFrame contains three rows (three player-game entries across two games) with typical game-log fields such as GAME_ID, PLAYER_ID, PLAYER_NAME, TEAM_ID, TEAM_ABBREVIATION, GAME_DATE, MATCHUP, WL, MIN, FGM, FGA, FG3M, FG3A, FTM, FTA, OREB, DREB, REB, AST, STL, BLK, TOV, PF, PTS, and PLUS_MINUS. Column values are suitable for testing parsing, row-building, and deduplication logic.
+    
+    Returns:
+        pd.DataFrame: A DataFrame with the columns described above and three sample rows.
+    """
     return pd.DataFrame(
         {
             "GAME_ID": ["0022300001", "0022300001", "0022300002"],
@@ -179,10 +187,10 @@ def test_load_season_skips_when_already_loaded(
     tmp_path: Path,
 ) -> None:
     """When etl_run_log already has a successful entry, load_season returns {}."""
-    import src.etl.utils as utils_mod
-    from src.etl.utils import record_run
+    import src.db.cache.file_cache as cache_mod
+    from src.db.tracking import record_run
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     record_run(
         sqlite_con_with_data,
@@ -202,16 +210,15 @@ def test_load_season_returns_empty_dict_for_empty_api_response(
     tmp_path: Path,
 ) -> None:
     """Empty API DataFrame → load_season returns {}."""
-    import src.etl.utils as utils_mod
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     mock_ep = MagicMock()
     mock_ep.get_data_frames.return_value = [pd.DataFrame()]
 
     with patch("src.etl.game_logs.playergamelogs.PlayerGameLogs", return_value=mock_ep):
-        with patch("src.etl.utils.time.sleep"):
-            result = load_season(sqlite_con_with_data, "2099-00")
+        result = load_season(sqlite_con_with_data, "2099-00")
     assert result == {}
 
 
@@ -220,10 +227,14 @@ def test_load_season_returns_counts_dict_on_success(
     monkeypatch,
     tmp_path: Path,
 ) -> None:
-    """load_season returns a dict with fact_game/player_game_log/team_game_log keys on success."""
-    import src.etl.utils as utils_mod
+    """
+    Check that load_season produces a counts dictionary containing fact_game, player_game_log, and team_game_log for a valid cached season.
+    
+    Sets a temporary cache directory, saves a minimal player-game-log cache for the 2023-24 regular season, runs load_season against a test SQLite database populated with required FK fixtures, and asserts the result is a dict that includes the "fact_game" key.
+    """
+    import src.db.cache.file_cache as cache_mod
 
-    monkeypatch.setattr(utils_mod, "CACHE_DIR", tmp_path)
+    monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     df = pd.DataFrame(
         {
@@ -254,7 +265,7 @@ def test_load_season_returns_counts_dict_on_success(
             "PLUS_MINUS": [10],
         }
     )
-    from src.etl.utils import save_cache
+    from src.db.cache import save_cache
 
     save_cache("pgl_2023-24_Regular_Season", df.to_dict(orient="records"))
 

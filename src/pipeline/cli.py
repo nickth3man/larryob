@@ -32,7 +32,7 @@ import sys
 from pathlib import Path
 
 from src.db.schema import init_db
-from src.etl.utils import setup_logging
+from src.etl.logging import setup_logging
 from src.pipeline.analytics import run_analytics_view
 from src.pipeline.constants import DEFAULT_SEASONS
 from src.pipeline.exceptions import AnalyticsError, IngestError, ValidationError

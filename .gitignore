@@ -20,5 +20,11 @@ wheels/
 *.db-shm
 *.db-wal
 /raw
+
+# Test coverage
 .coverage
 coverage.json
+
+# Log files (runtime artifacts)
+logs/*.log
+*.log

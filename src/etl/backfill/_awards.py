@@ -10,6 +10,7 @@ import sqlite3
 from pathlib import Path
 from typing import Any
 
+from src.db.operations import upsert_rows
 from src.etl.backfill._base import (
     RAW_DIR,
     csv_path,
@@ -19,7 +20,6 @@ from src.etl.backfill._base import (
     safe_str,
 )
 from src.etl.helpers import int_season_to_id
-from src.etl.utils import upsert_rows
 
 logger = logging.getLogger(__name__)
 

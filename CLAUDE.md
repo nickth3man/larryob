@@ -1,102 +1,84 @@
-# PROJECT KNOWLEDGE BASE
+# CLAUDE.md
 
-**Generated:** 2026-02-22
-**Branch:** dev
-**Commit:** 10e21cf
+> **Purpose:** This file exists to correct consistent agent mistakes and specify required tooling — nothing more.
+> Do NOT auto-generate or expand this file. If you encounter something surprising or confusing in this codebase,
+> flag it to the developer and suggest an edit here. The developer will decide whether to fix the code or update this file.
 
-## OVERVIEW
+---
 
-NBA analytics pipeline with SQLite ingestion (OLTP) and DuckDB analytics (OLAP). Python 3.13+, `uv` workflow, and stage-based CLI orchestration.
+## Required Tooling
 
-## STRUCTURE
+<!-- PLACEHOLDER: List only the non-obvious tools the agent must use.
+     Example: "Always use pnpm (not npm or yarn) to run scripts."
+     If the tool is detectable from package.json or config files, omit it. -->
 
-```
-larryob/
-├── src/
-│   ├── db/                  # Schema + DuckDB analytics views (see src/db/AGENTS.md)
-│   ├── etl/                 # API and scrape loaders (see src/etl/AGENTS.md)
-│   │   └── backfill/        # Raw CSV backfill pipeline (see src/etl/backfill/AGENTS.md)
-│   └── pipeline/            # CLI and stage orchestration (see src/pipeline/AGENTS.md)
-├── tests/                   # Pytest suite and DB fixtures (see tests/AGENTS.md)
-├── research/                # Analysis notes and references
-├── scripts/                 # Repo utility scripts (sync_agents.py mirrors AGENTS→CLAUDE/GEMINI)
-├── raw/                     # Source CSV/Parquet inputs (gitignored)
-├── logs/                    # Runtime logs (gitignored)
-├── .cache/                  # API response cache (gitignored)
-└── nba_raw_data.db          # Local SQLite DB (gitignored)
-```
+- [x] `uv` — always use `uv run` to run scripts
+- [x] `ruff` — run after every change: `ruff check . && ruff format .`
+- [x] `pytest` — run affected tests before marking a task complete: `uv run pytest tests/`
 
-## WHERE TO LOOK
+---
 
-| Task | Location | Notes |
-|------|----------|-------|
-| SQLite DDL and migrations | `src/db/AGENTS.md` | STRICT tables, ALTER_STATEMENTS pattern |
-| DuckDB view additions/changes | `src/db/AGENTS.md` | View lifecycle, `_VIEWS` list in analytics.py |
-| Loader implementation rules | `src/etl/AGENTS.md` | Idempotency guard, APICaller, validation flow |
-| Historical raw CSV backfill work | `src/etl/backfill/AGENTS.md` | Private modules, load ordering, fail-fast |
-| CLI flags and stage planning | `src/pipeline/AGENTS.md` | Parser, validation, `_build_stage_plan()` |
-| Exception hierarchy | `src/pipeline/AGENTS.md` | IngestError, ReconciliationError, AnalyticsError |
-| Test fixtures and isolation rules | `tests/AGENTS.md` | In-memory/temp DB constraints, fixture selection |
+## Consistent Mistakes to Avoid
 
-## CODE MAP
+<!-- PLACEHOLDER: Only add entries here when the agent repeatedly makes the same error
+     despite the codebase structure making the correct path clear.
+     Each entry should be a single, specific correction. -->
 
-| Symbol | Location | Role |
-|--------|----------|------|
-| `main()` | `src/pipeline/cli.py` | Top-level CLI entrypoint; manages connection lifecycle |
-| `run_ingest_pipeline()` | `src/pipeline/executor.py` | Executes stage plan with timing and checkpoints |
-| `_build_stage_plan()` | `src/pipeline/executor.py` | Builds dynamic ordered list of `(Stage, tables, fn)` |
-| `init_db()` | `src/db/schema.py` | Initializes SQLite schema (idempotent) |
-| `get_duck_con()` | `src/db/analytics.py` | Thread-local DuckDB factory; drops/recreates all views |
-| `load_game_logs_for_seasons()` | `src/etl/game_logs.py` | Core box-score ingest path |
-| `run_raw_backfill()` | `src/etl/backfill/_orchestrator.py` | Runs all CSV loaders in dependency order |
-| `IngestConfig` | `src/pipeline/models.py` | Immutable (`__slots__` dataclass) config from CLI args |
-| `CheckpointState` | `src/pipeline/models.py` | Mutable stage-to-stage progress tracker |
-| `APICaller` / `get_api_caller()` | `src/etl/api_client.py` | Singleton API client with adaptive pacing |
+<!-- Example format:
+- DO NOT use [X pattern/library] — use [Y] instead. Reason: [one sentence].
+- Always run `[command]` after modifying [area of codebase].
+-->
 
-## CONVENTIONS
+- No Python file should exceed 400 lines. If a file approaches or exceeds this limit, refactor by splitting it into smaller, logically grouped modules. Note: `__init__.py` files are exempt from this rule.
 
-- `season_id` format: `YYYY-YY` (e.g. `2023-24`)
-- `game_id`: 10-char zero-padded text (e.g. `0022301001`)
-- `player_id` / `team_id`: TEXT, not INTEGER
-- Early-era unavailable stats: NULL (never 0)
-- Stage checkpoint names use `"post-"` prefix (e.g. `"post-dimensions"`)
-- Python style: Ruff line length 100, `E/F/W/I/UP` rules, `E501` ignored
-- `LARRYOB_*` env-var prefix for all runtime knobs
-- Test discovery pinned to `tests/` via `[tool.pytest.ini_options]`
-- `ty` for type-checking (not mypy)
+---
 
-## ANTI-PATTERNS (THIS PROJECT)
+## Legacy / Deprecated Technologies
 
-- Never commit: `.cache/`, `raw/`, `logs/`, `*.db`, `.coverage`, `coverage.json`
-- Never bypass directory-local AGENTS guidance for `src/db`, `src/etl`, `src/pipeline`, `tests`
-- Never write to SQLite from `analytics.py` — DuckDB is read-only OLAP layer
-- Never use `as any`, `@ts-ignore` type suppressions (Python equivalent: avoid `type: ignore`)
-- Never raise generic `ValueError` for pipeline errors — use typed exceptions from `exceptions.py`
+<!-- PLACEHOLDER: List technologies still present in the codebase but no longer preferred.
+     This prevents the agent from reaching for outdated patterns it finds in older files. -->
 
-## COMMANDS
+<!-- Example:
+- `[TechA]` — legacy only, exists in [/path]. Do not use for new code; prefer [TechB].
+-->
 
-```bash
-# Full pipeline
-uv run ingest
+---
 
-# Common focused runs
-uv run ingest --dims-only
-uv run ingest --raw-backfill
-uv run ingest --awards --salaries --rosters
-uv run ingest --analytics-only --analytics-view vw_player_season_totals --analytics-output out.csv
-uv run ingest --pbp-limit 50 --include-playoffs
+## Project State Context
 
-# Validation
-uv run pytest
-uv run pytest --cov=src --cov-report=term-missing
-uv run ruff check .
-uv run ruff format .
-uv run ty check
-```
+<!-- PLACEHOLDER: Use this section to intentionally frame the project's current state
+     in a way that steers agent behavior. Update as the project matures.
+     Examples of useful framings:
+     - "This project is early-stage. Schema changes are welcome."
+     - "This app has no production users yet. Don't generate data migration scripts."
+     - "All new features must be backward-compatible — production data exists."
+     -->
 
-## NOTES
+- This project uses a modular architecture with SQL/JSON data extraction
+- Schema DDL is in `src/db/schema/*.sql` files
+- Analytics views are in `src/db/views/*.sql` files
+- Static data is in `src/etl/data/*.json` files
+- Helper modules use underscore prefix (e.g., `_helpers.py`)
+- Database operations are in `src/db/operations/`, caching in `src/db/cache/`, tracking in `src/db/tracking/`
+- ETL logging setup is in `src/etl/logging.py`
 
-- Entry command: `ingest = "src.pipeline.cli:main"` (via `pyproject.toml`)
-- Pre-commit hook: `scripts/sync_agents.py` mirrors `AGENTS.md` → `GEMINI.md` / `CLAUDE.md`
-- `mutmut` is available for mutation testing (`uv run mutmut run`)
-- `src/` and `tests/` are highest-complexity; keep deep guidance in local AGENTS files
+---
+
+## Agent Self-Reporting
+
+If you encounter anything in this codebase that is surprising, ambiguous, or contradicts your expectations,
+**do not silently work around it**. Instead:
+
+1. Flag it to the developer in your response.
+2. Propose a one-line addition to this file describing the confusion.
+
+The developer will determine whether the fix belongs in the code or here.
+
+---
+
+<!-- MAINTENANCE REMINDER:
+     - Review this file when upgrading major dependencies or refactoring architecture.
+     - If a section has been empty for a long time, delete it.
+     - If the model no longer makes a listed mistake, remove that entry.
+     - Outdated entries actively degrade agent performance.
+-->

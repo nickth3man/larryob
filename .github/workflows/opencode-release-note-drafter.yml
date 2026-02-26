@@ -1,0 +1,39 @@
+name: opencode-release-note-drafter
+
+on:
+  pull_request:
+    types: [opened]
+
+concurrency:
+  group: opencode-release-notes-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  draft:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+      pull-requests: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: anomalyco/opencode/github@0cf0294787322664c6d668fa5ab0a9ce26796f78
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: openrouter/mistralai/devstral-2512
+          use_github_token: true
+          prompt: |
+            Draft release-note bullets for this pull request.
+            Produce sections:
+            - User-visible changes
+            - Internal/infra changes
+            - Breaking changes (if none, state "None")
+            - Follow-up tasks
+
+            Keep wording concise, concrete, and suitable for a project changelog.

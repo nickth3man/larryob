@@ -8,9 +8,32 @@ Environment variables can override defaults:
 - LARRYOB_METRICS_ENABLED: Enable metrics collection (default: false)
 """
 
+import json
 import os
 from pathlib import Path
 from typing import Any
+
+# -----------------------------------------------------------------------------
+# Data Directory Path
+# -----------------------------------------------------------------------------
+
+_DATA_DIR = Path(__file__).parent / "data"
+
+
+def _load_json(filename: str) -> dict:
+    """
+    Load and parse a JSON file from the module's data directory.
+    
+    Parameters:
+        filename (str): Name of the JSON file located in the module data directory (relative path).
+    
+    Returns:
+        dict: The parsed JSON object.
+    """
+    filepath = _DATA_DIR / filename
+    with open(filepath, encoding="utf-8") as f:
+        return json.load(f)
+
 
 # -----------------------------------------------------------------------------
 # API Rate Limiting Configuration
@@ -57,309 +80,39 @@ class CacheConfig:
 
 
 # -----------------------------------------------------------------------------
-# Team Metadata (previously in dimensions.py)
+# Team Metadata (loaded from JSON)
 # -----------------------------------------------------------------------------
 
-_TEAM_METADATA: dict[str, dict] = {
-    "1610612737": {
-        "conference": "East",
-        "division": "Southeast",
-        "arena_name": "State Farm Arena",
-        "color_primary": "#E03A3E",
-        "color_secondary": "#C1D32F",
-        "founded_year": 1949,
-    },
-    "1610612738": {
-        "conference": "East",
-        "division": "Atlantic",
-        "arena_name": "TD Garden",
-        "color_primary": "#007A33",
-        "color_secondary": "#BA9653",
-        "founded_year": 1946,
-    },
-    "1610612739": {
-        "conference": "East",
-        "division": "Central",
-        "arena_name": "Rocket Mortgage FieldHouse",
-        "color_primary": "#860038",
-        "color_secondary": "#FDBB30",
-        "founded_year": 1970,
-    },
-    "1610612740": {
-        "conference": "West",
-        "division": "Southwest",
-        "arena_name": "Smoothie King Center",
-        "color_primary": "#0C2C56",
-        "color_secondary": "#B4975A",
-        "founded_year": 2002,
-    },
-    "1610612741": {
-        "conference": "East",
-        "division": "Central",
-        "arena_name": "United Center",
-        "color_primary": "#CE1141",
-        "color_secondary": "#000000",
-        "founded_year": 1966,
-    },
-    "1610612742": {
-        "conference": "West",
-        "division": "Southwest",
-        "arena_name": "American Airlines Center",
-        "color_primary": "#002B5C",
-        "color_secondary": "#00471B",
-        "founded_year": 1980,
-    },
-    "1610612743": {
-        "conference": "West",
-        "division": "Northwest",
-        "arena_name": "Ball Arena",
-        "color_primary": "#0E2240",
-        "color_secondary": "#FEC524",
-        "founded_year": 1976,
-    },
-    "1610612744": {
-        "conference": "West",
-        "division": "Pacific",
-        "arena_name": "Chase Center",
-        "color_primary": "#1D428A",
-        "color_secondary": "#FFC52F",
-        "founded_year": 1946,
-    },
-    "1610612745": {
-        "conference": "West",
-        "division": "Southwest",
-        "arena_name": "Toyota Center",
-        "color_primary": "#CE1141",
-        "color_secondary": "#C4CED4",
-        "founded_year": 1967,
-    },
-    "1610612746": {
-        "conference": "West",
-        "division": "Pacific",
-        "arena_name": "Crypto.com Arena",
-        "color_primary": "#C60C30",
-        "color_secondary": "#EF3B24",
-        "founded_year": 1970,
-    },
-    "1610612747": {
-        "conference": "West",
-        "division": "Pacific",
-        "arena_name": "Crypto.com Arena",
-        "color_primary": "#552582",
-        "color_secondary": "#FDB927",
-        "founded_year": 1948,
-    },
-    "1610612748": {
-        "conference": "East",
-        "division": "Southeast",
-        "arena_name": "Kaseya Center",
-        "color_primary": "#98002E",
-        "color_secondary": "#000000",
-        "founded_year": 1988,
-    },
-    "1610612749": {
-        "conference": "East",
-        "division": "Central",
-        "arena_name": "Fiserv Forum",
-        "color_primary": "#00471B",
-        "color_secondary": "#EEE1C6",
-        "founded_year": 1968,
-    },
-    "1610612750": {
-        "conference": "West",
-        "division": "Northwest",
-        "arena_name": "Target Center",
-        "color_primary": "#0C2340",
-        "color_secondary": "#9EA2A2",
-        "founded_year": 1989,
-    },
-    "1610612751": {
-        "conference": "East",
-        "division": "Atlantic",
-        "arena_name": "Barclays Center",
-        "color_primary": "#000000",
-        "color_secondary": "#FFFFFF",
-        "founded_year": 1976,
-    },
-    "1610612752": {
-        "conference": "East",
-        "division": "Atlantic",
-        "arena_name": "Madison Square Garden",
-        "color_primary": "#006BB6",
-        "color_secondary": "#F58426",
-        "founded_year": 1946,
-    },
-    "1610612753": {
-        "conference": "East",
-        "division": "Southeast",
-        "arena_name": "Kia Center",
-        "color_primary": "#0077C0",
-        "color_secondary": "#000000",
-        "founded_year": 1989,
-    },
-    "1610612754": {
-        "conference": "East",
-        "division": "Central",
-        "arena_name": "Gainbridge Fieldhouse",
-        "color_primary": "#002D62",
-        "color_secondary": "#FDBB30",
-        "founded_year": 1976,
-    },
-    "1610612755": {
-        "conference": "East",
-        "division": "Atlantic",
-        "arena_name": "Wells Fargo Center",
-        "color_primary": "#006BB6",
-        "color_secondary": "#ED174C",
-        "founded_year": 1949,
-    },
-    "1610612756": {
-        "conference": "West",
-        "division": "Pacific",
-        "arena_name": "Footprint Center",
-        "color_primary": "#1D1160",
-        "color_secondary": "#E56020",
-        "founded_year": 1968,
-    },
-    "1610612757": {
-        "conference": "West",
-        "division": "Northwest",
-        "arena_name": "Moda Center",
-        "color_primary": "#E03A3E",
-        "color_secondary": "#000000",
-        "founded_year": 1970,
-    },
-    "1610612758": {
-        "conference": "West",
-        "division": "Pacific",
-        "arena_name": "Golden 1 Center",
-        "color_primary": "#5A2D81",
-        "color_secondary": "#888888",
-        "founded_year": 1948,
-    },
-    "1610612759": {
-        "conference": "West",
-        "division": "Southwest",
-        "arena_name": "Frost Bank Center",
-        "color_primary": "#000000",
-        "color_secondary": "#C4CED4",
-        "founded_year": 1976,
-    },
-    "1610612760": {
-        "conference": "West",
-        "division": "Northwest",
-        "arena_name": "Paycom Center",
-        "color_primary": "#007AC1",
-        "color_secondary": "#EF3B24",
-        "founded_year": 2008,
-    },
-    "1610612761": {
-        "conference": "East",
-        "division": "Atlantic",
-        "arena_name": "Scotiabank Arena",
-        "color_primary": "#CE1141",
-        "color_secondary": "#000000",
-        "founded_year": 1995,
-    },
-    "1610612762": {
-        "conference": "West",
-        "division": "Northwest",
-        "arena_name": "Delta Center",
-        "color_primary": "#002B5C",
-        "color_secondary": "#00471B",
-        "founded_year": 1974,
-    },
-    "1610612763": {
-        "conference": "West",
-        "division": "Southwest",
-        "arena_name": "FedExForum",
-        "color_primary": "#12173F",
-        "color_secondary": "#6ECEB2",
-        "founded_year": 1995,
-    },
-    "1610612764": {
-        "conference": "East",
-        "division": "Southeast",
-        "arena_name": "Capital One Arena",
-        "color_primary": "#002B5C",
-        "color_secondary": "#E31837",
-        "founded_year": 1961,
-    },
-    "1610612765": {
-        "conference": "East",
-        "division": "Central",
-        "arena_name": "Little Caesars Arena",
-        "color_primary": "#C8102E",
-        "color_secondary": "#1D42BA",
-        "founded_year": 1948,
-    },
-    "1610612766": {
-        "conference": "East",
-        "division": "Southeast",
-        "arena_name": "Spectrum Center",
-        "color_primary": "#1D1160",
-        "color_secondary": "#00788C",
-        "founded_year": 1988,
-    },
-}
+_TEAM_METADATA: dict[str, dict] = _load_json("team_metadata.json")
 
 
 def get_team_metadata(team_id: str) -> dict[str, Any] | None:
-    """Get metadata for a team by ID."""
+    """
+    Retrieve metadata for a team given its identifier.
+    
+    Parameters:
+        team_id (str): Team identifier key used in the loaded team metadata.
+    
+    Returns:
+        dict[str, Any] | None: The team's metadata dictionary if present, `None` if the team_id is not found.
+    """
     return _TEAM_METADATA.get(team_id)
 
 
 # -----------------------------------------------------------------------------
-# Salary Cap Data (previously in salaries.py)
+# Salary Cap Data (loaded from JSON)
 # -----------------------------------------------------------------------------
 
-_SALARY_CAP_BY_SEASON: dict[str, int] = {
-    "1984-85": 3_600_000,
-    "1985-86": 4_233_000,
-    "1986-87": 4_945_000,
-    "1987-88": 6_164_000,
-    "1988-89": 7_232_000,
-    "1989-90": 9_802_000,
-    "1990-91": 11_871_000,
-    "1991-92": 12_500_000,
-    "1992-93": 14_000_000,
-    "1993-94": 15_175_000,
-    "1994-95": 15_964_000,
-    "1995-96": 23_000_000,
-    "1997-98": 26_900_000,
-    "1998-99": 30_000_000,
-    "1999-00": 34_000_000,
-    "2000-01": 35_500_000,
-    "2001-02": 42_500_000,
-    "2002-03": 40_271_000,
-    "2003-04": 43_870_000,
-    "2004-05": 43_870_000,
-    "2005-06": 49_500_000,
-    "2006-07": 53_135_000,
-    "2007-08": 55_630_000,
-    "2008-09": 58_680_000,
-    "2009-10": 57_700_000,
-    "2010-11": 58_044_000,
-    "2011-12": 58_044_000,
-    "2012-13": 58_044_000,
-    "2013-14": 58_679_000,
-    "2014-15": 63_065_000,
-    "2015-16": 70_000_000,
-    "2016-17": 94_143_000,
-    "2017-18": 99_093_000,
-    "2018-19": 101_869_000,
-    "2019-20": 109_140_000,
-    "2020-21": 109_140_000,
-    "2021-22": 112_414_000,
-    "2022-23": 123_655_000,
-    "2023-24": 136_021_000,
-    "2024-25": 140_588_000,
-    "2025-26": 150_267_000,
-}
+_SALARY_CAP_BY_SEASON: dict[str, int] = _load_json("salary_cap.json")
 
 
 def get_salary_cap(season_id: str) -> int | None:
-    """Get salary cap amount for a season."""
+    """
+    Retrieve the salary cap for a given NBA season.
+    
+    @param season_id: Season identifier used as key in the salary cap data (e.g., "2024-25").
+    @returns: `int` salary cap in dollars for the specified season, `None` if the season is not present.
+    """
     return _SALARY_CAP_BY_SEASON.get(season_id)
 
 
@@ -369,45 +122,22 @@ def get_all_salary_caps() -> dict[str, int]:
 
 
 # -----------------------------------------------------------------------------
-# Basketball-Reference Abbreviation Mapping (previously in salaries.py)
+# Basketball-Reference Abbreviation Mapping (loaded from JSON)
 # -----------------------------------------------------------------------------
 
-_ABBR_TO_BREF: dict[str, str] = {
-    "ATL": "ATL",
-    "BKN": "BRK",
-    "BOS": "BOS",
-    "CHA": "CHO",
-    "CHI": "CHI",
-    "CLE": "CLE",
-    "DAL": "DAL",
-    "DEN": "DEN",
-    "DET": "DET",
-    "GSW": "GSW",
-    "HOU": "HOU",
-    "IND": "IND",
-    "LAC": "LAC",
-    "LAL": "LAL",
-    "MEM": "MEM",
-    "MIA": "MIA",
-    "MIL": "MIL",
-    "MIN": "MIN",
-    "NOP": "NOP",
-    "NYK": "NYK",
-    "OKC": "OKC",
-    "ORL": "ORL",
-    "PHI": "PHI",
-    "PHX": "PHO",
-    "POR": "POR",
-    "SAC": "SAC",
-    "SAS": "SAS",
-    "TOR": "TOR",
-    "UTA": "UTA",
-    "WAS": "WAS",
-}
+_ABBR_TO_BREF: dict[str, str] = _load_json("abbr_mappings.json")
 
 
 def nba_abbr_to_bref(abbr: str) -> str | None:
-    """Convert NBA abbreviation to Basketball-Reference abbreviation."""
+    """
+    Map an NBA team abbreviation to its Basketball-Reference equivalent.
+    
+    Parameters:
+        abbr (str): NBA team abbreviation to convert (case-sensitive).
+    
+    Returns:
+        str | None: Basketball-Reference abbreviation if found, None otherwise.
+    """
     return _ABBR_TO_BREF.get(abbr)
 
 

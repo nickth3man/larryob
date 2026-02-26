@@ -1,3 +1,0 @@
-03:01:18  INFO      ingest.fix  Loading dim_player from CommonAllPlayers(2025-26)
-03:01:21  INFO      src.etl.dimensions  dim_player full: 5111 rows upserted from CommonAllPlayers(2025-26).
-03:01:21  INFO      ingest.fix  dim_player update complete inserted=5111

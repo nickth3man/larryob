@@ -9,7 +9,7 @@ from pathlib import Path
 
 import pytest
 
-from src.etl.utils import _validate_identifier as _validate_sql_identifier
+from src.db.operations import _validate_identifier as _validate_sql_identifier
 from src.pipeline.constants import _SEASON_ID_PATTERN, _VALID_IDENTIFIER
 from src.pipeline.exceptions import AnalyticsError, ValidationError
 

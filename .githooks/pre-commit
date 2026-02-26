@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+
+if ! command -v uv >/dev/null 2>&1; then
+  echo "pre-commit: uv is required but was not found in PATH."
+  exit 1
+fi
+
+echo "pre-commit: running quality checks..."
+uv run ruff check .
+uv run ruff format --check .
+uv run ty check
+uv run pytest -q
