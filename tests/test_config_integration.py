@@ -102,9 +102,9 @@ def test_gitignore_does_not_ignore_source_code() -> None:
 
 def test_workflow_yaml_syntax_edge_cases() -> None:
     """Test edge cases in workflow YAML parsing."""
-    try:
-        import yaml
-    except ImportError:
+    import importlib.util
+
+    if importlib.util.find_spec("yaml") is None:
         pytest.skip("PyYAML not available")
 
     workflow_dir = Path(".github/workflows")
@@ -286,9 +286,9 @@ def test_commit_gate_workflow_triggers_correctly() -> None:
 
 def test_workflow_files_valid_model_references() -> None:
     """Verify workflow files reference valid AI models."""
-    try:
-        import yaml
-    except ImportError:
+    import importlib.util
+
+    if importlib.util.find_spec("yaml") is None:
         pytest.skip("PyYAML not available")
 
     workflow_dir = Path(".github/workflows")

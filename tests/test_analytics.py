@@ -187,7 +187,8 @@ def test_views_are_queryable(duck_con_with_sqlite) -> None:
     # This test just ensures the view SQL parses without error.
     views = _load_all_views()
     for name, sql in views:
-        duck_con_with_sqlite.execute(f"SELECT 1 FROM ({sql}) LIMIT 0")
+        clean_sql = sql.strip().rstrip(";")
+        duck_con_with_sqlite.execute(f"SELECT 1 FROM ({clean_sql}) LIMIT 0")
 
 
 def test_get_duck_con_singleton(tmp_path, monkeypatch) -> None:

@@ -96,9 +96,7 @@ def _build_team_lookup(con: sqlite3.Connection) -> dict[str, str]:
     write wins for bref if it duplicates an NBA key).
     """
     lookup: dict[str, str] = {}
-    rows = con.execute(
-        "SELECT team_id, abbreviation, bref_abbrev FROM dim_team"
-    ).fetchall()
+    rows = con.execute("SELECT team_id, abbreviation, bref_abbrev FROM dim_team").fetchall()
     for team_id, nba_abbr, bref_abbr in rows:
         team_id_str = str(team_id).strip()
         # Register bref first so NBA key can overwrite on collision.
@@ -142,9 +140,7 @@ def load_salary_history(
     # ------------------------------------------------------------------ #
     path: Path = open_file if open_file is not None else raw_dir / _DEFAULT_FILENAME
     if not path.exists():
-        logger.warning(
-            "load_salary_history: file not found — skipping: %s", path
-        )
+        logger.warning("load_salary_history: file not found — skipping: %s", path)
         return 0
 
     df = read_csv_safe(path, low_memory=False)
@@ -171,14 +167,11 @@ def load_salary_history(
     skipped_salary: int = 0
 
     for raw_row in df.to_dict("records"):
-
         # -- Season --------------------------------------------------------
         raw_season = _col(raw_row, "season_id", "season")
         season_id = _parse_season_id(raw_season)
         if season_id is None:
-            logger.debug(
-                "load_salary_history: invalid season %r — row skipped", raw_season
-            )
+            logger.debug("load_salary_history: invalid season %r — row skipped", raw_season)
             skipped_season += 1
             continue
 
@@ -270,7 +263,5 @@ def load_salary_history(
     # 5. Upsert                                                           #
     # ------------------------------------------------------------------ #
     inserted = upsert_rows(con, "fact_salary", rows_to_insert, conflict="REPLACE")
-    logger.info(
-        "load_salary_history: %d rows inserted/replaced in fact_salary.", inserted
-    )
+    logger.info("load_salary_history: %d rows inserted/replaced in fact_salary.", inserted)
     return inserted

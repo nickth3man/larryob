@@ -248,9 +248,7 @@ def test_load_season_pbp_source_api_skips_bulk(
 
     with patch("src.etl.play_by_play.load_games", return_value=5):
         with patch("src.etl.play_by_play.log_load_summary"):
-            with patch(
-                "src.etl.backfill._pbp_bulk.load_bulk_pbp_season"
-            ) as mock_bulk:
+            with patch("src.etl.backfill._pbp_bulk.load_bulk_pbp_season") as mock_bulk:
                 result = load_season_pbp(sqlite_con_with_data, "2023-24", source="api")
 
     assert result == 5
@@ -267,14 +265,10 @@ def test_load_season_pbp_source_bulk_calls_bulk_only(
 
     monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
-    with patch(
-        "src.etl.play_by_play.load_games"
-    ) as mock_api:
+    with patch("src.etl.play_by_play.load_games") as mock_api:
         with patch("src.etl.play_by_play.log_load_summary"):
             # Patch the import-time name inside the function's local scope
-            with patch(
-                "src.etl.backfill._pbp_bulk.load_bulk_pbp_season", return_value=42
-            ):
+            with patch("src.etl.backfill._pbp_bulk.load_bulk_pbp_season", return_value=42):
                 result = load_season_pbp(sqlite_con_with_data, "2023-24", source="bulk")
 
     assert result == 42
@@ -322,13 +316,9 @@ def test_load_season_pbp_source_auto_deduplicates(
     }
     _upsert(sqlite_con_with_data, "fact_play_by_play", [row])
 
-    with patch(
-        "src.etl.play_by_play.load_games", return_value=0
-    ) as mock_api:
+    with patch("src.etl.play_by_play.load_games", return_value=0) as mock_api:
         with patch("src.etl.play_by_play.log_load_summary"):
-            with patch(
-                "src.etl.backfill._pbp_bulk.load_bulk_pbp_season", return_value=1
-            ):
+            with patch("src.etl.backfill._pbp_bulk.load_bulk_pbp_season", return_value=1):
                 load_season_pbp(sqlite_con_with_data, "2023-24", source="auto")
 
     # load_games was called, but game "0022300001" should NOT be in its args

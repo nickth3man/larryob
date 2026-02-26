@@ -127,10 +127,12 @@ def _fetch_pbp(game_id: str, api_caller: APICaller | None = None) -> pd.DataFram
 def _transform_pbp(df: pd.DataFrame) -> list[dict]:
     df = df.rename(columns=_PBP_RENAME)
 
+    # Ensure game_id is TEXT — pandas infers CSV all-digit columns as integers,
+    # which breaks STRICT-mode FK checks against fact_game(game_id TEXT).
+    df["game_id"] = df["game_id"].astype(str)
+
     # Synthesise a stable event_id: zero-pad eventnum to 6 digits for correct text sort
-    df["event_id"] = (
-        df["game_id"].astype(str) + "_" + df["eventnum"].astype(int).map(lambda x: f"{x:06d}")
-    )
+    df["event_id"] = df["game_id"] + "_" + df["eventnum"].astype(int).map(lambda x: f"{x:06d}")
 
     # Cast IDs to str; treat "0" player IDs as None (team-level events)
     for col in ("player1_id", "player2_id", "player3_id", "team1_id", "team2_id"):

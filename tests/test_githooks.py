@@ -22,7 +22,7 @@ def test_pre_commit_hook_is_executable() -> None:
     import stat
 
     st = hook.stat()
-    is_executable = bool(st.st_mode & stat.S_IXUSR)
+    _ = bool(st.st_mode & stat.S_IXUSR)  # executable check (may not work on all filesystems)
     # Note: May not be executable on all systems, so we just verify it's a valid shell script
     assert hook.exists()
 

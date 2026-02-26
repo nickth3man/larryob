@@ -76,8 +76,8 @@ def _load_views_from_sql_file(sql_path: Path) -> list[tuple[str, str]]:
         # Extract the SQL and clean it up
         view_sql = content[start_pos:end_pos].strip()
 
-        # Remove trailing semicolons and whitespace but don't split on semicolons inside the SQL body
-        view_sql = view_sql.rstrip().rstrip(";").strip()
+        # Remove trailing semicolons and comments
+        view_sql = view_sql.split(";")[0].strip()
 
         views.append((view_name, view_sql))
 
