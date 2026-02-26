@@ -45,10 +45,29 @@ def _load_sql_file(filename: str) -> list[str]:
     lines = content.splitlines()
     cleaned_lines = []
     for line in lines:
-        # Remove inline comments but keep the line
-        if "--" in line:
-            line = line[: line.index("--")]
-        cleaned_lines.append(line)
+        # Remove inline SQL comments unless they appear inside string literals
+        new_chars = []
+        in_single = False
+        in_double = False
+        i = 0
+        while i < len(line):
+            ch = line[i]
+            if ch == "'" and not in_double:
+                in_single = not in_single
+                new_chars.append(ch)
+                i += 1
+                continue
+            if ch == '"' and not in_single:
+                in_double = not in_double
+                new_chars.append(ch)
+                i += 1
+                continue
+            if not in_single and not in_double and line[i : i + 2] == "--":
+                # start of a comment outside of quotes; drop the rest of the line
+                break
+            new_chars.append(ch)
+            i += 1
+        cleaned_lines.append("".join(new_chars))
 
     # Join back and split on semicolons
     cleaned_content = "\n".join(cleaned_lines)

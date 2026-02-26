@@ -13,7 +13,7 @@ from ...etl.config import CacheConfig
 logger = logging.getLogger(__name__)
 
 CACHE_DIR = CacheConfig.cache_dir()
-CACHE_DIR.mkdir(exist_ok=True)
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
 
 CACHE_VERSION = CacheConfig.CACHE_VERSION
 
