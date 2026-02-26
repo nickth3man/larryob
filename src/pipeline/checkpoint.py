@@ -32,7 +32,7 @@ logger = logging.getLogger(__name__)
 def _safe_table_count(con: sqlite3.Connection, table_name: str) -> int | None:
     """
     Obtain the number of rows in the named table, or None when the name is invalid or the table is missing.
-    
+
     Returns:
         int | None: Row count for the table if the name is a valid SQL identifier and the table exists; `None` if the table name is invalid, the table does not exist, or the count cannot be parsed as an integer.
     """

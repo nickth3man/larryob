@@ -33,7 +33,7 @@ _SALARY_CAP_BY_SEASON = get_all_salary_caps()
 def _abbr_to_bref(abbr: str) -> str:
     """
     Map an NBA team abbreviation to the Basketball-Reference equivalent.
-    
+
     Returns:
         The Basketball-Reference abbreviation for `abbr`, or `abbr` unchanged if no mapping is available.
     """
@@ -47,9 +47,9 @@ _LOADER_ID = "salaries.load_player_salaries.v2"
 def load_salary_cap(con: sqlite3.Connection) -> int:
     """
     Seed the dim_salary_cap table with historical salary cap amounts and ensure referenced seasons exist.
-    
+
     This ensures dim_season contains seasons up to the latest start year present in the hardcoded cap data, then upserts season_id/cap_amount rows into dim_salary_cap.
-    
+
     Returns:
         inserted (int): Number of rows inserted or replaced into dim_salary_cap.
     """
@@ -67,10 +67,10 @@ def load_salary_cap(con: sqlite3.Connection) -> int:
 def _normalize_name(name: str) -> str:
     """
     Normalize a person name for consistent matching by removing accents, lowercasing, and stripping non-alphabetic characters.
-    
+
     Parameters:
         name (str): Raw name to normalize.
-    
+
     Returns:
         str: Normalized name suitable for lookup and comparison.
     """
@@ -83,12 +83,12 @@ def _season_team_map(
 ) -> tuple[dict[str, str], str]:
     """
     Map Basketball-Reference team abbreviations for a given season to internal team IDs.
-    
+
     Looks up season-specific mappings from fact_team_season joined to dim_team_history and, if none are found, falls back to current abbreviations from dim_team.
-    
+
     Parameters:
         season_id (str): Season identifier in the form "YYYY-YY" (e.g., "2023-24"); the start year is used to resolve historical mappings.
-    
+
     Returns:
         tuple[dict[str, str], str]: A pair where the first element is a dict mapping Basketball-Reference abbreviations (uppercased strings) to team_id strings, and the second element is the source label: either "fact_team_season" when historical season mappings were used or "dim_team" when the current-team fallback was used.
     """
@@ -139,13 +139,13 @@ def load_player_salaries(
 ) -> int:
     """
     Load and upsert player salary records for a given NBA season into the fact_salary table.
-    
+
     Builds salary rows by fetching Basketball-Reference team salary or contracts pages for the season, matching scraped player names to dim_player by a normalized name, validating the resulting rows, and upserting them into fact_salary. Records run metadata (status and counts) and may short-circuit returning 0 when the season is already loaded, when no valid rows are found, or when a rate limit prevents fetching data.
-    
+
     Parameters:
         con (sqlite3.Connection): Database connection used for lookups, validation, and upsert.
         season_id (str): Season identifier like "2023-24" or "2025-26".
-    
+
     Returns:
         int: Number of rows inserted or replaced into fact_salary; returns 0 if nothing was inserted.
     """

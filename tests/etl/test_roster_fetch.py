@@ -485,11 +485,11 @@ def test_load_team_roster_api_max_retries_exceeded(
     def side_effect(*args, **kwargs):
         """
         Placeholder callable used as a side effect that always raises a RuntimeError indicating the API is unavailable.
-        
+
         Parameters:
             *args: Ignored positional arguments.
             **kwargs: Ignored keyword arguments.
-        
+
         Raises:
             RuntimeError: Always raised with the message "API unavailable".
         """

@@ -20,6 +20,7 @@ def test_pre_commit_hook_is_executable() -> None:
 
     # Check if file has executable bit set
     import stat
+
     st = hook.stat()
     is_executable = bool(st.st_mode & stat.S_IXUSR)
     # Note: May not be executable on all systems, so we just verify it's a valid shell script
@@ -140,7 +141,8 @@ def test_pre_commit_hook_commands_use_uv_run() -> None:
     for cmd in commands:
         # Find lines containing the command (exclude echo and comments)
         matching_lines = [
-            line for line in lines
+            line
+            for line in lines
             if cmd in line and not line.startswith("#") and not line.startswith("echo")
         ]
         for line in matching_lines:
@@ -178,9 +180,7 @@ def test_pre_commit_hook_has_informative_output() -> None:
 
     content = hook.read_text()
     # Should have echo statements or similar to inform user
-    assert "echo" in content or "printf" in content, (
-        "pre-commit should provide user feedback"
-    )
+    assert "echo" in content or "printf" in content, "pre-commit should provide user feedback"
 
 
 def test_pre_commit_hook_quality_checks_order() -> None:
@@ -257,6 +257,4 @@ def test_pre_commit_hook_no_hardcoded_paths() -> None:
         # Avoid hardcoded /home/, /usr/local/, etc. paths
         if "/home/" in line or "/usr/local/" in line:
             # Could be in comments or strings, so this is a soft check
-            assert line.strip().startswith("#"), (
-                f"Line {i+1} may contain hardcoded path: {line}"
-            )
+            assert line.strip().startswith("#"), f"Line {i + 1} may contain hardcoded path: {line}"

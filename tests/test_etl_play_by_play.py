@@ -13,7 +13,7 @@ from src.etl.play_by_play import _fetch_pbp, _transform_pbp, load_game, load_gam
 def _make_pbp_df() -> pd.DataFrame:
     """
     Create a sample play-by-play pandas DataFrame containing four events for game "0022300001".
-    
+
     Returns:
         pd.DataFrame: A DataFrame with 4 rows and the following columns:
             GAME_ID, EVENTNUM, PERIOD, PCTIMESTRING, WCTIMESTRING,

@@ -44,6 +44,7 @@ CREATE INDEX IF NOT EXISTS idx_team_hist_team ON dim_team_history(team_id);
 -- Team season indexes
 CREATE INDEX IF NOT EXISTS idx_fts_season ON fact_team_season(season_id);
 CREATE INDEX IF NOT EXISTS idx_fts_abbrev ON fact_team_season(bref_abbrev);
+CREATE INDEX IF NOT EXISTS idx_dim_team_bref_abbrev ON dim_team(bref_abbrev);
 
 -- Draft indexes
 CREATE INDEX IF NOT EXISTS idx_draft_season ON fact_draft(season_id);

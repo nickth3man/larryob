@@ -25,12 +25,12 @@ SCHEMA_DIR = Path(__file__).parent / "schema"
 def _load_sql_file(filename: str) -> list[str]:
     """
     Load SQL statements from a file in the schema directory.
-    
+
     Reads the file located at SCHEMA_DIR / filename, removes inline SQL comments that start with `--`, splits the content on semicolons into individual statements, strips surrounding whitespace, and filters out empty or comment-only statements.
-    
+
     Parameters:
         filename (str): Name of the SQL file inside the module's SCHEMA_DIR.
-    
+
     Returns:
         list[str]: A list of individual, trimmed SQL statements from the file. If the file does not exist, returns an empty list.
     """
@@ -68,12 +68,12 @@ ROLLBACK_STATEMENTS = _load_sql_file("rollback.sql")
 def get_db_connection(db_path: Path = DB_PATH) -> sqlite3.Connection:
     """
     Open and configure a SQLite connection for the NBA raw data database.
-    
+
     Configures the connection to use WAL journal mode, enable foreign key enforcement, and set synchronous to NORMAL.
-    
+
     Parameters:
         db_path (Path): Filesystem path to the SQLite database file. Defaults to module-level DB_PATH.
-    
+
     Returns:
         sqlite3.Connection: Configured SQLite connection.
     """
@@ -87,12 +87,12 @@ def get_db_connection(db_path: Path = DB_PATH) -> sqlite3.Connection:
 def init_db(db_path: Path = DB_PATH) -> sqlite3.Connection:
     """
     Create the database schema (tables, indexes, and migrations) and return a configured connection.
-    
+
     Ensures the database parent directory exists, opens a configured SQLite connection, performs a one-time cleanup of a legacy index, executes SQL statements loaded from schema/tables.sql and schema/indexes.sql, and applies ALTER statements from migrations with idempotent handling of "duplicate column name" errors. Commits the changes before returning.
-    
+
     Parameters:
         db_path (Path): Path to the SQLite database file (defaults to module DB_PATH).
-    
+
     Returns:
         sqlite3.Connection: An open, configured connection to the initialized database.
     """
@@ -102,22 +102,40 @@ def init_db(db_path: Path = DB_PATH) -> sqlite3.Connection:
     # One-time cleanup: remove misnamed index from earlier schema versions
     con.execute("DROP INDEX IF EXISTS idx_pgl_player_season;")
 
-    # Load and execute table definitions
-    for stmt in _load_sql_file("tables.sql"):
-        con.execute(stmt)
+    # Execute tables.sql using executescript to avoid fragile statement splitting
+    tables_sql = (SCHEMA_DIR / "tables.sql").read_text(encoding="utf-8")
+    con.executescript(tables_sql)
 
-    # Load and execute index definitions
-    for stmt in _load_sql_file("indexes.sql"):
-        con.execute(stmt)
+    # Execute indexes.sql; if index creation fails due to existing duplicate data, raise a helpful error
+    indexes_sql = (SCHEMA_DIR / "indexes.sql").read_text(encoding="utf-8")
+    try:
+        con.executescript(indexes_sql)
+    except sqlite3.OperationalError as e:
+        msg = str(e).lower()
+        if "unique" in msg or "index" in msg:
+            logger.error("Index creation failed during init_db: %s", e)
+            raise RuntimeError(
+                "Index creation failed during init_db. This usually indicates duplicate or incompatible existing data. "
+                "Please inspect the database, deduplicate conflicting rows (e.g., duplicate bref_id), and re-run init_db."
+            ) from e
+        else:
+            raise
 
     # ALTER TABLE statements are not idempotent in SQLite; swallow the
-    # OperationalError that fires when the column already exists.
+    # OperationalError that fires when the column already exists. For index creation
+    # related errors, raise a helpful error advising deduplication.
     for stmt in ALTER_STATEMENTS:
         try:
             con.execute(stmt)
         except sqlite3.OperationalError as e:
-            if "duplicate column name" in str(e).lower():
+            msg = str(e).lower()
+            if "duplicate column name" in msg:
                 logger.debug("ALTER skipped (already applied?): %s", stmt[:50])
+            elif "index" in msg or "unique" in msg:
+                logger.error("Migration index creation failed: %s", e)
+                raise RuntimeError(
+                    "Migration failed during index creation. Please deduplicate conflicting data before re-running init_db."
+                ) from e
             else:
                 raise
 
@@ -128,12 +146,12 @@ def init_db(db_path: Path = DB_PATH) -> sqlite3.Connection:
 def rollback_db(db_path: Path = DB_PATH) -> sqlite3.Connection:
     """
     Execute configured rollback SQL statements against the database to reverse applied migrations.
-    
+
     Each statement from the module's rollback statements is executed in sequence; statement-level sqlite3.OperationalError exceptions are logged at debug level and do not abort the overall rollback. The transaction is committed before returning.
-    
+
     Parameters:
         db_path (Path): Path to the SQLite database file to operate on.
-    
+
     Returns:
         sqlite3.Connection: An open SQLite connection to the database after rollback.
     """

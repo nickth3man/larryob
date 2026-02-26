@@ -117,12 +117,15 @@ def test_workflow_yaml_syntax_edge_cases() -> None:
         # Verify no tab characters (YAML doesn't allow tabs for indentation)
         assert "\t" not in content or all(
             line.strip().startswith("#") or "\t" in line.split("#")[0]
-            for line in content.split("\n") if "\t" in line
+            for line in content.split("\n")
+            if "\t" in line
         ), f"{workflow_file.name} should not use tabs for indentation"
 
         # Verify consistent indentation (2 or 4 spaces)
         lines = content.split("\n")
-        indented_lines = [line for line in lines if line and line[0] == " " and not line.strip().startswith("#")]
+        indented_lines = [
+            line for line in lines if line and line[0] == " " and not line.strip().startswith("#")
+        ]
         if indented_lines:
             # Check that indentation is consistent (multiples of 2)
             for line in indented_lines:
@@ -168,7 +171,9 @@ def test_gitignore_protects_secrets() -> None:
         assert pattern in content, f"Should ignore secret file pattern: {pattern}"
 
     # Should NOT ignore the example env file
-    lines = [line.strip() for line in content.split("\n") if line.strip() and not line.startswith("#")]
+    lines = [
+        line.strip() for line in content.split("\n") if line.strip() and not line.startswith("#")
+    ]
     assert ".env.example" not in lines, ".env.example should be tracked"
 
 
@@ -241,9 +246,7 @@ def test_workflow_security_best_practices() -> None:
             triggers = data.get("on", data.get(True, {}))
             if isinstance(triggers, dict) and "pull_request_target" in triggers:
                 # If using pull_request_target, should have safety measures
-                pytest.fail(
-                    f"{workflow_file.name} uses pull_request_target which can be dangerous"
-                )
+                pytest.fail(f"{workflow_file.name} uses pull_request_target which can be dangerous")
 
 
 def test_gitignore_no_trailing_whitespace() -> None:
@@ -258,9 +261,7 @@ def test_gitignore_no_trailing_whitespace() -> None:
     for i, line in enumerate(lines, 1):
         if line and not line.startswith("#"):
             # Pattern lines should not have trailing whitespace
-            assert line == line.rstrip(), (
-                f".gitignore line {i} has trailing whitespace: '{line}'"
-            )
+            assert line == line.rstrip(), f".gitignore line {i} has trailing whitespace: '{line}'"
 
 
 def test_commit_gate_workflow_triggers_correctly() -> None:
@@ -299,6 +300,4 @@ def test_workflow_files_valid_model_references() -> None:
 
         # OpenCode workflows should reference a model
         if "anomalyco/opencode" in content:
-            assert "model:" in content, (
-                f"{workflow_file.name} should specify a model for OpenCode"
-            )
+            assert "model:" in content, f"{workflow_file.name} should specify a model for OpenCode"

@@ -40,9 +40,7 @@ def test_gitignore_ignores_venv() -> None:
         pytest.skip(".gitignore not found")
 
     content = gitignore.read_text()
-    assert ".venv" in content or "venv" in content, (
-        ".gitignore should ignore virtual environment"
-    )
+    assert ".venv" in content or "venv" in content, ".gitignore should ignore virtual environment"
 
 
 def test_gitignore_ignores_env_file() -> None:
@@ -89,9 +87,7 @@ def test_gitignore_ignores_db_wal_files() -> None:
         pytest.skip(".gitignore not found")
 
     content = gitignore.read_text()
-    assert "*.db-wal" in content or "*-wal" in content, (
-        ".gitignore should ignore SQLite WAL files"
-    )
+    assert "*.db-wal" in content or "*-wal" in content, ".gitignore should ignore SQLite WAL files"
 
 
 def test_gitignore_ignores_cache_directory() -> None:
@@ -102,9 +98,7 @@ def test_gitignore_ignores_cache_directory() -> None:
 
     content = gitignore.read_text()
     # Project uses .cache for API response cache
-    assert ".cache" in content or "/.cache" in content, (
-        ".gitignore should ignore cache directory"
-    )
+    assert ".cache" in content or "/.cache" in content, ".gitignore should ignore cache directory"
 
 
 def test_gitignore_ignores_build_artifacts() -> None:
@@ -137,9 +131,7 @@ def test_gitignore_ignores_log_files() -> None:
         pytest.skip(".gitignore not found")
 
     content = gitignore.read_text()
-    assert "*.log" in content or "logs/" in content, (
-        ".gitignore should ignore log files"
-    )
+    assert "*.log" in content or "logs/" in content, ".gitignore should ignore log files"
 
 
 def test_gitignore_has_comments() -> None:
@@ -206,9 +198,7 @@ def test_gitignore_ignores_raw_data_directory() -> None:
 
     content = gitignore.read_text()
     # Based on project structure, /raw is for local data
-    assert "/raw" in content or "raw/" in content, (
-        ".gitignore should ignore raw data directory"
-    )
+    assert "/raw" in content or "raw/" in content, ".gitignore should ignore raw data directory"
 
 
 def test_gitignore_allows_required_config_files() -> None:
@@ -218,7 +208,11 @@ def test_gitignore_allows_required_config_files() -> None:
         pytest.skip(".gitignore not found")
 
     content = gitignore.read_text()
-    lines = [line.strip() for line in content.split("\n") if line.strip() and not line.strip().startswith("#")]
+    lines = [
+        line.strip()
+        for line in content.split("\n")
+        if line.strip() and not line.strip().startswith("#")
+    ]
 
     # Should not explicitly ignore important files
     forbidden_ignores = ["pyproject.toml", "README.md", ".github/", "src/", "tests/"]
@@ -293,9 +287,7 @@ def test_gitignore_no_duplicate_patterns() -> None:
 
     # Check for exact duplicates
     unique_lines = set(lines)
-    assert len(unique_lines) == len(lines), (
-        ".gitignore contains duplicate patterns"
-    )
+    assert len(unique_lines) == len(lines), ".gitignore contains duplicate patterns"
 
 
 def test_gitignore_ignores_logs_directory() -> None:

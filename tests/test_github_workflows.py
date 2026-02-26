@@ -120,9 +120,7 @@ def test_opencode_workflows_use_correct_action() -> None:
     if not workflow_dir.exists():
         pytest.skip("workflow directory not found")
 
-    opencode_workflows = [
-        f for f in workflow_dir.glob("opencode-*.yml")
-    ]
+    opencode_workflows = [f for f in workflow_dir.glob("opencode-*.yml")]
 
     for workflow in opencode_workflows:
         content = workflow.read_text()
@@ -142,9 +140,7 @@ def test_opencode_workflows_have_required_secrets() -> None:
     if not workflow_dir.exists():
         pytest.skip("workflow directory not found")
 
-    opencode_workflows = [
-        f for f in workflow_dir.glob("opencode-*.yml")
-    ]
+    opencode_workflows = [f for f in workflow_dir.glob("opencode-*.yml")]
 
     for workflow in opencode_workflows:
         content = workflow.read_text()
