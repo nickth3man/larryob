@@ -15,10 +15,10 @@ from .config import get_team_metadata
 def _height_to_cm(height_str: str | None) -> float | None:
     """
     Convert a height string in "feet-inches" format (e.g., "6-8") to centimeters.
-    
+
     Parameters:
         height_str (str | None): Height in "feet-inches" (feet and inches separated by a hyphen). May be None.
-    
+
     Returns:
         height_cm (float | None): Height in centimeters rounded to one decimal place, or `None` if the input is missing or not a valid "feet-inches" string.
     """
@@ -38,10 +38,10 @@ def _height_to_cm(height_str: str | None) -> float | None:
 def _weight_to_kg(weight_str: str | int | None) -> float | None:
     """
     Convert a weight value in pounds to kilograms.
-    
+
     Parameters:
         weight_str (str | int | None): Weight in pounds as a number or numeric string. If None or an unparsable value is provided, the function returns None.
-    
+
     Returns:
         float | None: Weight converted to kilograms, rounded to one decimal place, or `None` if input is None or invalid.
     """
@@ -57,10 +57,10 @@ def _weight_to_kg(weight_str: str | int | None) -> float | None:
 def _parse_birth_date(date_str: str | None) -> str | None:
     """
     Extracts a YYYY-MM-DD date substring from an ISO-like datetime string.
-    
+
     Parameters:
         date_str (str | None): Input date/time string (e.g., '1989-12-09T00:00:00').
-    
+
     Returns:
         str | None: The first 10 characters as 'YYYY-MM-DD' when present and valid, otherwise `None`.
     """
@@ -72,16 +72,16 @@ def _parse_birth_date(date_str: str | None) -> str | None:
 def _normalize_position(pos: str | None) -> str | None:
     """
     Normalize an NBA position string to a canonical schema code.
-    
+
     Recognizes canonical position codes (e.g., "PG", "SG", "SF", "PF", "C", "G", "F", "G-F", "F-G", "F-C", "C-F")
     and maps common synonyms: "GUARD" -> "G", "FORWARD" -> "F", "CENTER" -> "C".
     Returns None for missing, invalid, or unrecognized inputs.
-    
+
     Parameters:
-    	pos (str | None): Position string from the API; may be a code, full word, or None.
-    
+        pos (str | None): Position string from the API; may be a code, full word, or None.
+
     Returns:
-    	str | None: Canonical position code or `None` if the input is not recognized.
+        str | None: Canonical position code or `None` if the input is not recognized.
     """
     if not pos or not isinstance(pos, str):
         return None
@@ -106,12 +106,12 @@ def _normalize_position(pos: str | None) -> str | None:
 def _map_nba_team(t: dict) -> dict:
     """
     Convert a static nba_api team dictionary into a dim_team row dictionary.
-    
+
     Enriches the base team fields with metadata from get_team_metadata when available.
-    
+
     Parameters:
         t (dict): Team object from the nba_api static teams endpoint.
-    
+
     Returns:
         dict: A dim_team-style dictionary containing keys:
             team_id, abbreviation, full_name, city, nickname,
@@ -139,10 +139,10 @@ def _map_nba_team(t: dict) -> dict:
 def _map_nba_player_static(p: dict) -> dict:
     """
     Create a partial dim_player row from a static NBA player dictionary.
-    
+
     Parameters:
         p (dict): NBA API player object containing at least the keys "id", "full_name", and optionally "is_active".
-    
+
     Returns:
         dict: A mapping representing a partial dim_player record with keys:
             - player_id (str): Player identifier as a string from p["id"].
@@ -183,11 +183,11 @@ def _map_nba_player_static(p: dict) -> dict:
 def _map_common_all_player(row: dict) -> dict:
     """
     Convert a CommonAllPlayers endpoint row into a dim_player dictionary.
-    
+
     Parameters:
         row (dict): Input row with nba_api-style, lowercased column names. Expected keys include
             "person_id", and either "display_first_last" or "player_slug", and "rosterstatus".
-    
+
     Returns:
         dict: A dim_player-formatted dictionary with these keys:
             player_id (str): Player identifier coerced to string from "person_id".
@@ -228,13 +228,13 @@ def _map_common_all_player(row: dict) -> dict:
 def _map_common_player_info(row: dict) -> dict:
     """
     Map a CommonPlayerInfo API row to a dim_player dictionary including biographical and draft fields.
-    
+
     Parameters:
         row (dict): Mapping of CommonPlayerInfo fields (expects keys such as
             "display_first_last", "person_id", "birthdate", "height", "weight",
             "country", "position", "draft_year", "draft_round", "draft_number",
             and "rosterstatus").
-    
+
     Returns:
         dict: A dictionary representing a dim_player row with the following keys:
             - player_id (str): Player identifier coerced to a string.

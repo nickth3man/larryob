@@ -340,6 +340,7 @@ LEFT JOIN nba.dim_player p ON p.bref_id = s.bref_player_id;
 -- ============================================================================== --
 CREATE OR REPLACE VIEW vw_player_awards AS
 SELECT
+    p.player_id,
     p.full_name,
     a.award_name,
     COUNT(*) AS times_won,
@@ -347,5 +348,5 @@ SELECT
     MAX(a.season_id) AS last_won
 FROM nba.fact_player_award a
 JOIN nba.dim_player p USING (player_id)
-GROUP BY p.full_name, a.award_name
+GROUP BY p.player_id, p.full_name, a.award_name
 ORDER BY p.full_name, times_won DESC;
