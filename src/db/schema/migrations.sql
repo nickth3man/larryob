@@ -14,6 +14,7 @@ ALTER TABLE dim_team ADD COLUMN bref_abbrev TEXT;
 
 -- Indexes on the new columns — must run AFTER the ALTER TABLE statements.
 CREATE UNIQUE INDEX IF NOT EXISTS idx_player_bref ON dim_player(bref_id);
+CREATE INDEX IF NOT EXISTS idx_dim_team_bref_abbrev ON dim_team(bref_abbrev);
 
 -- ============================================================================
 -- Rollback / Down migration
