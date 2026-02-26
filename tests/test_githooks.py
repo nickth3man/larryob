@@ -158,7 +158,7 @@ def test_pre_commit_hook_syntax_is_valid() -> None:
     # Try to validate syntax with bash -n (dry-run)
     try:
         result = subprocess.run(
-            ["bash", "-n", str(hook)],
+            ["bash", "-n", hook.as_posix()],
             capture_output=True,
             text=True,
             timeout=5,

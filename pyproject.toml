@@ -39,6 +39,7 @@ dev = [
     "pytest-cov>=7.0.0",
     "types-requests",
     "mutmut>=3.4.0",
+    "pyyaml>=6.0.3",
 ]
 
 [tool.ruff]
