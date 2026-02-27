@@ -33,8 +33,9 @@ from nba_api.stats.endpoints import playbyplayv2
 from ..db.cache import load_cache, save_cache
 from ..db.operations import transaction, upsert_rows
 from ..db.tracking import already_loaded, log_load_summary, record_run
+from ._etl_timer import ETLTimer
 from .api_client import APICaller
-from .metrics import ETLTimer, record_etl_rows
+from .metrics import record_etl_rows
 from .validation import validate_rows
 
 logger = logging.getLogger(__name__)

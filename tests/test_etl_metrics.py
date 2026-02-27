@@ -5,8 +5,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from src.etl._etl_timer import ETLTimer
 from src.etl.metrics import (
-    ETLTimer,
     export_metrics,
     get_metrics_summary,
     log_metrics_summary,
@@ -17,6 +17,11 @@ from src.etl.metrics import (
     record_retry,
     reset_metrics,
 )
+
+
+def test_etl_timer_module_exports_context_manager() -> None:
+    assert hasattr(ETLTimer, "__enter__")
+    assert hasattr(ETLTimer, "__exit__")
 
 
 @pytest.fixture(autouse=True)
