@@ -25,6 +25,9 @@ def infer_season_start_range(raw_dir: str | Path = "raw") -> tuple[int, int]:
     df = pd.read_csv(path, usecols=["gameDateTimeEst"])
     dates = pd.to_datetime(df["gameDateTimeEst"], errors="coerce").dropna()
 
+    if dates.empty:
+        raise ValueError(f"No valid dates found in {path}. Cannot infer season start range.")
+
     earliest = dates.min()
     min_year = int(earliest.year) if int(earliest.month) >= 7 else int(earliest.year) - 1
 

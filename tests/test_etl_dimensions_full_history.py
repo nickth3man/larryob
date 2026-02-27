@@ -14,4 +14,5 @@ def test_infer_season_start_range_from_raw(tmp_path):
     shutil.copy(FIXTURE_CSV, tmp_path / "Games.csv")
     min_y, max_y = infer_season_start_range(raw_dir=tmp_path)
     assert min_y == 1946
+    # max_y >= 2025 to remain valid when run against a live raw/Games.csv
     assert max_y >= 2025
