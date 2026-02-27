@@ -149,8 +149,10 @@ def test_load_all_nba_votes_inserts_orv_rows_with_null_team_number(
         """
     ).fetchall()
 
-    assert inserted == 2
+    # Unknown player now gets a placeholder and is inserted alongside known players.
+    assert inserted == 3
     assert rows == [
         ("203999", "2023-24", "All-NBA", 1, "C", 495, 99),
         ("2544", "2023-24", "All-NBA", None, "F", 12, 0),
+        ("placeholder_bref_unknown01", "2023-24", "All-NBA", 2, "G", 50, 0),
     ]

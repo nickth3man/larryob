@@ -81,7 +81,9 @@ def test_enrich_player_career_updates_bref_hof_and_bio(
         "SELECT bref_id FROM dim_player WHERE player_id = '1000'"
     ).fetchone()
 
-    assert updated == 2
+    # Two known players updated, plus "No Match" now creates a placeholder row
+    # and is also enriched (rowcount increments because the placeholder was just inserted).
+    assert updated == 3
     assert jokic[0] == "jokicni01"
     assert jokic[1] == "Mega Basket"
     assert jokic[2] == 0
@@ -89,6 +91,14 @@ def test_enrich_player_career_updates_bref_hof_and_bio(
     assert round(jokic[4], 2) == 128.82
     assert smith_1992 == ("smithjo02", "State U", 1)
     assert smith_1990 == (None,)
+
+    # "No Match" got a placeholder dim_player row with its bref_id set
+    no_match = sqlite_con.execute(
+        "SELECT full_name, bref_id FROM dim_player WHERE player_id = 'placeholder_bref_nomatch01'"
+    ).fetchone()
+    assert no_match is not None
+    assert no_match[0] == "No Match"
+    assert no_match[1] == "nomatch01"
 
 
 def test_enrich_player_career_skips_when_file_missing(

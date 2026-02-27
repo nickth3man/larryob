@@ -18,6 +18,7 @@ from src.etl.backfill._base import (
     safe_str,
 )
 from src.etl.helpers import _isna, int_season_to_id
+from src.etl.identity.resolver import resolve_or_create_player
 
 logger = logging.getLogger(__name__)
 
@@ -99,7 +100,15 @@ def load_all_nba_teams(
         bref_id = safe_str(row.get("player_id"))
         player_id = bref_to_player_id.get(bref_id or "")
 
-        if season_id not in valid_seasons or not player_id:
+        if season_id not in valid_seasons:
+            skipped += 1
+            continue
+
+        if not player_id and bref_id:
+            full_name = safe_str(row.get("player")) or bref_id
+            player_id = resolve_or_create_player(con, "bref", bref_id, full_name)
+
+        if not player_id:
             skipped += 1
             continue
 
@@ -140,7 +149,15 @@ def load_all_nba_votes(
         bref_id = safe_str(row.get("player_id"))
         player_id = bref_to_player_id.get(bref_id or "")
 
-        if season_id not in valid_seasons or not player_id:
+        if season_id not in valid_seasons:
+            skipped += 1
+            continue
+
+        if not player_id and bref_id:
+            full_name = safe_str(row.get("player")) or bref_id
+            player_id = resolve_or_create_player(con, "bref", bref_id, full_name)
+
+        if not player_id:
             skipped += 1
             continue
 

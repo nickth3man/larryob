@@ -13,6 +13,7 @@ from typing import Any
 
 from src.etl.backfill._base import RAW_DIR, csv_path, read_csv_safe, safe_str
 from src.etl.helpers import _isna, _norm_name
+from src.etl.identity.resolver import resolve_or_create_player
 
 logger = logging.getLogger(__name__)
 
@@ -122,8 +123,7 @@ def enrich_player_career(
 
         player_id = _resolve_player_id(raw_name, row.get("birth_date"), name_lookup, ambiguous)
         if player_id is None:
-            unmatched += 1
-            continue
+            player_id = resolve_or_create_player(con, "bref", bref_id, raw_name)
 
         birth_date = safe_str(row.get("birth_date"))
         birth_date = birth_date[:10] if birth_date else None
