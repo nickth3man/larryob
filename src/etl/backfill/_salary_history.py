@@ -23,9 +23,9 @@ from typing import Any
 
 from src.db.operations import upsert_rows
 from src.etl._salaries_fetch import _parse_salary
-from src.etl._salaries_helpers import _normalize_name
 from src.etl.backfill._base import read_csv_safe, safe_str
 from src.etl.helpers import int_season_to_id
+from src.etl.salaries import _normalize_name
 
 logger = logging.getLogger(__name__)
 

@@ -51,10 +51,13 @@ def validate_rows(table: str, rows: list[dict]) -> list[dict]:
     valid_rows = []
     for row in rows:
         try:
-            # model_dump ensures we get typed/parsed values back (e.g., date strings -> objects)
+            # model_dump ensures we get typed/parsed values back, using mode="json" so
+            # that Python objects (e.g. datetime.date) are serialised to JSON-compatible
+            # primitives (ISO strings) instead of native types that trip the deprecated
+            # sqlite3 default date adapter (Python 3.12+ DeprecationWarning → error in 3.14).
             validated = model_cls.model_validate(row)
             # Update the row with validated data while keeping any unmapped extra fields
-            row.update(validated.model_dump(exclude_unset=True))
+            row.update(validated.model_dump(exclude_unset=True, mode="json"))
             valid_rows.append(row)
         except ValidationError as exc:
             errors = exc.errors()

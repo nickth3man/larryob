@@ -14,14 +14,6 @@ from collections.abc import Callable
 from typing import TypeVar
 
 from .config import APIConfig
-from .constants import (
-    API_FAILURE_MULT,
-    API_MAX_SLEEP_CAP,
-    API_MAX_SLEEP_MULT,
-    API_MIN_SLEEP,
-    API_SUCCESS_BACKOFF,
-    API_SUCCESS_STREAK,
-)
 from .metrics import record_api_call, record_api_latency, record_retry
 
 logger = logging.getLogger(__name__)
@@ -62,23 +54,23 @@ class APICaller:
 
         # Adaptive pacing state.
         self._adaptive_sleep = max(0.0, self._base_sleep)
-        self._adaptive_min_sleep = min(self._adaptive_sleep, API_MIN_SLEEP)
-        self._adaptive_max_sleep = max(self._adaptive_sleep * API_MAX_SLEEP_MULT, API_MAX_SLEEP_CAP)
+        self._adaptive_min_sleep = min(self._adaptive_sleep, 0.5)
+        self._adaptive_max_sleep = max(self._adaptive_sleep * 8, 30.0)
         self._success_streak = 0
 
     def _note_success(self, used_sleep: float) -> None:
         self._success_streak += 1
-        if self._success_streak >= API_SUCCESS_STREAK:
+        if self._success_streak >= 3:
             self._adaptive_sleep = max(
                 self._adaptive_min_sleep,
-                min(self._adaptive_sleep, used_sleep) * API_SUCCESS_BACKOFF,
+                min(self._adaptive_sleep, used_sleep) * 0.9,
             )
 
     def _note_failure(self, wait: float) -> None:
         self._success_streak = 0
         self._adaptive_sleep = min(
             self._adaptive_max_sleep,
-            max(self._adaptive_sleep * API_FAILURE_MULT, wait / 2.0),
+            max(self._adaptive_sleep * 1.6, wait / 2.0),
         )
 
     def call_with_backoff(

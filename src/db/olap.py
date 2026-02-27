@@ -143,6 +143,11 @@ def get_duck_con(
             _local.cached_con.execute("SELECT 1")
             return _local.cached_con
         except Exception:
+            # Stale connection — close it before discarding to avoid a leak
+            try:
+                _local.cached_con.close()
+            except Exception:
+                pass
             _local.cached_con = None
 
     if _local.cached_con is not None:
@@ -177,11 +182,13 @@ def get_duck_con(
 if __name__ == "__main__":  # pragma: no cover
     logging.basicConfig(level=logging.INFO)
     duck = get_duck_con()
-    logger.info("Available views:")
-    views = duck.execute("SHOW TABLES").fetchall()
-    for v in views:
-        logger.info(" - %s", v[0])
-    duck.close()
-    _local.cached_con = None
-    _local.cached_sqlite_path = None
-    _local.cached_duck_db_path = None
+    try:
+        logger.info("Available views:")
+        views = duck.execute("SHOW TABLES").fetchall()
+        for v in views:
+            logger.info(" - %s", v[0])
+    finally:
+        duck.close()
+        _local.cached_con = None
+        _local.cached_sqlite_path = None
+        _local.cached_duck_db_path = None

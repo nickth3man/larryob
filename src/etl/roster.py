@@ -126,10 +126,9 @@ def load_season_rosters(
     try:
         cur = con.execute("SELECT team_id FROM dim_team")
         team_ids = [r[0] for r in cur.fetchall()]
+        valid_teams = set(team_ids)  # Reuse result — avoids a second identical query
         cur = con.execute("SELECT player_id FROM dim_player")
         valid_players = {r[0] for r in cur.fetchall()}
-        cur = con.execute("SELECT team_id FROM dim_team")
-        valid_teams = {r[0] for r in cur.fetchall()}
         total = 0
         for i, tid in enumerate(team_ids):
             total += load_team_roster(

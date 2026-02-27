@@ -1,9 +1,12 @@
 import sqlite3
 import subprocess
 import sys
+from pathlib import Path
 from unittest.mock import patch
 
 import src.pipeline.cli as ingest
+
+_PROJECT_ROOT = str(Path(__file__).parent.parent)
 
 
 def test_ingest_dims_only(tmp_path, monkeypatch):
@@ -253,7 +256,7 @@ class TestMainModuleEntryPoint:
             [sys.executable, "-m", "src.pipeline", "--help"],
             capture_output=True,
             text=True,
-            cwd="C:\\Users\\nicolas\\Documents\\GitHub\\larryob",
+            cwd=_PROJECT_ROOT,
         )
 
         assert result.returncode == 0
@@ -268,7 +271,7 @@ class TestMainModuleEntryPoint:
             [sys.executable, "-m", "src.pipeline", "--analytics-only"],
             capture_output=True,
             text=True,
-            cwd="C:\\Users\\nicolas\\Documents\\GitHub\\larryob",
+            cwd=_PROJECT_ROOT,
         )
 
         # Should exit with code 1 for validation error
@@ -281,7 +284,7 @@ class TestMainModuleEntryPoint:
             [sys.executable, "-m", "src.pipeline", "--log-level", "INVALID"],
             capture_output=True,
             text=True,
-            cwd="C:\\Users\\nicolas\\Documents\\GitHub\\larryob",
+            cwd=_PROJECT_ROOT,
         )
 
         # Should exit with code 1 for validation error
@@ -293,7 +296,7 @@ class TestMainModuleEntryPoint:
             [sys.executable, "-m", "src.pipeline", "--seasons", "2023"],
             capture_output=True,
             text=True,
-            cwd="C:\\Users\\nicolas\\Documents\\GitHub\\larryob",
+            cwd=_PROJECT_ROOT,
         )
 
         # Should exit with code 1 for validation error
@@ -306,7 +309,7 @@ class TestMainModuleEntryPoint:
             [sys.executable, "-m", "src.pipeline", "--pbp-limit", "-1"],
             capture_output=True,
             text=True,
-            cwd="C:\\Users\\nicolas\\Documents\\GitHub\\larryob",
+            cwd=_PROJECT_ROOT,
         )
 
         # Should exit with code 1 for validation error
@@ -318,7 +321,7 @@ class TestMainModuleEntryPoint:
             [sys.executable, "-m", "src.pipeline", "--analytics-only"],
             capture_output=True,
             text=True,
-            cwd="C:\\Users\\nicolas\\Documents\\GitHub\\larryob",
+            cwd=_PROJECT_ROOT,
         )
 
         # Should exit with code 1 for validation error
@@ -400,7 +403,7 @@ class TestMainModuleEntryPoint:
         # Verify the entry point is registered in pyproject.toml
         import tomllib
 
-        with open("C:\\Users\\nicolas\\Documents\\GitHub\\larryob\\pyproject.toml", "rb") as f:
+        with open(Path(_PROJECT_ROOT) / "pyproject.toml", "rb") as f:
             config = tomllib.load(f)
 
         assert "project" in config

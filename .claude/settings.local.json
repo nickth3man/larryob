@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(wc -l /c/Users/nicolas/Documents/GitHub/larryob/src/**/*.py)",
+      "Bash(find /c/Users/nicolas/Documents/GitHub/larryob/tests -name \"*.py\" -type f -exec wc -l {} ;)",
+      "Bash(grep -n \"started_at = datetime.now\\(UTC\\)\" /c/Users/nicolas/Documents/GitHub/larryob/src/etl/**/*.py)",
+      "Bash(grep -n \"magic\\\\|hardcode\\\\|TODO\\\\|FIXME\\\\|XXX\\\\|HACK\" /c/Users/nicolas/Documents/GitHub/larryob/src/etl/*.py)",
+      "Bash(grep -n \"1946\\\\|2000\\\\|2024\\\\|1999\\\\|30\\\\.0\\\\|0\\\\.9\\\\|1\\\\.6\\\\|12\\\\|2\\\\.54\" /c/Users/nicolas/Documents/GitHub/larryob/src/etl/*.py)",
+      "Bash(grep -r \"\\\\.0\\\\|\\\\.9\\\\|\\\\.6\" /c/Users/nicolas/Documents/GitHub/larryob/src/etl/*.py)",
+      "Bash(python -m pytest tests/ --collect-only)",
+      "Bash(uv run ruff check .)",
+      "Bash(python -m ruff check .)",
+      "Bash(git add docs/plans/2026-02-26-technical-debt-cleanup-design.md)",
+      "Bash(git commit:*)",
+      "Bash(python scripts/sync_agents.py)",
+      "Bash(git add GEMINI.md CLAUDE.md)",
+      "Bash(echo \"Exit: $?\")",
+      "Bash(uv run pre-commit run --all-files)",
+      "Bash(python3 scripts/sync_agents.py)",
+      "Bash(uv run python scripts/sync_agents.py)",
+      "Bash(git config --global core.hooksPath)",
+      "Bash(git config core.hooksPath)"
+    ]
+  }
+}

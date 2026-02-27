@@ -11,17 +11,6 @@ import time
 
 import requests
 
-from .constants import (
-    RATE_LIMIT_ERROR_BUMP,
-    RATE_LIMIT_FAILURE_MULT,
-    RATE_LIMIT_INTER_SEASON_CAP,
-    RATE_LIMIT_MAX_DELAY,
-    RATE_LIMIT_MIN_DELAY,
-    RATE_LIMIT_RATE_LIMIT_MULT,
-    RATE_LIMIT_SUCCESS_BACKOFF,
-    RATE_LIMIT_SUCCESS_STREAK,
-)
-
 logger = logging.getLogger(__name__)
 
 # Basketball-Reference constants
@@ -106,8 +95,8 @@ class _AdaptiveBRefThrottle:
         the environment-configured default), initializes the next-allowed timestamp
         to 0, and zeroes the success and rate-limit streak counters.
         """
-        self.min_delay = RATE_LIMIT_MIN_DELAY
-        self.max_delay = RATE_LIMIT_MAX_DELAY
+        self.min_delay = 0.4
+        self.max_delay = 30.0
         self.delay = max(self.min_delay, _bref_delay_seconds())
         self.next_allowed_at = 0.0
         self.success_streak = 0
@@ -141,8 +130,8 @@ class _AdaptiveBRefThrottle:
         """
         self.success_streak += 1
         self.rate_limit_streak = 0
-        if self.success_streak >= RATE_LIMIT_SUCCESS_STREAK:
-            self.delay = max(self.min_delay, self.delay * RATE_LIMIT_SUCCESS_BACKOFF)
+        if self.success_streak >= 3:
+            self.delay = max(self.min_delay, self.delay * 0.9)
         self.next_allowed_at = time.monotonic() + self.delay
 
     def on_transient_error(self) -> None:
@@ -152,10 +141,7 @@ class _AdaptiveBRefThrottle:
         This method sets success_streak to 0, raises delay (clamped between min_delay and max_delay) to back off from subsequent requests, and updates next_allowed_at to now plus the new delay.
         """
         self.success_streak = 0
-        self.delay = min(
-            self.max_delay,
-            max(self.delay * RATE_LIMIT_FAILURE_MULT, self.delay + RATE_LIMIT_ERROR_BUMP),
-        )
+        self.delay = min(self.max_delay, max(self.delay * 1.4, self.delay + 0.5))
         self.next_allowed_at = time.monotonic() + self.delay
 
     def on_rate_limit(self, retry_after: int | None) -> int:
@@ -176,7 +162,7 @@ class _AdaptiveBRefThrottle:
             retry_after if retry_after is not None and retry_after > 0 else int(self.delay * 2)
         )
         wait = int(max(self.min_delay, min(self.max_delay, float(requested_wait))))
-        self.delay = min(self.max_delay, max(self.delay * RATE_LIMIT_RATE_LIMIT_MULT, float(wait)))
+        self.delay = min(self.max_delay, max(self.delay * 1.8, float(wait)))
         self.next_allowed_at = time.monotonic() + wait
         return wait
 
@@ -189,7 +175,7 @@ class _AdaptiveBRefThrottle:
         """
         if self.rate_limit_streak == 0:
             return 0.0
-        return min(RATE_LIMIT_INTER_SEASON_CAP, self.delay)
+        return min(5.0, self.delay)
 
 
 # Process-wide singleton throttle instance

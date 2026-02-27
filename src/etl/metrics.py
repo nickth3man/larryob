@@ -14,6 +14,7 @@ Usage
 """
 
 import logging
+import time
 from collections import defaultdict
 from threading import Lock
 from typing import Any
@@ -170,6 +171,9 @@ def get_metrics_summary() -> dict[str, Any]:
         - api_latency_summary: Dict of label -> (min, max, avg) latency in ms
         - etl_duration_summary: Dict of (table, season) -> (min, max, avg) duration in seconds
     """
+    # Copy all data under the lock, then compute summaries outside it.
+    # This avoids holding _metrics_lock during potentially expensive min/max/avg
+    # iterations over large latency and duration lists.
     with _metrics_lock:
         summary: dict[str, Any] = {
             "etl_rows_loaded": dict(_metrics["etl_rows_loaded"]),
@@ -178,32 +182,33 @@ def get_metrics_summary() -> dict[str, Any]:
             "api_failures": dict(_metrics["api_failures"]),
             "api_retries": dict(_metrics["api_retries"]),
         }
+        latency_snapshot = {k: list(v) for k, v in _metrics["api_latency_ms"].items()}
+        duration_snapshot = {k: list(v) for k, v in _metrics["etl_duration_seconds"].items()}
 
-        # Calculate latency summaries
-        latency_summary = {}
-        for label, latencies in _metrics["api_latency_ms"].items():
-            if latencies:
-                latency_summary[label] = {
-                    "min_ms": round(min(latencies), 2),
-                    "max_ms": round(max(latencies), 2),
-                    "avg_ms": round(sum(latencies) / len(latencies), 2),
-                    "count": len(latencies),
-                }
-        summary["api_latency_summary"] = latency_summary
+    # Compute summaries after releasing the lock
+    latency_summary = {}
+    for label, latencies in latency_snapshot.items():
+        if latencies:
+            latency_summary[label] = {
+                "min_ms": round(min(latencies), 2),
+                "max_ms": round(max(latencies), 2),
+                "avg_ms": round(sum(latencies) / len(latencies), 2),
+                "count": len(latencies),
+            }
+    summary["api_latency_summary"] = latency_summary
 
-        # Calculate duration summaries
-        duration_summary = {}
-        for key, durations in _metrics["etl_duration_seconds"].items():
-            if durations:
-                duration_summary[str(key)] = {
-                    "min_s": round(min(durations), 2),
-                    "max_s": round(max(durations), 2),
-                    "avg_s": round(sum(durations) / len(durations), 2),
-                    "count": len(durations),
-                }
-        summary["etl_duration_summary"] = duration_summary
+    duration_summary = {}
+    for key, durations in duration_snapshot.items():
+        if durations:
+            duration_summary[str(key)] = {
+                "min_s": round(min(durations), 2),
+                "max_s": round(max(durations), 2),
+                "avg_s": round(sum(durations) / len(durations), 2),
+                "count": len(durations),
+            }
+    summary["etl_duration_summary"] = duration_summary
 
-        return summary
+    return summary
 
 
 def reset_metrics() -> None:
@@ -298,3 +303,40 @@ def export_metrics(endpoint: str | None = None, timeout_seconds: float = 5.0) ->
 
     logger.info("Metrics exported to %s", target)
     return True
+
+
+class ETLTimer:
+    """
+    Context manager for timing ETL operations.
+
+    Automatically records duration when the context exits.
+
+    Example
+    -------
+    >>> with ETLTimer("player_game_log", "2023-24"):
+    ...     load_season(con, "2023-24")
+    """
+
+    def __init__(self, table: str, season_id: str | None = None):
+        """
+        Initialize the timer.
+
+        Parameters
+        ----------
+        table : str
+            Name of the table.
+        season_id : str | None
+            Season identifier or None for non-seasonal tables.
+        """
+        self.table = table
+        self.season_id = season_id
+        self.start_time: float | None = None
+
+    def __enter__(self) -> "ETLTimer":
+        self.start_time = time.time()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
+        if self.start_time is not None:
+            duration = time.time() - self.start_time
+            record_etl_duration(self.table, self.season_id, duration)

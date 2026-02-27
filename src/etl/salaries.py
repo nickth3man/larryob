@@ -12,24 +12,23 @@ Strategy
 import logging
 import sqlite3
 import time
-from datetime import UTC, datetime
+from datetime import UTC
 from pathlib import Path
 from typing import Literal
 
 from ..db.cache import load_cache
-from ..db.operations import fetch_count, upsert_rows
+from ..db.operations import upsert_rows
 from ..db.tracking import already_loaded, record_run
-from . import _salaries_helpers
 from ._salaries_fetch import fetch_team_current_contracts, fetch_team_season_salaries
-from ._salaries_helpers import _normalize_name, load_salary_cap
-from .config import nba_abbr_to_bref
-from .constants import SEASON_BOUNDARY_MONTH
+from .config import get_all_salary_caps, nba_abbr_to_bref
+from .helpers import _norm_name
 from .rate_limit import _BREF_THROTTLE, BBRRateLimitExceeded
 from .validation import validate_rows
 
 logger = logging.getLogger(__name__)
 
-_SALARY_CAP_BY_SEASON = _salaries_helpers._SALARY_CAP_BY_SEASON
+# Use centralized config for salary cap data
+_SALARY_CAP_BY_SEASON = get_all_salary_caps()
 
 
 # Helper function for abbreviation conversion (uses centralized config)
@@ -45,6 +44,39 @@ def _abbr_to_bref(abbr: str) -> str:
 
 
 _LOADER_ID = "salaries.load_player_salaries.v2"
+
+
+def load_salary_cap(con: sqlite3.Connection) -> int:
+    """
+    Seed the dim_salary_cap table with historical salary cap amounts and ensure referenced seasons exist.
+
+    This ensures dim_season contains seasons up to the latest start year present in the hardcoded cap data, then upserts season_id/cap_amount rows into dim_salary_cap.
+
+    Returns:
+        inserted (int): Number of rows inserted or replaced into dim_salary_cap.
+    """
+    # Ensure dim_season has the seasons we need (FK constraint)
+    from .dimensions import load_seasons
+
+    max_start_year = max(int(sid.split("-")[0]) for sid in _SALARY_CAP_BY_SEASON)
+    load_seasons(con, up_to_start_year=max_start_year)
+    rows = [{"season_id": sid, "cap_amount": cap} for sid, cap in _SALARY_CAP_BY_SEASON.items()]
+    inserted = upsert_rows(con, "dim_salary_cap", rows, conflict="REPLACE")
+    logger.info("dim_salary_cap: %d rows upserted.", inserted)
+    return inserted
+
+
+def _normalize_name(name: str) -> str:
+    """
+    Normalize a person name for consistent matching by removing accents, lowercasing, and stripping non-alphabetic characters.
+
+    Parameters:
+        name (str): Raw name to normalize.
+
+    Returns:
+        str: Normalized name suitable for lookup and comparison.
+    """
+    return _norm_name(name, strip_non_alpha=True)
 
 
 def _season_team_map(
@@ -136,19 +168,24 @@ def load_player_salaries(
         logger.info("Skipping player salaries for %s (already loaded)", season_id)
         return 0
 
+    from datetime import datetime
+
     started_at = datetime.now(UTC).isoformat()
 
     # ------------------------------------------------------------------ #
     # "open" source: delegate entirely to load_salary_history             #
     # ------------------------------------------------------------------ #
     if source == "open":
-        # Local import keeps module dependency direction explicit.
+        # Local import avoids circular dependency:
+        # _salary_history imports _normalize_name from this module.
         from src.etl.backfill._salary_history import load_salary_history
 
         load_salary_history(con, open_file=open_file, raw_dir=Path("raw"))
         # Return season-scoped count; load_salary_history processes the whole CSV
         # across all seasons, so we query only the requested season for accuracy.
-        inserted = fetch_count(con, "fact_salary", season_id)
+        inserted: int = con.execute(
+            "SELECT COUNT(*) FROM fact_salary WHERE season_id = ?", (season_id,)
+        ).fetchone()[0]
         record_run(con, "fact_salary", season_id, loader_id, inserted, "ok", started_at)
         return inserted
 
@@ -160,10 +197,14 @@ def load_player_salaries(
 
         # Snapshot row count BEFORE open-source load so stale/partial rows from a
         # prior bref run don't falsely indicate the season is covered.
-        pre_count = fetch_count(con, "fact_salary", season_id)
+        pre_count: int = con.execute(
+            "SELECT COUNT(*) FROM fact_salary WHERE season_id = ?", (season_id,)
+        ).fetchone()[0]
         load_salary_history(con, open_file=open_file, raw_dir=Path("raw"))
 
-        post_count = fetch_count(con, "fact_salary", season_id)
+        post_count: int = con.execute(
+            "SELECT COUNT(*) FROM fact_salary WHERE season_id = ?", (season_id,)
+        ).fetchone()[0]
         delta = post_count - pre_count
 
         if delta > 0:
@@ -184,9 +225,9 @@ def load_player_salaries(
     # ------------------------------------------------------------------ #
     # "bref" (and fallback from "auto"): scrape Basketball-Reference      #
     # ------------------------------------------------------------------ #
-    now = datetime.now(UTC)
-    current_season_start_year = now.year if now.month >= SEASON_BOUNDARY_MONTH else now.year - 1
-    current_season_end_year = current_season_start_year + 1
+    import datetime as dt
+
+    current_year = dt.date.today().year
     end_year = int(season_id.split("-")[0]) + 1  # '2023-24' → 2024
 
     # Ensure dim_season covers this season (FK guard)
@@ -223,7 +264,7 @@ def load_player_salaries(
         was_cached = False
 
         try:
-            if end_year < current_season_end_year:
+            if end_year < current_year:
                 # Historical (season fully complete): team season page has a commented salary table
                 logger.debug("BBref team season salary: %s %d", bref_abbr, end_year)
                 was_cached = load_cache(cache_key_season) is not None

@@ -187,9 +187,11 @@ def rollback_db(db_path: Path = DB_PATH) -> sqlite3.Connection:
 if __name__ == "__main__":  # pragma: no cover
     logging.basicConfig(level=logging.INFO)
     con = init_db()
-    tables = con.execute(
-        "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"
-    ).fetchall()
-    logger.info("Initialized database at: %s", DB_PATH)
-    logger.info("Tables: %s", [t[0] for t in tables])
-    con.close()
+    try:
+        tables = con.execute(
+            "SELECT name FROM sqlite_master WHERE type='table' ORDER BY name;"
+        ).fetchall()
+        logger.info("Initialized database at: %s", DB_PATH)
+        logger.info("Tables: %s", [t[0] for t in tables])
+    finally:
+        con.close()

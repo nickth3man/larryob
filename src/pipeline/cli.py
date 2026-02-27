@@ -33,13 +33,6 @@ from pathlib import Path
 
 from src.db.schema import init_db
 from src.etl.logging import setup_logging
-from src.pipeline._cli_validators import (
-    _normalize_seasons,
-    _validate_analytics_output_path,
-    _validate_log_level,
-    _validate_seasons,
-    validate_view_name,
-)
 from src.pipeline.analytics import run_analytics_view
 from src.pipeline.constants import DEFAULT_SEASONS
 from src.pipeline.exceptions import AnalyticsError, IngestError, ValidationError
@@ -50,6 +43,13 @@ from src.pipeline.executor import (
     set_metrics_env,
 )
 from src.pipeline.models import IngestConfig
+from src.pipeline.validation import (
+    _normalize_seasons,
+    _validate_analytics_output_path,
+    _validate_log_level,
+    _validate_seasons,
+    validate_view_name,
+)
 
 logger = logging.getLogger(__name__)
 
