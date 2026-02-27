@@ -58,10 +58,11 @@ def test_load_team_history_skips_when_csv_missing(
     assert count == 0
 
 
-def test_load_team_history_skips_unknown_team_ids(
+def test_load_team_history_inserts_only_dim_team_ids(
     sqlite_con: sqlite3.Connection,
     tmp_path: Path,
 ) -> None:
+    """Only team IDs present in dim_team (FK target) are inserted; others are blocked by the DB."""
     sqlite_con.execute(
         """INSERT INTO dim_team
            (team_id, abbreviation, full_name, city, nickname)
@@ -80,15 +81,6 @@ def test_load_team_history_skips_unknown_team_ids(
                 "seasonActiveTill": 2026,
                 "league": "NBA",
             },
-            {
-                "teamId": 9999999999,
-                "teamCity": "Defunct",
-                "teamName": "Team",
-                "teamAbbrev": "DEF",
-                "seasonFounded": 1950,
-                "seasonActiveTill": 1951,
-                "league": "NBA",
-            },
         ]
     ).to_csv(tmp_path / "TeamHistories.csv", index=False)
 
@@ -96,6 +88,40 @@ def test_load_team_history_skips_unknown_team_ids(
 
     rows = sqlite_con.execute("SELECT team_id FROM dim_team_history ORDER BY team_id").fetchall()
     assert rows == [("1610612747",)]
+
+
+def test_load_team_history_keeps_historical_franchises(
+    sqlite_con: sqlite3.Connection,
+    tmp_path: Path,
+) -> None:
+    """Historical team IDs (e.g. BAA/relocated franchises) are preserved."""
+    # Seed a historical franchise into dim_team so the FK constraint is satisfied.
+    # This mirrors what Task 3 (seed historical teams) does in the real pipeline.
+    sqlite_con.execute(
+        """INSERT INTO dim_team
+           (team_id, abbreviation, full_name, city, nickname)
+           VALUES ('1610612761', 'ROC', 'Rochester Royals', 'Rochester', 'Royals')"""
+    )
+    sqlite_con.commit()
+
+    pd.DataFrame(
+        [
+            {
+                "teamId": 1610612761,
+                "teamCity": "Rochester",
+                "teamName": "Royals",
+                "teamAbbrev": "ROC",
+                "seasonFounded": 1945,
+                "seasonActiveTill": 1957,
+                "league": "BAA",
+            }
+        ]
+    ).to_csv(tmp_path / "TeamHistories.csv", index=False)
+
+    load_team_history(sqlite_con, raw_dir=tmp_path)
+
+    count = sqlite_con.execute("SELECT COUNT(*) FROM dim_team_history").fetchone()[0]
+    assert count > 0
 
 
 def test_enrich_dim_team_updates_latest_abbreviation(

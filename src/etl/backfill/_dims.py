@@ -16,7 +16,6 @@ from src.db.operations import upsert_rows
 from src.etl.backfill._base import (
     RAW_DIR,
     csv_path,
-    get_valid_set,
     read_csv_safe,
     safe_int,
     safe_str,
@@ -111,20 +110,13 @@ def load_team_history(
         return
 
     df = read_csv_safe(path)
-    valid_team_ids = get_valid_set(con, "dim_team", "team_id")
 
     rows: list[dict] = []
-    skipped = 0
 
     for row in df.to_dict("records"):
-        team_id = str(int(row["teamId"]))
-        if team_id not in valid_team_ids:
-            skipped += 1
-            continue
-
         rows.append(
             {
-                "team_id": team_id,
+                "team_id": str(int(row["teamId"])),
                 "team_city": safe_str(row.get("teamCity")),
                 "team_name": safe_str(row.get("teamName")),
                 "team_abbrev": safe_str(row.get("teamAbbrev")),
@@ -135,7 +127,7 @@ def load_team_history(
         )
 
     inserted = upsert_rows(con, "dim_team_history", rows)
-    logger.info("dim_team_history: %d rows inserted/ignored, %d skipped", inserted, skipped)
+    logger.info("dim_team_history: %d rows inserted/ignored", inserted)
 
 
 def enrich_dim_team(
