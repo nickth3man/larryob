@@ -2,9 +2,9 @@
 
 import pytest
 
+from src.pipeline._cli_validators import _validate_log_level as _validate_log_level_from_module
 from src.pipeline.cli import create_argument_parser, validate_arguments
 from src.pipeline.constants import DEFAULT_SEASONS
-
 
 # ------------------------------------------------------------------ #
 # Helpers                                                             #
@@ -68,6 +68,10 @@ def test_default_salaries_false():
 def test_default_rosters_false():
     ns = _parse([])
     assert ns.rosters is False
+
+
+def test_cli_validators_module_exposes_validate_log_level() -> None:
+    assert _validate_log_level_from_module("INFO") == "INFO"
 
 
 # ------------------------------------------------------------------ #
