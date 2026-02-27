@@ -2,9 +2,11 @@
 
 import sqlite3
 from pathlib import Path
+from sqlite3 import IntegrityError
 from unittest.mock import patch
 
 import pandas as pd
+import pytest
 
 from src.etl.backfill import _dims as dims_mod
 from src.etl.backfill._dims import (
@@ -62,7 +64,16 @@ def test_load_team_history_inserts_only_dim_team_ids(
     sqlite_con: sqlite3.Connection,
     tmp_path: Path,
 ) -> None:
-    """Only team IDs present in dim_team (FK target) are inserted; others are blocked by the DB."""
+    """Only team IDs present in dim_team (FK target) are inserted.
+
+    SQLite behaviour (PRAGMA foreign_keys=ON): executemany with INSERT OR IGNORE
+    raises IntegrityError on a FK violation even though the conflict clause is
+    IGNORE. The IGNORE clause only suppresses UNIQUE/NOT NULL conflicts; FK
+    failures propagate as hard errors when foreign_keys is enabled.
+
+    The codebase's upsert_rows catches OperationalError but not IntegrityError,
+    so callers must only pass rows whose FK references exist in dim_team.
+    """
     sqlite_con.execute(
         """INSERT INTO dim_team
            (team_id, abbreviation, full_name, city, nickname)
@@ -70,6 +81,7 @@ def test_load_team_history_inserts_only_dim_team_ids(
     )
     sqlite_con.commit()
 
+    # Build a CSV that contains a valid row AND one with an unknown team_id.
     pd.DataFrame(
         [
             {
@@ -81,33 +93,48 @@ def test_load_team_history_inserts_only_dim_team_ids(
                 "seasonActiveTill": 2026,
                 "league": "NBA",
             },
+            {
+                # team_id '9999000002' is absent from dim_team; FK violation.
+                "teamId": 9999000002,
+                "teamCity": "Nowhere",
+                "teamName": "Ghosts",
+                "teamAbbrev": "GHO",
+                "seasonFounded": 1900,
+                "seasonActiveTill": 1910,
+                "league": "BAA",
+            },
         ]
     ).to_csv(tmp_path / "TeamHistories.csv", index=False)
 
-    load_team_history(sqlite_con, tmp_path)
-
-    rows = sqlite_con.execute("SELECT team_id FROM dim_team_history ORDER BY team_id").fetchall()
-    assert rows == [("1610612747",)]
+    # With foreign_keys=ON, passing an unknown team_id raises IntegrityError.
+    with pytest.raises(IntegrityError, match="FOREIGN KEY constraint failed"):
+        load_team_history(sqlite_con, tmp_path)
 
 
 def test_load_team_history_keeps_historical_franchises(
     sqlite_con: sqlite3.Connection,
     tmp_path: Path,
 ) -> None:
-    """Historical team IDs (e.g. BAA/relocated franchises) are preserved."""
-    # Seed a historical franchise into dim_team so the FK constraint is satisfied.
-    # This mirrors what Task 3 (seed historical teams) does in the real pipeline.
+    """Historical team IDs absent from the 30-team static set are preserved.
+
+    ID '9999000001' is not present in src/etl/data/team_metadata.json.
+    The old code (which filtered to valid_team_ids from that file) would have
+    dropped this row; the new code (no filter) must keep it.
+    """
+    # Seed the historical franchise into dim_team so the FK constraint is
+    # satisfied. This mirrors what Task 3 (seed historical teams) does in
+    # the real pipeline.
     sqlite_con.execute(
         """INSERT INTO dim_team
            (team_id, abbreviation, full_name, city, nickname)
-           VALUES ('1610612761', 'ROC', 'Rochester Royals', 'Rochester', 'Royals')"""
+           VALUES ('9999000001', 'ROC', 'Rochester Royals', 'Rochester', 'Royals')"""
     )
     sqlite_con.commit()
 
     pd.DataFrame(
         [
             {
-                "teamId": 1610612761,
+                "teamId": 9999000001,
                 "teamCity": "Rochester",
                 "teamName": "Royals",
                 "teamAbbrev": "ROC",
@@ -121,7 +148,7 @@ def test_load_team_history_keeps_historical_franchises(
     load_team_history(sqlite_con, raw_dir=tmp_path)
 
     count = sqlite_con.execute("SELECT COUNT(*) FROM dim_team_history").fetchone()[0]
-    assert count > 0
+    assert count == 1
 
 
 def test_enrich_dim_team_updates_latest_abbreviation(
