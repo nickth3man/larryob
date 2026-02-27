@@ -16,9 +16,9 @@ from src.etl.backfill._base import (
     RAW_DIR,
     csv_path,
     get_valid_set,
-    read_csv_safe,
     safe_str,
 )
+from src.etl.backfill._stats_base import _load_rows
 from src.etl.helpers import _flt, _int, int_season_to_id
 from src.etl.validation import validate_rows
 
@@ -265,18 +265,8 @@ def load_player_advanced(
     if path is None:
         return
 
-    df = read_csv_safe(path, low_memory=False)
     valid_seasons = get_valid_set(con, "dim_season", "season_id")
-
-    rows: list[dict] = []
-    skipped = 0
-
-    for row in df.to_dict("records"):
-        transformed = _transform_advanced_row(row, valid_seasons)
-        if transformed is None:
-            skipped += 1
-        else:
-            rows.append(transformed)
+    rows, skipped = _load_rows(con, path, _transform_advanced_row, valid_seasons)
 
     inserted = upsert_rows(
         con,
@@ -306,18 +296,8 @@ def load_player_shooting(
     if path is None:
         return
 
-    df = read_csv_safe(path, low_memory=False)
     valid_seasons = get_valid_set(con, "dim_season", "season_id")
-
-    rows: list[dict] = []
-    skipped = 0
-
-    for row in df.to_dict("records"):
-        transformed = _transform_shooting_row(row, valid_seasons)
-        if transformed is None:
-            skipped += 1
-        else:
-            rows.append(transformed)
+    rows, skipped = _load_rows(con, path, _transform_shooting_row, valid_seasons)
 
     inserted = upsert_rows(
         con,
@@ -347,18 +327,8 @@ def load_player_pbp_season(
     if path is None:
         return
 
-    df = read_csv_safe(path, low_memory=False)
     valid_seasons = get_valid_set(con, "dim_season", "season_id")
-
-    rows: list[dict] = []
-    skipped = 0
-
-    for row in df.to_dict("records"):
-        transformed = _transform_pbp_row(row, valid_seasons)
-        if transformed is None:
-            skipped += 1
-        else:
-            rows.append(transformed)
+    rows, skipped = _load_rows(con, path, _transform_pbp_row, valid_seasons)
 
     inserted = upsert_rows(
         con,
