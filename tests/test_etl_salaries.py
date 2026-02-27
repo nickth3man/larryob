@@ -6,6 +6,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.etl._salaries_fetch import _parse_salary
+from src.etl._salaries_helpers import _normalize_name as _normalize_name_helper
 from src.etl.rate_limit import (
     _BREF_THROTTLE,
     BBRRateLimitExceeded,
@@ -57,6 +58,10 @@ def test_normalize_name_handles_hyphenated_names() -> None:
 
 def test_normalize_name_handles_empty_string() -> None:
     assert _normalize_name("") == ""
+
+
+def test_normalize_name_helper_keeps_salary_name_behavior() -> None:
+    assert _normalize_name_helper("D'Angelo Russell") == "dangelo russell"
 
 
 # ------------------------------------------------------------------ #
