@@ -18,7 +18,7 @@ from pathlib import Path
 
 logger = logging.getLogger(__name__)
 
-DB_PATH = Path(__file__).parent.parent.parent / "nba_raw_data.db"
+DB_PATH = Path(__file__).parent.parent.parent / "data" / "databases" / "nba_raw_data.db"
 SCHEMA_DIR = Path(__file__).parent / "schema"
 
 
