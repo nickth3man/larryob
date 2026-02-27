@@ -13,7 +13,7 @@ wheels/
 .env
 
 # API response cache (rebuilt on next run)
-/.cache
+/data/cache/
 
 # SQLite database and WAL journal files (local data, not source-controlled)
 *.db
