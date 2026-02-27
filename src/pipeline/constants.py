@@ -21,12 +21,14 @@ import re
 from collections.abc import Callable
 from typing import Any
 
+from src.pipeline.completeness import full_history_seasons
+
 # =============================================================================
 # Default Configuration
 # =============================================================================
 
 #: Default seasons to ingest when --seasons is not provided
-DEFAULT_SEASONS: tuple[str, ...] = ("2023-24", "2024-25")
+DEFAULT_SEASONS: tuple[str, ...] = full_history_seasons(2025)
 
 # =============================================================================
 # Validation Patterns (compiled at module load)
