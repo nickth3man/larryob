@@ -1,7 +1,9 @@
 """Tests: backfill bulk play-by-play loader."""
 
 import pandas as pd
+import pytest
 
+import src.etl.backfill._pbp_bulk_helpers as pbp_helpers
 from src.etl.backfill._pbp_bulk import load_bulk_pbp, load_bulk_pbp_season
 from src.etl.backfill._pbp_bulk_helpers import _list_csv_files
 
@@ -148,6 +150,31 @@ def test_load_bulk_pbp_multiple_files(sqlite_con, tmp_path):
     result = load_bulk_pbp(sqlite_con, raw_dir=tmp_path)
     assert result == 4
     assert sqlite_con.execute("SELECT COUNT(*) FROM fact_play_by_play").fetchone()[0] == 4
+
+
+def test_load_bulk_pbp_skips_parser_error_file(sqlite_con, tmp_path):
+    """Malformed CSV files are skipped while valid files still load."""
+    _seed_fact_game(sqlite_con, "2023-24", _GAME_A, game_date="2023-10-24")
+    _make_pbp_csv(tmp_path, game_id=_GAME_A)
+    bad_csv = tmp_path / "pbp" / "bad.csv"
+    bad_csv.write_text('GAME_ID,EVENTNUM\n"9022300001,1\n', encoding="utf-8")
+
+    result = load_bulk_pbp(sqlite_con, raw_dir=tmp_path)
+    assert result == 2
+    assert sqlite_con.execute("SELECT COUNT(*) FROM fact_play_by_play").fetchone()[0] == 2
+
+
+def test_read_csv_file_reraises_unexpected_read_errors(monkeypatch, tmp_path):
+    """Unexpected non-parser read failures must not be silently swallowed."""
+    csv_path = tmp_path / "bad.csv"
+    csv_path.write_text("GAME_ID,EVENTNUM\n9022300001,1\n", encoding="utf-8")
+
+    def _raise_value_error(*args, **kwargs):
+        raise ValueError("boom")
+
+    monkeypatch.setattr(pbp_helpers, "read_csv_safe", _raise_value_error)
+    with pytest.raises(ValueError, match="boom"):
+        pbp_helpers._read_csv_file(csv_path)
 
 
 # ---------------------------------------------------------------------------

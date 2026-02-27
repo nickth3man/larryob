@@ -58,9 +58,8 @@ def _read_csv_file(path: Path) -> pd.DataFrame | None:
         Path to the CSV file to read.
     """
     try:
-        df = read_csv_safe(path, low_memory=False)
-        return df
-    except Exception as exc:  # noqa: BLE001
+        return read_csv_safe(path, low_memory=False)
+    except (pd.errors.ParserError, OSError) as exc:
         logger.warning("Failed to read %s: %s", path.name, exc)
         return None
 

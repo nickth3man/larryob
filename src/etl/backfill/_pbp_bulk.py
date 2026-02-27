@@ -228,7 +228,7 @@ def load_bulk_pbp_season(
 
     try:
         log_load_summary(con, _TABLE, season_id=season)
-    except Exception:  # noqa: BLE001
+    except sqlite3.DatabaseError:
         pass  # Non-fatal: summary logging is informational only
 
     return total
