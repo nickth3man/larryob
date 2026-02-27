@@ -19,6 +19,7 @@ wheels/
 *.db
 *.db-shm
 *.db-wal
+data/databases/
 /raw
 
 # Test coverage
