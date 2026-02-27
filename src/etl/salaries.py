@@ -12,7 +12,7 @@ Strategy
 import logging
 import sqlite3
 import time
-from datetime import UTC, date, datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
@@ -23,6 +23,7 @@ from . import _salaries_helpers
 from ._salaries_fetch import fetch_team_current_contracts, fetch_team_season_salaries
 from ._salaries_helpers import _normalize_name, load_salary_cap
 from .config import nba_abbr_to_bref
+from .constants import SEASON_BOUNDARY_MONTH
 from .rate_limit import _BREF_THROTTLE, BBRRateLimitExceeded
 from .validation import validate_rows
 
@@ -183,7 +184,9 @@ def load_player_salaries(
     # ------------------------------------------------------------------ #
     # "bref" (and fallback from "auto"): scrape Basketball-Reference      #
     # ------------------------------------------------------------------ #
-    current_year = date.today().year
+    now = datetime.now(UTC)
+    current_season_start_year = now.year if now.month >= SEASON_BOUNDARY_MONTH else now.year - 1
+    current_season_end_year = current_season_start_year + 1
     end_year = int(season_id.split("-")[0]) + 1  # '2023-24' → 2024
 
     # Ensure dim_season covers this season (FK guard)
@@ -220,7 +223,7 @@ def load_player_salaries(
         was_cached = False
 
         try:
-            if end_year < current_year:
+            if end_year < current_season_end_year:
                 # Historical (season fully complete): team season page has a commented salary table
                 logger.debug("BBref team season salary: %s %d", bref_abbr, end_year)
                 was_cached = load_cache(cache_key_season) is not None

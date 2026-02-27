@@ -1,11 +1,14 @@
 """Shared helper infrastructure for CSV-backed seasonal stat loaders."""
 
+import logging
 import sqlite3
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
 from src.etl.backfill._base import read_csv_safe
+
+logger = logging.getLogger(__name__)
 
 
 def _load_rows(

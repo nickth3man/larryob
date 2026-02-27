@@ -33,6 +33,7 @@ def isolated_cache(tmp_path, monkeypatch):
     importlib.reload(fc_mod)
     yield fc_mod
     # Reload again to restore defaults for other test modules.
+    monkeypatch.delenv("LARRYOB_CACHE_DIR", raising=False)
     importlib.reload(fc_mod)
 
 

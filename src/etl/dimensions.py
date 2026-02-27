@@ -29,7 +29,7 @@ from ._dimensions_helpers import (
     _map_nba_team,
 )
 from .api_client import APICaller
-from .constants import NBA_FOUNDING_YEAR
+from .constants import NBA_FOUNDING_YEAR, SEASON_BOUNDARY_MONTH
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,8 @@ def _season_id(start_year: int) -> str:
 
 def _default_start_year() -> int:
     """Return the default season start year used by dimension loaders."""
-    return datetime.now(UTC).year
+    now = datetime.now(UTC)
+    return now.year if now.month >= SEASON_BOUNDARY_MONTH else now.year - 1
 
 
 def _default_season_id() -> str:
@@ -55,8 +56,10 @@ def _default_season_id() -> str:
     return _season_id(_default_start_year())
 
 
-def load_seasons(con: sqlite3.Connection, up_to_start_year: int = _default_start_year()) -> int:
+def load_seasons(con: sqlite3.Connection, up_to_start_year: int | None = None) -> int:
     """Seed dim_season from the inaugural 1946-47 season through *up_to_start_year*."""
+    if up_to_start_year is None:
+        up_to_start_year = _default_start_year()
     loader_id = f"dimensions.load_seasons.{up_to_start_year}"
     if already_loaded(con, "dim_season", None, loader_id):
         logger.info("Skipping dim_season (already loaded)")
@@ -154,7 +157,7 @@ def load_players_static(con: sqlite3.Connection) -> int:
 
 def load_players_full(
     con: sqlite3.Connection,
-    season_id: str = _default_season_id(),
+    season_id: str | None = None,
     api_caller: APICaller | None = None,
 ) -> int:
     """
@@ -164,6 +167,8 @@ def load_players_full(
     """
     if api_caller is None:
         api_caller = APICaller()
+    if season_id is None:
+        season_id = _default_season_id()
 
     loader_id = f"dimensions.load_players_full.{season_id}"
     if already_loaded(con, "dim_player", None, loader_id):

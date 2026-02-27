@@ -27,6 +27,9 @@ from pathlib import Path
 from src.db.tracking import already_loaded, log_load_summary, record_run
 from src.etl.backfill._base import RAW_DIR
 from src.etl.backfill._pbp_bulk_helpers import (
+    _TABLE as _PBP_TABLE,
+)
+from src.etl.backfill._pbp_bulk_helpers import (
     _insert_rows,
     _list_csv_files,
     _pbp_dir,
@@ -40,7 +43,6 @@ logger = logging.getLogger(__name__)
 # Constants                                                           #
 # ------------------------------------------------------------------ #
 
-_TABLE = "fact_play_by_play"
 _LOADER_ID = "backfill.pbp_bulk"
 
 
@@ -125,12 +127,12 @@ def load_bulk_pbp(
             "%s: %d row(s) inserted/ignored into %s.",
             csv_file.name,
             n,
-            _TABLE,
+            _PBP_TABLE,
         )
 
     logger.info(
         "%s (bulk): %d total row(s) inserted/ignored across %d file(s).",
-        _TABLE,
+        _PBP_TABLE,
         total,
         len(csv_files),
     )
@@ -166,7 +168,7 @@ def load_bulk_pbp_season(
         directory is missing, no CSV files exist, or no matching rows were
         found.
     """
-    if already_loaded(con, _TABLE, season, _LOADER_ID):
+    if already_loaded(con, _PBP_TABLE, season, _LOADER_ID):
         logger.info("Skipping bulk PBP load for %s (already loaded).", season)
         return 0
 
@@ -218,17 +220,17 @@ def load_bulk_pbp_season(
 
     logger.info(
         "%s (bulk, %s): %d total row(s) inserted/ignored.",
-        _TABLE,
+        _PBP_TABLE,
         season,
         total,
     )
 
     status = "ok" if total > 0 else "empty"
-    record_run(con, _TABLE, season, _LOADER_ID, total, status, started_at)
+    record_run(con, _PBP_TABLE, season, _LOADER_ID, total, status, started_at)
 
     try:
-        log_load_summary(con, _TABLE, season_id=season)
-    except sqlite3.DatabaseError:
+        log_load_summary(con, _PBP_TABLE, season_id=season)
+    except (sqlite3.DatabaseError, ValueError):
         pass  # Non-fatal: summary logging is informational only
 
     return total

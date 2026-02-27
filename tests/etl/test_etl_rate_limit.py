@@ -5,6 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 
+from src.etl.constants import RATE_LIMIT_INTER_SEASON_CAP
 from src.etl.rate_limit import (
     BBRRateLimitExceeded,
     _AdaptiveBRefThrottle,
@@ -172,7 +173,7 @@ def test_inter_season_pause_capped_at_five_seconds():
     t = _AdaptiveBRefThrottle()
     t.delay = 100.0  # force a large delay
     t.rate_limit_streak = 3
-    assert t.inter_season_pause() <= 5.0
+    assert t.inter_season_pause() <= RATE_LIMIT_INTER_SEASON_CAP
 
 
 # ------------------------------------------------------------------ #

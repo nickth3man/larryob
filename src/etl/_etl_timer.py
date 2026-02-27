@@ -15,9 +15,9 @@ class ETLTimer:
         self.start_time: float | None = None
 
     def __enter__(self) -> "ETLTimer":
-        self.start_time = time.time()
+        self.start_time = time.monotonic()
         return self
 
     def __exit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
         if self.start_time is not None:
-            record_etl_duration(self.table, self.season_id, time.time() - self.start_time)
+            record_etl_duration(self.table, self.season_id, time.monotonic() - self.start_time)

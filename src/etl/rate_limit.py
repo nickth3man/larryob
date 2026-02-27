@@ -12,7 +12,7 @@ import time
 import requests
 
 from .constants import (
-    API_MIN_SLEEP,
+    RATE_LIMIT_ERROR_BUMP,
     RATE_LIMIT_FAILURE_MULT,
     RATE_LIMIT_INTER_SEASON_CAP,
     RATE_LIMIT_MAX_DELAY,
@@ -154,7 +154,7 @@ class _AdaptiveBRefThrottle:
         self.success_streak = 0
         self.delay = min(
             self.max_delay,
-            max(self.delay * RATE_LIMIT_FAILURE_MULT, self.delay + API_MIN_SLEEP),
+            max(self.delay * RATE_LIMIT_FAILURE_MULT, self.delay + RATE_LIMIT_ERROR_BUMP),
         )
         self.next_allowed_at = time.monotonic() + self.delay
 

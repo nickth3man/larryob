@@ -59,7 +59,7 @@ def _read_csv_file(path: Path) -> pd.DataFrame | None:
     """
     try:
         return read_csv_safe(path, low_memory=False)
-    except (pd.errors.ParserError, OSError) as exc:
+    except (pd.errors.EmptyDataError, pd.errors.ParserError, OSError) as exc:
         logger.warning("Failed to read %s: %s", path.name, exc)
         return None
 
