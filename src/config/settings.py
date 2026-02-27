@@ -1,6 +1,5 @@
 """Application settings and configuration."""
 
-import os
 from pathlib import Path
 
 

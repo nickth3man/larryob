@@ -21,8 +21,8 @@ from ..db.operations import upsert_rows
 from ..db.tracking import already_loaded, record_run
 from ._salaries_fetch import fetch_team_current_contracts, fetch_team_season_salaries
 from .config import get_all_salary_caps, nba_abbr_to_bref
-from .helpers import _norm_name
 from .extract.rate_limit import _BREF_THROTTLE, BBRRateLimitExceeded
+from .helpers import _norm_name
 from .validation import validate_rows
 
 logger = logging.getLogger(__name__)

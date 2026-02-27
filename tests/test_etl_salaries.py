@@ -104,7 +104,9 @@ def test_fetch_html_returns_text_on_success() -> None:
 def test_fetch_html_returns_none_on_persistent_error() -> None:
     import requests as req_mod
 
-    with patch("src.etl.extract.rate_limit.requests.get", side_effect=req_mod.RequestException("timeout")):
+    with patch(
+        "src.etl.extract.rate_limit.requests.get", side_effect=req_mod.RequestException("timeout")
+    ):
         with patch("src.etl.extract.rate_limit.time.sleep"):
             result = fetch_html("http://example.com", max_retries=2)
     assert result is None

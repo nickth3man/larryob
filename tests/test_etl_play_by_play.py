@@ -7,7 +7,13 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 
 from src.db.operations import upsert_rows
-from src.etl.play_by_play import _fetch_pbp, _transform_pbp, load_game, load_games, load_season_pbp
+from src.etl.transform.play_by_play import (
+    _fetch_pbp,
+    _transform_pbp,
+    load_game,
+    load_games,
+    load_season_pbp,
+)
 
 
 def _make_pbp_df() -> pd.DataFrame:
@@ -153,7 +159,7 @@ def test_load_game_returns_zero_for_empty_api_response(
 
     mock_ep = MagicMock()
     mock_ep.get_data_frames.return_value = [pd.DataFrame()]
-    with patch("src.etl.play_by_play.playbyplayv2.PlayByPlayV2", return_value=mock_ep):
+    with patch("src.etl.transform.play_by_play.playbyplayv2.PlayByPlayV2", return_value=mock_ep):
         n = load_game(sqlite_con_with_data, "0022300001")
     assert n == 0
 
@@ -172,7 +178,7 @@ def test_load_games_handles_exception_per_game(
 
     monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
-    with patch("src.etl.play_by_play.load_game", side_effect=RuntimeError("API error")):
+    with patch("src.etl.transform.play_by_play.load_game", side_effect=RuntimeError("API error")):
         with patch("src.etl.extract.api_client.time.sleep"):
             total = load_games(sqlite_con_with_data, ["0022300001"])
     assert total == 0
@@ -187,7 +193,7 @@ def test_load_games_sums_counts_across_games(
 
     monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
-    with patch("src.etl.play_by_play.load_game", return_value=5):
+    with patch("src.etl.transform.play_by_play.load_game", return_value=5):
         with patch("src.etl.extract.api_client.time.sleep"):
             total = load_games(sqlite_con_with_data, ["001", "002", "003"])
     assert total == 15
@@ -224,8 +230,8 @@ def test_load_season_pbp_processes_games(
 
     monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
-    with patch("src.etl.play_by_play.load_games", return_value=10) as mock_lg:
-        with patch("src.etl.play_by_play.log_load_summary", return_value=10):
+    with patch("src.etl.transform.play_by_play.load_games", return_value=10) as mock_lg:
+        with patch("src.etl.transform.play_by_play.log_load_summary", return_value=10):
             result = load_season_pbp(sqlite_con_with_data, "2023-24")
     assert result == 10
     mock_lg.assert_called_once()
@@ -246,8 +252,8 @@ def test_load_season_pbp_source_api_skips_bulk(
 
     monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
-    with patch("src.etl.play_by_play.load_games", return_value=5):
-        with patch("src.etl.play_by_play.log_load_summary"):
+    with patch("src.etl.transform.play_by_play.load_games", return_value=5):
+        with patch("src.etl.transform.play_by_play.log_load_summary"):
             with patch("src.etl.backfill._pbp_bulk.load_bulk_pbp_season") as mock_bulk:
                 result = load_season_pbp(sqlite_con_with_data, "2023-24", source="api")
 
@@ -265,8 +271,8 @@ def test_load_season_pbp_source_bulk_calls_bulk_only(
 
     monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
-    with patch("src.etl.play_by_play.load_games") as mock_api:
-        with patch("src.etl.play_by_play.log_load_summary"):
+    with patch("src.etl.transform.play_by_play.load_games") as mock_api:
+        with patch("src.etl.transform.play_by_play.log_load_summary"):
             # Patch the import-time name inside the function's local scope
             with patch("src.etl.backfill._pbp_bulk.load_bulk_pbp_season", return_value=42):
                 result = load_season_pbp(sqlite_con_with_data, "2023-24", source="bulk")
@@ -316,8 +322,8 @@ def test_load_season_pbp_source_auto_deduplicates(
     }
     _upsert(sqlite_con_with_data, "fact_play_by_play", [row])
 
-    with patch("src.etl.play_by_play.load_games", return_value=0) as mock_api:
-        with patch("src.etl.play_by_play.log_load_summary"):
+    with patch("src.etl.transform.play_by_play.load_games", return_value=0) as mock_api:
+        with patch("src.etl.transform.play_by_play.log_load_summary"):
             with patch("src.etl.backfill._pbp_bulk.load_bulk_pbp_season", return_value=1):
                 load_season_pbp(sqlite_con_with_data, "2023-24", source="auto")
 

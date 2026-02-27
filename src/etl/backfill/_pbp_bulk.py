@@ -4,7 +4,7 @@ Backfill loader for play-by-play data from bulk CSV files.
 Strategy
 --------
 * Scan ``raw/pbp/`` for ``*.csv`` files — one or many, any naming convention.
-* Normalise each file via :func:`~src.etl.play_by_play._transform_pbp`, which
+* Normalise each file via :func:`~src.etl.transform.play_by_play._transform_pbp`, which
   handles both uppercase NBA-API column names (``GAME_ID``, ``EVENTNUM``, …)
   and already-lowercased variants.
 * Insert into ``fact_play_by_play`` with ``INSERT OR IGNORE`` on ``event_id``
@@ -29,7 +29,7 @@ import pandas as pd
 from src.db.operations import upsert_rows
 from src.db.tracking import already_loaded, log_load_summary, record_run
 from src.etl.backfill._base import RAW_DIR, read_csv_safe
-from src.etl.play_by_play import _transform_pbp
+from src.etl.transform.play_by_play import _transform_pbp
 from src.etl.validation import validate_rows
 
 logger = logging.getLogger(__name__)
@@ -181,7 +181,7 @@ def load_bulk_pbp(
     Load all play-by-play CSV files from ``raw/pbp/`` into ``fact_play_by_play``.
 
     Scans every ``*.csv`` file inside ``<raw_dir>/pbp/``, normalises rows via
-    :func:`~src.etl.play_by_play._transform_pbp` (handles uppercase NBA-API
+    :func:`~src.etl.transform.play_by_play._transform_pbp` (handles uppercase NBA-API
     column names), and inserts with ``INSERT OR IGNORE`` so re-runs are safe.
 
     Gracefully returns ``0`` when ``raw/pbp/`` is missing or contains no CSV

@@ -285,7 +285,10 @@ def test_fetch_html_returns_none_on_other_4xx():
 
 def test_fetch_html_returns_none_after_all_retries_fail():
     with (
-        patch("src.etl.extract.rate_limit.requests.get", side_effect=requests.RequestException("timeout")),
+        patch(
+            "src.etl.extract.rate_limit.requests.get",
+            side_effect=requests.RequestException("timeout"),
+        ),
         patch("src.etl.extract.rate_limit._BREF_THROTTLE") as mock_throttle,
     ):
         mock_throttle.before_request = MagicMock()

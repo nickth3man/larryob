@@ -26,9 +26,9 @@ import sqlite3
 import time
 
 from src.etl.dimensions import run_all as run_dimensions
-from src.etl.game_logs import load_multiple_seasons
-from src.etl.play_by_play import load_season_pbp
 from src.etl.raw_backfill import RAW_DIR, run_raw_backfill
+from src.etl.transform.game_logs import load_multiple_seasons
+from src.etl.transform.play_by_play import load_season_pbp
 from src.etl.validation import run_consistency_checks
 from src.pipeline.exceptions import ReconciliationError
 from src.pipeline.models import IngestConfig
