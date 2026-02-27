@@ -235,7 +235,7 @@ def load_season_pbp(
 
     # ── "bulk" only ────────────────────────────────────────────────── #
     if source == "bulk":
-        from src.etl.backfill._pbp_bulk import load_bulk_pbp_season
+        from src.etl.load.bulk import load_bulk_pbp_season
 
         total = load_bulk_pbp_season(con, season, bulk_dir.parent)
         status = "partial" if limit else "ok"
@@ -254,7 +254,7 @@ def load_season_pbp(
     # ── "auto": bulk load first, then find games still missing data ── #
     bulk_total = 0
     if source == "auto":
-        from src.etl.backfill._pbp_bulk import load_bulk_pbp_season
+        from src.etl.load.bulk import load_bulk_pbp_season
 
         bulk_total = load_bulk_pbp_season(con, season, bulk_dir.parent)
         if all_game_ids:

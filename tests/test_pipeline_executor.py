@@ -125,7 +125,7 @@ def test_execute_stage_calls_stage_fn():
     state = CheckpointState()
     cfg = _config()
     fn = MagicMock()
-    with patch("src.pipeline.executor.log_checkpoint"):
+    with patch("src.pipeline.executor.steps.log_checkpoint"):
         _execute_stage(con, Stage.AWARDS, ("fact_player_award",), state, cfg, fn)
     fn.assert_called_once_with(con)
 
@@ -135,7 +135,7 @@ def test_execute_stage_passes_args_and_kwargs():
     state = CheckpointState()
     cfg = _config()
     fn = MagicMock()
-    with patch("src.pipeline.executor.log_checkpoint"):
+    with patch("src.pipeline.executor.steps.log_checkpoint"):
         _execute_stage(con, Stage.AWARDS, (), state, cfg, fn, "arg1", key="val")
     fn.assert_called_once_with(con, "arg1", key="val")
 
@@ -148,7 +148,7 @@ def test_execute_stage_reraises_exception():
     def boom(con):
         raise ValueError("stage failed")
 
-    with patch("src.pipeline.executor.log_checkpoint"):
+    with patch("src.pipeline.executor.steps.log_checkpoint"):
         with pytest.raises(ValueError, match="stage failed"):
             _execute_stage(con, Stage.AWARDS, (), state, cfg, boom)
 
@@ -164,8 +164,8 @@ def test_execute_raw_backfill_stage_logs_and_checkpoints_on_success():
     cfg = _config(raw_backfill=True)
     summary = {"ok": ["loader_a"], "skipped": [], "failed": []}
     with (
-        patch("src.pipeline.executor.run_raw_backfill_stage", return_value=summary),
-        patch("src.pipeline.executor.log_checkpoint") as mock_ckpt,
+        patch("src.pipeline.executor.steps.run_raw_backfill_stage", return_value=summary),
+        patch("src.pipeline.executor.steps.log_checkpoint") as mock_ckpt,
     ):
         _execute_raw_backfill_stage(con, state, cfg)
     mock_ckpt.assert_called_once()
@@ -177,8 +177,8 @@ def test_execute_raw_backfill_stage_warns_on_failures_no_fail_fast():
     cfg = _config(raw_backfill=True, raw_backfill_fail_fast=False)
     summary = {"ok": [], "skipped": [], "failed": ["bad_loader"]}
     with (
-        patch("src.pipeline.executor.run_raw_backfill_stage", return_value=summary),
-        patch("src.pipeline.executor.log_checkpoint"),
+        patch("src.pipeline.executor.steps.run_raw_backfill_stage", return_value=summary),
+        patch("src.pipeline.executor.steps.log_checkpoint"),
     ):
         # Should not raise
         _execute_raw_backfill_stage(con, state, cfg)
@@ -190,8 +190,8 @@ def test_execute_raw_backfill_stage_raises_on_failures_with_fail_fast():
     cfg = _config(raw_backfill=True, raw_backfill_fail_fast=True)
     summary = {"ok": [], "skipped": [], "failed": ["bad_loader"]}
     with (
-        patch("src.pipeline.executor.run_raw_backfill_stage", return_value=summary),
-        patch("src.pipeline.executor.log_checkpoint"),
+        patch("src.pipeline.executor.steps.run_raw_backfill_stage", return_value=summary),
+        patch("src.pipeline.executor.steps.log_checkpoint"),
     ):
         with pytest.raises(IngestError):
             _execute_raw_backfill_stage(con, state, cfg)
@@ -204,8 +204,8 @@ def test_execute_raw_backfill_stage_raises_on_failures_with_fail_fast():
 
 def test_finalize_metrics_noop_when_disabled():
     with (
-        patch("src.pipeline.executor.log_metrics_summary") as mock_summary,
-        patch("src.pipeline.executor.export_metrics") as mock_export,
+        patch("src.pipeline.executor.orchestrator.log_metrics_summary") as mock_summary,
+        patch("src.pipeline.executor.orchestrator.export_metrics") as mock_export,
     ):
         finalize_metrics(metrics_enabled=False, show_summary=True, export_endpoint="http://x")
     mock_summary.assert_not_called()
@@ -214,8 +214,8 @@ def test_finalize_metrics_noop_when_disabled():
 
 def test_finalize_metrics_logs_summary_when_enabled():
     with (
-        patch("src.pipeline.executor.log_metrics_summary") as mock_summary,
-        patch("src.pipeline.executor.export_metrics"),
+        patch("src.pipeline.executor.orchestrator.log_metrics_summary") as mock_summary,
+        patch("src.pipeline.executor.orchestrator.export_metrics"),
     ):
         finalize_metrics(metrics_enabled=True, show_summary=True, export_endpoint=None)
     mock_summary.assert_called_once()
@@ -223,8 +223,8 @@ def test_finalize_metrics_logs_summary_when_enabled():
 
 def test_finalize_metrics_exports_when_endpoint_given():
     with (
-        patch("src.pipeline.executor.log_metrics_summary"),
-        patch("src.pipeline.executor.export_metrics") as mock_export,
+        patch("src.pipeline.executor.orchestrator.log_metrics_summary"),
+        patch("src.pipeline.executor.orchestrator.export_metrics") as mock_export,
     ):
         finalize_metrics(
             metrics_enabled=True, show_summary=False, export_endpoint="http://endpoint"
@@ -234,8 +234,8 @@ def test_finalize_metrics_exports_when_endpoint_given():
 
 def test_finalize_metrics_no_export_when_no_endpoint():
     with (
-        patch("src.pipeline.executor.log_metrics_summary"),
-        patch("src.pipeline.executor.export_metrics") as mock_export,
+        patch("src.pipeline.executor.orchestrator.log_metrics_summary"),
+        patch("src.pipeline.executor.orchestrator.export_metrics") as mock_export,
     ):
         finalize_metrics(metrics_enabled=True, show_summary=False, export_endpoint=None)
     mock_export.assert_not_called()
@@ -272,9 +272,9 @@ def test_run_ingest_pipeline_dims_only_skips_game_logs():
     con = MagicMock(spec=sqlite3.Connection)
     cfg = _config(dims_only=True)
     with (
-        patch("src.pipeline.executor.run_dimensions_stage") as mock_dims,
-        patch("src.pipeline.executor.run_game_logs_stage") as mock_gl,
-        patch("src.pipeline.executor.log_checkpoint"),
+        patch("src.pipeline.executor.steps.run_dimensions_stage") as mock_dims,
+        patch("src.pipeline.executor.steps.run_game_logs_stage") as mock_gl,
+        patch("src.pipeline.executor.steps.log_checkpoint"),
     ):
         run_ingest_pipeline(con, cfg)
     mock_dims.assert_called_once()
@@ -285,9 +285,9 @@ def test_run_ingest_pipeline_calls_game_logs_by_default():
     con = MagicMock(spec=sqlite3.Connection)
     cfg = _config(skip_reconciliation=True)
     with (
-        patch("src.pipeline.executor.run_dimensions_stage"),
-        patch("src.pipeline.executor.run_game_logs_stage") as mock_gl,
-        patch("src.pipeline.executor.log_checkpoint"),
+        patch("src.pipeline.executor.steps.run_dimensions_stage"),
+        patch("src.pipeline.executor.steps.run_game_logs_stage") as mock_gl,
+        patch("src.pipeline.executor.steps.log_checkpoint"),
     ):
         run_ingest_pipeline(con, cfg)
     mock_gl.assert_called_once()
@@ -297,8 +297,8 @@ def test_run_ingest_pipeline_reraises_stage_failure():
     con = MagicMock(spec=sqlite3.Connection)
     cfg = _config(dims_only=True)
     with (
-        patch("src.pipeline.executor.run_dimensions_stage", side_effect=RuntimeError("fail")),
-        patch("src.pipeline.executor.log_checkpoint"),
+        patch("src.pipeline.executor.steps.run_dimensions_stage", side_effect=RuntimeError("fail")),
+        patch("src.pipeline.executor.steps.log_checkpoint"),
     ):
         with pytest.raises(RuntimeError, match="fail"):
             run_ingest_pipeline(con, cfg)

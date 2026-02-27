@@ -25,7 +25,7 @@ def test_ingest_dims_only(tmp_path, monkeypatch):
     with patch("sys.argv", test_args):
         with patch("src.etl.dimensions.nba_teams_static.get_teams", return_value=[]):
             with patch("src.etl.dimensions.nba_players_static.get_players", return_value=[]):
-                with patch("src.pipeline.cli.init_db", return_value=con):
+                with patch("src.pipeline.cli.runner.init_db", return_value=con):
                     ingest.main()
 
     # Verify tables exist and connection closed successfully
@@ -63,11 +63,11 @@ def test_ingest_full_pipeline_mocked(tmp_path, monkeypatch):
     # Mock network calls to avoid actual HTTP requests
     with patch("sys.argv", test_args):
         with patch("src.db.schema.init_db", return_value=con):
-            with patch("src.pipeline.cli.init_db", return_value=con):
+            with patch("src.pipeline.cli.runner.init_db", return_value=con):
                 with patch("src.pipeline.stages.run_dimensions"):
-                    with patch("src.pipeline.executor.load_all_awards"):
-                        with patch("src.pipeline.executor.load_salaries_for_seasons"):
-                            with patch("src.pipeline.executor.load_rosters_for_seasons"):
+                    with patch("src.pipeline.executor.steps.load_all_awards"):
+                        with patch("src.pipeline.executor.steps.load_salaries_for_seasons"):
+                            with patch("src.pipeline.executor.steps.load_rosters_for_seasons"):
                                 with patch("src.pipeline.stages.load_multiple_seasons"):
                                     with patch("src.pipeline.stages.load_season_pbp"):
                                         with patch(
@@ -110,7 +110,7 @@ def test_ingest_reconciliation_discrepancy_raises_by_default(tmp_path):
 
     test_args = ["ingest.py", "--seasons", "2023-24"]
     with patch("sys.argv", test_args):
-        with patch("src.pipeline.cli.init_db", return_value=con):
+        with patch("src.pipeline.cli.runner.init_db", return_value=con):
             with patch("src.pipeline.stages.run_dimensions"):
                 with patch("src.pipeline.stages.load_multiple_seasons"):
                     with patch("src.pipeline.stages.run_consistency_checks", return_value=2):
@@ -127,7 +127,7 @@ def test_ingest_reconciliation_warn_only_continues(tmp_path):
 
     test_args = ["ingest.py", "--seasons", "2023-24", "--reconciliation-warn-only"]
     with patch("sys.argv", test_args):
-        with patch("src.pipeline.cli.init_db", return_value=con):
+        with patch("src.pipeline.cli.runner.init_db", return_value=con):
             with patch("src.pipeline.stages.run_dimensions"):
                 with patch("src.pipeline.stages.load_multiple_seasons"):
                     with patch(
@@ -145,7 +145,7 @@ def test_ingest_skip_reconciliation_bypasses_checks(tmp_path):
 
     test_args = ["ingest.py", "--seasons", "2023-24", "--skip-reconciliation"]
     with patch("sys.argv", test_args):
-        with patch("src.pipeline.cli.init_db", return_value=con):
+        with patch("src.pipeline.cli.runner.init_db", return_value=con):
             with patch("src.pipeline.stages.run_dimensions"):
                 with patch("src.pipeline.stages.load_multiple_seasons"):
                     with patch("src.pipeline.stages.run_consistency_checks") as reconcile:
@@ -164,8 +164,8 @@ def test_ingest_analytics_only_runs_query_without_init_db() -> None:
     with patch(
         "sys.argv", ["ingest.py", "--analytics-only", "--analytics-view", "vw_team_standings"]
     ):
-        with patch("src.pipeline.cli.run_analytics_view") as query_view:
-            with patch("src.pipeline.cli.init_db") as init_db_patch:
+        with patch("src.pipeline.cli.runner.run_analytics_view") as query_view:
+            with patch("src.pipeline.cli.runner.init_db") as init_db_patch:
                 ingest.main()
                 query_view.assert_called_once()
                 init_db_patch.assert_not_called()
@@ -186,10 +186,12 @@ def test_ingest_metrics_summary_and_export_hooks(tmp_path):
     ]
 
     with patch("sys.argv", args):
-        with patch("src.pipeline.cli.init_db", return_value=con):
+        with patch("src.pipeline.cli.runner.init_db", return_value=con):
             with patch("src.pipeline.stages.run_dimensions"):
-                with patch("src.pipeline.executor.log_metrics_summary") as log_summary:
-                    with patch("src.pipeline.executor.export_metrics") as export_metrics_mock:
+                with patch("src.pipeline.executor.orchestrator.log_metrics_summary") as log_summary:
+                    with patch(
+                        "src.pipeline.executor.orchestrator.export_metrics"
+                    ) as export_metrics_mock:
                         ingest.main()
                         log_summary.assert_called_once()
                         export_metrics_mock.assert_called_once_with("http://localhost:9999/metrics")
@@ -202,7 +204,7 @@ def test_ingest_raw_backfill_fail_fast_raises(tmp_path):
     con = init_db(db_file)
     args = ["ingest.py", "--raw-backfill", "--raw-backfill-fail-fast", "--seasons", "2023-24"]
     with patch("sys.argv", args):
-        with patch("src.pipeline.cli.init_db", return_value=con):
+        with patch("src.pipeline.cli.runner.init_db", return_value=con):
             with patch("src.pipeline.stages.run_dimensions"):
                 with patch(
                     "src.pipeline.stages.run_raw_backfill",
@@ -338,7 +340,7 @@ class TestMainModuleEntryPoint:
         con = init_db(db_file)
 
         with patch("sys.argv", ["__main__.py", "--dims-only", "--seasons", "2023-24"]):
-            with patch("src.pipeline.cli.init_db", return_value=con):
+            with patch("src.pipeline.cli.runner.init_db", return_value=con):
                 with patch("src.etl.dimensions.nba_teams_static.get_teams", return_value=[]):
                     with patch(
                         "src.etl.dimensions.nba_players_static.get_players", return_value=[]
@@ -367,7 +369,7 @@ class TestMainModuleEntryPoint:
         con = init_db(db_file)
 
         with patch("sys.argv", ["__main__.py", "--seasons", "2023-24"]):
-            with patch("src.pipeline.cli.init_db", return_value=con):
+            with patch("src.pipeline.cli.runner.init_db", return_value=con):
                 with patch(
                     "src.pipeline.stages.run_dimensions", side_effect=Exception("Unexpected error")
                 ):
@@ -409,7 +411,7 @@ class TestMainModuleEntryPoint:
         assert "project" in config
         assert "scripts" in config["project"]
         assert "ingest" in config["project"]["scripts"]
-        assert config["project"]["scripts"]["ingest"] == "src.pipeline.cli:main"
+        assert config["project"]["scripts"]["ingest"] == "src.pipeline.cli.main:main"
 
     def test_main_module_execution_as_module(self, tmp_path):
         """Test executing __main__ as a module via subprocess (mocked for speed)."""
@@ -425,7 +427,7 @@ class TestMainModuleEntryPoint:
         # Mock subprocess.run to simulate a successful module execution
         # We'll actually call main() directly to verify the behavior
         with patch("sys.argv", ["__main__.py", "--dims-only", "--seasons", "2023-24"]):
-            with patch("src.pipeline.cli.init_db", return_value=con):
+            with patch("src.pipeline.cli.runner.init_db", return_value=con):
                 with patch("src.etl.dimensions.nba_teams_static.get_teams", return_value=[]):
                     with patch(
                         "src.etl.dimensions.nba_players_static.get_players", return_value=[]
@@ -460,7 +462,7 @@ class TestMainModuleEntryPoint:
 
         # Test successful exit (0)
         with patch("sys.argv", ["__main__.py", "--dims-only", "--seasons", "2023-24"]):
-            with patch("src.pipeline.cli.init_db", return_value=con):
+            with patch("src.pipeline.cli.runner.init_db", return_value=con):
                 with patch("src.etl.dimensions.nba_teams_static.get_teams", return_value=[]):
                     with patch(
                         "src.etl.dimensions.nba_players_static.get_players", return_value=[]
