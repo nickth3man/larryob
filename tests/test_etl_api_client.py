@@ -6,6 +6,12 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 from src.etl.api_client import APICaller, get_api_caller
+from src.etl.constants import API_SUCCESS_STREAK, RATE_LIMIT_MIN_DELAY
+
+
+def test_constants_module_exports_rate_limit_values() -> None:
+    assert RATE_LIMIT_MIN_DELAY == 0.4
+    assert API_SUCCESS_STREAK == 3
 
 
 class TestAPICaller:
