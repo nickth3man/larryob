@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-from src.etl.api_client import APICaller, get_api_caller
+from src.etl.extract.api_client import APICaller, get_api_caller
 
 
 class TestAPICaller:
@@ -25,7 +25,7 @@ class TestAPICaller:
         assert caller._max_retries == 3
         assert caller._inter_call_sleep == 0.5
 
-    @patch("src.etl.api_client.time.sleep")
+    @patch("src.etl.extract.api_client.time.sleep")
     def test_call_with_backoff_success(self, mock_sleep: MagicMock) -> None:
         """Successful call should sleep once and return result."""
         caller = APICaller(base_sleep=0.1, max_retries=3)
@@ -37,7 +37,7 @@ class TestAPICaller:
         assert result == "success"
         assert mock_sleep.call_count == 1  # Sleep after success
 
-    @patch("src.etl.api_client.time.sleep")
+    @patch("src.etl.extract.api_client.time.sleep")
     def test_call_with_backoff_retry_then_success(self, mock_sleep: MagicMock) -> None:
         """Should retry on failure and succeed."""
         caller = APICaller(base_sleep=0.1, max_retries=3)
@@ -57,7 +57,7 @@ class TestAPICaller:
         # First attempt failed (retry sleep), second succeeded (normal sleep)
         assert mock_sleep.call_count == 2
 
-    @patch("src.etl.api_client.time.sleep")
+    @patch("src.etl.extract.api_client.time.sleep")
     def test_call_with_backoff_exhausted_retries(self, mock_sleep: MagicMock) -> None:
         """Should raise after max retries exhausted."""
         caller = APICaller(base_sleep=0.1, max_retries=2)
@@ -72,7 +72,7 @@ class TestAPICaller:
         # but NOT after final failure (exception raised before sleep)
         assert mock_sleep.call_count == 1
 
-    @patch("src.etl.api_client.time.sleep")
+    @patch("src.etl.extract.api_client.time.sleep")
     def test_call_with_backoff_custom_delay(self, mock_sleep: MagicMock) -> None:
         """Custom delay should override instance default."""
         caller = APICaller(base_sleep=1.0, max_retries=3)

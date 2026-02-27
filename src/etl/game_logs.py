@@ -36,7 +36,7 @@ from ._game_logs_transform import (
     build_team_rows,
     parse_matchup,
 )
-from .api_client import APICaller
+from .extract.api_client import APICaller
 from .metrics import ETLTimer, record_etl_rows
 from .validation import validate_rows
 

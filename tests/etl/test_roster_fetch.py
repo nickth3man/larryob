@@ -242,7 +242,7 @@ def test_load_team_roster_returns_zero_on_api_exception(
         "src.etl.roster.commonteamroster.CommonTeamRoster",
         side_effect=RuntimeError("API unavailable"),
     ):
-        with patch("src.etl.api_client.time.sleep"):
+        with patch("src.etl.extract.api_client.time.sleep"):
             inserted = load_team_roster(sqlite_con_with_data, "1610612747", "2023-24")
     assert inserted == 0
 
@@ -460,7 +460,7 @@ def test_load_team_roster_api_failure_retries_and_succeeds(
         "src.etl.roster.commonteamroster.CommonTeamRoster",
         side_effect=side_effect,
     ):
-        with patch("src.etl.api_client.time.sleep"):
+        with patch("src.etl.extract.api_client.time.sleep"):
             inserted = load_team_roster(
                 sqlite_con_with_data,
                 "1610612747",
@@ -499,7 +499,7 @@ def test_load_team_roster_api_max_retries_exceeded(
         "src.etl.roster.commonteamroster.CommonTeamRoster",
         side_effect=side_effect,
     ):
-        with patch("src.etl.api_client.time.sleep"):
+        with patch("src.etl.extract.api_client.time.sleep"):
             inserted = load_team_roster(sqlite_con_with_data, "1610612747", "2023-24")
     assert inserted == 0
 
@@ -519,7 +519,7 @@ def test_load_team_roster_api_error_is_caught_and_logged(
         "src.etl.roster.commonteamroster.CommonTeamRoster",
         side_effect=ValueError("Bad request"),
     ):
-        with patch("src.etl.api_client.time.sleep"):
+        with patch("src.etl.extract.api_client.time.sleep"):
             inserted = load_team_roster(sqlite_con_with_data, "1610612747", "2023-24")
 
     assert inserted == 0

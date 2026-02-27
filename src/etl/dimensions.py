@@ -28,7 +28,7 @@ from ._dimensions_helpers import (
     _map_nba_player_static,
     _map_nba_team,
 )
-from .api_client import APICaller
+from .extract.api_client import APICaller
 
 logger = logging.getLogger(__name__)
 

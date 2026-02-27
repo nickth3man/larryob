@@ -344,7 +344,7 @@ def test_load_players_bio_enrichment_api_exception_skips_player(
     with patch(
         "src.etl.dimensions.commonplayerinfo.CommonPlayerInfo", side_effect=RuntimeError("API down")
     ):
-        with patch("src.etl.api_client.time.sleep"):
+        with patch("src.etl.extract.api_client.time.sleep"):
             result = load_players_bio_enrichment(sqlite_con_with_data, player_ids=["2544"])
     assert result == 0
 

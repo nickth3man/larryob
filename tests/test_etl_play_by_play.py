@@ -173,7 +173,7 @@ def test_load_games_handles_exception_per_game(
     monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     with patch("src.etl.play_by_play.load_game", side_effect=RuntimeError("API error")):
-        with patch("src.etl.api_client.time.sleep"):
+        with patch("src.etl.extract.api_client.time.sleep"):
             total = load_games(sqlite_con_with_data, ["0022300001"])
     assert total == 0
 
@@ -188,7 +188,7 @@ def test_load_games_sums_counts_across_games(
     monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     with patch("src.etl.play_by_play.load_game", return_value=5):
-        with patch("src.etl.api_client.time.sleep"):
+        with patch("src.etl.extract.api_client.time.sleep"):
             total = load_games(sqlite_con_with_data, ["001", "002", "003"])
     assert total == 15
 
