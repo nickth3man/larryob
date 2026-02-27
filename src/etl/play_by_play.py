@@ -23,7 +23,7 @@ EVENTMSGTYPE reference
 import logging
 import sqlite3
 from collections.abc import Iterable
-from datetime import UTC
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Literal
 
@@ -229,8 +229,6 @@ def load_season_pbp(
     if already_loaded(con, "fact_play_by_play", season, loader_id):
         logger.info("Skipping play by play for %s (already loaded)", season)
         return 0
-
-    from datetime import datetime
 
     started_at = datetime.now(UTC).isoformat()
 

@@ -1,10 +1,12 @@
 """Tests: ETL salary loaders — pure-logic helpers and mock-boundary integrations."""
 
+import inspect
 import sqlite3
 from unittest.mock import MagicMock, patch
 
 import pytest
 
+import src.etl.salaries as salaries_module
 from src.etl._salaries_fetch import _parse_salary
 from src.etl._salaries_helpers import _normalize_name as _normalize_name_helper
 from src.etl.rate_limit import (
@@ -62,6 +64,12 @@ def test_normalize_name_handles_empty_string() -> None:
 
 def test_normalize_name_helper_keeps_salary_name_behavior() -> None:
     assert _normalize_name_helper("D'Angelo Russell") == "dangelo russell"
+
+
+def test_salaries_module_has_no_function_level_datetime_imports() -> None:
+    source = inspect.getsource(salaries_module.load_player_salaries)
+    assert "from datetime import datetime" not in source
+    assert "import datetime as dt" not in source
 
 
 # ------------------------------------------------------------------ #

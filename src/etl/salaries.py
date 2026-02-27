@@ -12,7 +12,7 @@ Strategy
 import logging
 import sqlite3
 import time
-from datetime import UTC
+from datetime import UTC, date, datetime
 from pathlib import Path
 from typing import Literal
 
@@ -135,8 +135,6 @@ def load_player_salaries(
         logger.info("Skipping player salaries for %s (already loaded)", season_id)
         return 0
 
-    from datetime import datetime
-
     started_at = datetime.now(UTC).isoformat()
 
     # ------------------------------------------------------------------ #
@@ -185,9 +183,7 @@ def load_player_salaries(
     # ------------------------------------------------------------------ #
     # "bref" (and fallback from "auto"): scrape Basketball-Reference      #
     # ------------------------------------------------------------------ #
-    import datetime as dt
-
-    current_year = dt.date.today().year
+    current_year = date.today().year
     end_year = int(season_id.split("-")[0]) + 1  # '2023-24' → 2024
 
     # Ensure dim_season covers this season (FK guard)
