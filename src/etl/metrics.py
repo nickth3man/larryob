@@ -14,7 +14,6 @@ Usage
 """
 
 import logging
-import time
 from collections import defaultdict
 from threading import Lock
 from typing import Any
@@ -299,40 +298,3 @@ def export_metrics(endpoint: str | None = None, timeout_seconds: float = 5.0) ->
 
     logger.info("Metrics exported to %s", target)
     return True
-
-
-class ETLTimer:
-    """
-    Context manager for timing ETL operations.
-
-    Automatically records duration when the context exits.
-
-    Example
-    -------
-    >>> with ETLTimer("player_game_log", "2023-24"):
-    ...     load_season(con, "2023-24")
-    """
-
-    def __init__(self, table: str, season_id: str | None = None):
-        """
-        Initialize the timer.
-
-        Parameters
-        ----------
-        table : str
-            Name of the table.
-        season_id : str | None
-            Season identifier or None for non-seasonal tables.
-        """
-        self.table = table
-        self.season_id = season_id
-        self.start_time: float | None = None
-
-    def __enter__(self) -> "ETLTimer":
-        self.start_time = time.time()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb) -> None:
-        if self.start_time is not None:
-            duration = time.time() - self.start_time
-            record_etl_duration(self.table, self.season_id, duration)

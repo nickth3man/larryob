@@ -5,7 +5,8 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.etl.backfill._awards import _bref_to_player_id, _eos_award_name, load_awards
+import src.etl.backfill._awards as awards_mod
+from src.etl.backfill._awards import AwardsLoader, load_awards
 
 
 def _seed_award_context(con: sqlite3.Connection) -> None:
@@ -20,17 +21,7 @@ def _seed_award_context(con: sqlite3.Connection) -> None:
     con.commit()
 
 
-def test_eos_award_name_maps_known_awards() -> None:
-    result = _eos_award_name("Most Valuable Player Voting")
-    assert result == "MVP"
-
-
-def test_eos_award_name_returns_none_for_unmapped_value() -> None:
-    result = _eos_award_name("Some Other Award")
-    assert result is None
-
-
-def test_bref_to_player_id_builds_lookup(sqlite_con: sqlite3.Connection) -> None:
+def test_awards_loader_init_lookups_builds_bref_map(sqlite_con: sqlite3.Connection) -> None:
     sqlite_con.execute(
         """INSERT INTO dim_player
            (player_id, first_name, last_name, full_name, bref_id, is_active)
@@ -38,8 +29,15 @@ def test_bref_to_player_id_builds_lookup(sqlite_con: sqlite3.Connection) -> None
     )
     sqlite_con.commit()
 
-    mapping = _bref_to_player_id(sqlite_con)
-    assert mapping == {"jokicni01": "203999"}
+    loader = AwardsLoader()
+    loader._init_lookups(sqlite_con)
+    assert isinstance(loader.bref_to_pid, dict)
+    assert loader.bref_to_pid.get("jokicni01") == "203999"
+
+
+def test_awards_module_removes_legacy_alias_functions() -> None:
+    assert not hasattr(awards_mod, "_bref_to_player_id")
+    assert not hasattr(awards_mod, "_eos_award_name")
 
 
 def test_load_awards_prefers_eos_voting_when_present(

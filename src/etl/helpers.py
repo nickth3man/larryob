@@ -6,6 +6,8 @@ from typing import Any
 
 import pandas as pd
 
+from .constants import SEASON_BOUNDARY_MONTH, YEAR_SHORT_OFFSET
+
 
 def _isna(v: Any) -> bool:
     """Scalar-safe NA check that always returns a plain bool."""
@@ -77,7 +79,7 @@ def season_id_from_game_id(padded: str) -> str:
         '0022500686'  →  padded[3:5] = '25'  →  start_year = 2025  →  '2025-26'
         '0022301001'  →  padded[3:5] = '23'  →  start_year = 2023  →  '2023-24'
     """
-    start_year = 2000 + int(padded[3:5])
+    start_year = YEAR_SHORT_OFFSET + int(padded[3:5])
     end_suffix = str(start_year + 1)[2:]
     return f"{start_year}-{end_suffix}"
 
@@ -92,7 +94,7 @@ def season_id_from_date(date_str: str) -> str:
     date_str = str(date_str)[:10]  # keep 'YYYY-MM-DD'
     year = int(date_str[:4])
     month = int(date_str[5:7])
-    start_year = year if month >= 7 else year - 1
+    start_year = year if month >= SEASON_BOUNDARY_MONTH else year - 1
     end_suffix = str(start_year + 1)[2:]
     return f"{start_year}-{end_suffix}"
 

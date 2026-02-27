@@ -27,29 +27,17 @@ from nba_api.stats.endpoints import playergamelogs
 from ..db.cache import load_cache, save_cache
 from ..db.operations import transaction, upsert_rows
 from ..db.tracking import already_loaded, log_load_summary, record_run
+from ._etl_timer import ETLTimer
 from ._game_logs_transform import (
-    PGL_COLS,
-    PGL_RENAME,
-    TEAM_SUM_COLS,
     build_game_rows,
     build_player_rows,
     build_team_rows,
-    parse_matchup,
 )
 from .api_client import APICaller
-from .metrics import ETLTimer, record_etl_rows
+from .metrics import record_etl_rows
 from .validation import validate_rows
 
 logger = logging.getLogger(__name__)
-
-# Re-export for backward compatibility with tests
-_PGL_RENAME = PGL_RENAME
-_PGL_COLS = PGL_COLS
-_TEAM_SUM_COLS = TEAM_SUM_COLS
-_parse_matchup = parse_matchup
-_build_game_rows = build_game_rows
-_build_player_rows = build_player_rows
-_build_team_rows = build_team_rows
 
 
 # ------------------------------------------------------------------ #

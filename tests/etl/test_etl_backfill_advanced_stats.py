@@ -10,6 +10,11 @@ from src.etl.backfill._advanced_stats import (
     load_player_pbp_season,
     load_player_shooting,
 )
+from src.etl.backfill._stats_base import _load_rows
+
+
+def test_stats_base_load_rows_symbol_exists() -> None:
+    assert callable(_load_rows)
 
 
 def test_load_player_advanced_filters_invalid_percentage_rows(

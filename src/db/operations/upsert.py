@@ -33,6 +33,22 @@ def _chunked(iterable: Iterable, n: int):
         yield batch
 
 
+def fetch_count(con: sqlite3.Connection, table: str, season_id: str) -> int:
+    """Fetch row count for a table filtered by season_id."""
+    _validate_identifier(table)
+    try:
+        result = con.execute(
+            f"SELECT COUNT(*) FROM {table} WHERE season_id = ?",  # noqa: S608
+            (season_id,),
+        ).fetchone()
+        return int(result[0]) if result else 0
+    except sqlite3.OperationalError as exc:
+        if "no such table" in str(exc).lower():
+            logger.warning("Could not fetch count from missing table '%s': %s", table, exc)
+            return 0
+        raise
+
+
 def upsert_rows(
     con: sqlite3.Connection,
     table: str,

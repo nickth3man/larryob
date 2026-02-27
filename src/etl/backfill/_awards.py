@@ -293,28 +293,3 @@ def load_awards(con: sqlite3.Connection, raw_dir: Path = RAW_DIR) -> None:
     """
     loader = AwardsLoader(raw_dir)
     loader.load(con)
-
-
-# Backward-compatible function aliases for tests
-def _bref_to_player_id(con: sqlite3.Connection) -> dict[str, str]:
-    """
-    Build bref_id → player_id lookup from dim_player.
-
-    Deprecated: Use AwardsLoader._init_lookups() instead.
-    """
-    return _build_bref_to_player_id_lookup(con)
-
-
-def _eos_award_name(raw: str) -> str | None:
-    """
-    Normalize an award name to standard format.
-
-    Deprecated: Use _normalize_award_name() instead.
-
-    Returns None for unmapped values (backward-compatible behavior).
-    """
-    raw_lc = str(raw).lower().strip()
-    for pattern, (name, _) in _AWARD_MAP.items():
-        if pattern in raw_lc:
-            return name
-    return None  # Return None for unmapped values (original behavior)

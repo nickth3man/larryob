@@ -7,13 +7,26 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 
 from src.db.operations import upsert_rows
-from src.etl.game_logs import (
-    _build_game_rows,
-    _build_player_rows,
-    _build_team_rows,
-    _parse_matchup,
-    load_season,
+from src.etl._game_logs_transform import (
+    build_game_rows as _build_game_rows,
 )
+from src.etl._game_logs_transform import (
+    build_player_rows as _build_player_rows,
+)
+from src.etl._game_logs_transform import (
+    build_team_rows as _build_team_rows,
+)
+from src.etl._game_logs_transform import (
+    parse_matchup as _parse_matchup,
+)
+from src.etl.game_logs import load_season
+
+
+def test_game_logs_tests_use_transform_module_directly() -> None:
+    assert callable(_build_game_rows)
+    import src.etl.game_logs as game_logs
+
+    assert not hasattr(game_logs, "_build_game_rows")
 
 
 def _make_mock_df() -> pd.DataFrame:
