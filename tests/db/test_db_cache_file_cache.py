@@ -6,7 +6,6 @@ import time
 
 import pytest
 
-
 # ------------------------------------------------------------------ #
 # Helpers                                                             #
 # ------------------------------------------------------------------ #
@@ -28,6 +27,7 @@ def isolated_cache(tmp_path, monkeypatch):
     monkeypatch.setenv("LARRYOB_CACHE_DIR", str(tmp_path))
     # Re-import so module-level CACHE_DIR picks up the env override.
     import importlib
+
     import src.db.cache.file_cache as fc_mod
 
     importlib.reload(fc_mod)

@@ -11,7 +11,6 @@ from src.etl.rate_limit import (
     fetch_html,
 )
 
-
 # ------------------------------------------------------------------ #
 # _AdaptiveBRefThrottle — initial state                              #
 # ------------------------------------------------------------------ #
@@ -205,8 +204,10 @@ def _mock_response(status_code: int, text: str = "<html/>", headers: dict | None
 
 
 def test_fetch_html_returns_text_on_200():
-    with patch("src.etl.rate_limit.requests.get") as mock_get, \
-         patch("src.etl.rate_limit._BREF_THROTTLE") as mock_throttle:
+    with (
+        patch("src.etl.rate_limit.requests.get") as mock_get,
+        patch("src.etl.rate_limit._BREF_THROTTLE") as mock_throttle,
+    ):
         mock_throttle.before_request = MagicMock()
         mock_throttle.on_success = MagicMock()
         mock_get.return_value = _mock_response(200, "<html>ok</html>")
@@ -215,8 +216,10 @@ def test_fetch_html_returns_text_on_200():
 
 
 def test_fetch_html_returns_none_on_404():
-    with patch("src.etl.rate_limit.requests.get") as mock_get, \
-         patch("src.etl.rate_limit._BREF_THROTTLE") as mock_throttle:
+    with (
+        patch("src.etl.rate_limit.requests.get") as mock_get,
+        patch("src.etl.rate_limit._BREF_THROTTLE") as mock_throttle,
+    ):
         mock_throttle.before_request = MagicMock()
         mock_throttle.on_success = MagicMock()
         mock_get.return_value = _mock_response(404)
@@ -234,8 +237,10 @@ def test_fetch_html_retries_on_429_and_succeeds():
         _mock_response(429, headers={"Retry-After": "1"}),
         _mock_response(200, "<html>ok</html>"),
     ]
-    with patch("src.etl.rate_limit.requests.get", side_effect=responses), \
-         patch("src.etl.rate_limit._BREF_THROTTLE") as mock_throttle:
+    with (
+        patch("src.etl.rate_limit.requests.get", side_effect=responses),
+        patch("src.etl.rate_limit._BREF_THROTTLE") as mock_throttle,
+    ):
         mock_throttle.before_request = MagicMock()
         mock_throttle.on_success = MagicMock()
         mock_throttle.on_rate_limit = MagicMock(return_value=1)
@@ -244,9 +249,11 @@ def test_fetch_html_retries_on_429_and_succeeds():
 
 
 def test_fetch_html_raises_on_excessive_retry_after():
-    with patch("src.etl.rate_limit.requests.get") as mock_get, \
-         patch("src.etl.rate_limit._BREF_THROTTLE") as mock_throttle, \
-         patch("src.etl.rate_limit._bref_max_retry_after_seconds", return_value=300):
+    with (
+        patch("src.etl.rate_limit.requests.get") as mock_get,
+        patch("src.etl.rate_limit._BREF_THROTTLE") as mock_throttle,
+        patch("src.etl.rate_limit._bref_max_retry_after_seconds", return_value=300),
+    ):
         mock_throttle.before_request = MagicMock()
         mock_get.return_value = _mock_response(429, headers={"Retry-After": "600"})
         with pytest.raises(BBRRateLimitExceeded) as exc_info:
@@ -260,8 +267,10 @@ def test_fetch_html_raises_on_excessive_retry_after():
 
 
 def test_fetch_html_returns_none_on_other_4xx():
-    with patch("src.etl.rate_limit.requests.get") as mock_get, \
-         patch("src.etl.rate_limit._BREF_THROTTLE") as mock_throttle:
+    with (
+        patch("src.etl.rate_limit.requests.get") as mock_get,
+        patch("src.etl.rate_limit._BREF_THROTTLE") as mock_throttle,
+    ):
         mock_throttle.before_request = MagicMock()
         mock_throttle.on_transient_error = MagicMock()
         mock_get.return_value = _mock_response(403)
@@ -275,9 +284,10 @@ def test_fetch_html_returns_none_on_other_4xx():
 
 
 def test_fetch_html_returns_none_after_all_retries_fail():
-    with patch("src.etl.rate_limit.requests.get",
-               side_effect=requests.RequestException("timeout")), \
-         patch("src.etl.rate_limit._BREF_THROTTLE") as mock_throttle:
+    with (
+        patch("src.etl.rate_limit.requests.get", side_effect=requests.RequestException("timeout")),
+        patch("src.etl.rate_limit._BREF_THROTTLE") as mock_throttle,
+    ):
         mock_throttle.before_request = MagicMock()
         mock_throttle.on_transient_error = MagicMock()
         result = fetch_html("http://example.com", max_retries=3)

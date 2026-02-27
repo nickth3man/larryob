@@ -31,7 +31,9 @@ from src.etl.dimensions import (
 def test_load_players_full_default_season_matches_current_year_suffix() -> None:
     current = datetime.now().year
     expected = f"{current}-{str(current + 1)[-2:]}"
-    assert load_players_full.__defaults__[0] == expected
+    defaults = load_players_full.__defaults__
+    assert defaults is not None
+    assert defaults[0] == expected
 
 
 def test_load_seasons(sqlite_con: sqlite3.Connection) -> None:

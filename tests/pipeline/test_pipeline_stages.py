@@ -1,7 +1,8 @@
 """Tests for src.pipeline.stages — stage runners and reconciliation logic."""
 
 import sqlite3
-from unittest.mock import MagicMock, call, patch
+from typing import Any
+from unittest.mock import MagicMock, patch
 
 import pytest
 
@@ -15,14 +16,13 @@ from src.pipeline.stages import (
     run_reconciliation,
 )
 
-
 # ------------------------------------------------------------------ #
 # Helpers                                                             #
 # ------------------------------------------------------------------ #
 
 
-def _config(**kwargs) -> IngestConfig:
-    defaults = dict(
+def _config(**kwargs: Any) -> IngestConfig:
+    defaults: dict[str, Any] = dict(
         seasons=("2023-24",),
         dims_only=False,
         enrich_bio=False,
@@ -91,9 +91,7 @@ def test_run_game_logs_stage_includes_playoffs():
     cfg = _config(include_playoffs=True, seasons=("2023-24",))
     with patch("src.pipeline.stages.load_multiple_seasons") as mock_load:
         run_game_logs_stage(con, cfg)
-    mock_load.assert_called_once_with(
-        con, ["2023-24"], season_types=["Regular Season", "Playoffs"]
-    )
+    mock_load.assert_called_once_with(con, ["2023-24"], season_types=["Regular Season", "Playoffs"])
 
 
 def test_run_game_logs_stage_multiple_seasons():
@@ -101,9 +99,7 @@ def test_run_game_logs_stage_multiple_seasons():
     cfg = _config(seasons=("2022-23", "2023-24"))
     with patch("src.pipeline.stages.load_multiple_seasons") as mock_load:
         run_game_logs_stage(con, cfg)
-    mock_load.assert_called_once_with(
-        con, ["2022-23", "2023-24"], season_types=["Regular Season"]
-    )
+    mock_load.assert_called_once_with(con, ["2022-23", "2023-24"], season_types=["Regular Season"])
 
 
 # ------------------------------------------------------------------ #

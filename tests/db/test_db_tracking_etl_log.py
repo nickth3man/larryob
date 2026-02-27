@@ -112,12 +112,16 @@ def test_already_loaded_does_not_match_different_loader(con):
 
 def test_record_run_inserts_row(con):
     record_run(con, "fact_game", "2023-24", "game_loader", 100, "ok")
-    row = con.execute("SELECT table_name,season_id,loader,row_count,status FROM etl_run_log").fetchone()
+    row = con.execute(
+        "SELECT table_name,season_id,loader,row_count,status FROM etl_run_log"
+    ).fetchone()
     assert row == ("fact_game", "2023-24", "game_loader", 100, "ok")
 
 
 def test_record_run_with_started_at_uses_provided_value(con):
-    record_run(con, "fact_game", "2023-24", "game_loader", 10, "ok", started_at="2024-01-01T00:00:00")
+    record_run(
+        con, "fact_game", "2023-24", "game_loader", 10, "ok", started_at="2024-01-01T00:00:00"
+    )
     row = con.execute("SELECT started_at FROM etl_run_log").fetchone()
     assert row[0] == "2024-01-01T00:00:00"
 

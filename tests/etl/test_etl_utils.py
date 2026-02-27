@@ -22,6 +22,7 @@ def test_utils_compat_module_removed() -> None:
     with pytest.raises(ModuleNotFoundError):
         importlib.import_module("src.etl.utils")
 
+
 # ------------------------------------------------------------------ #
 # Helpers                                                             #
 # ------------------------------------------------------------------ #

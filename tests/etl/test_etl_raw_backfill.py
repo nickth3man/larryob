@@ -4,10 +4,7 @@ import sqlite3
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
-import pytest
-
 from src.etl.raw_backfill import RAW_DIR, run_raw_backfill
-
 
 # ------------------------------------------------------------------ #
 # Helpers                                                             #
@@ -76,8 +73,6 @@ def test_run_raw_backfill_fail_fast_stops_after_first_error(tmp_path):
     import src.etl.backfill._orchestrator as orchestrator_mod
 
     call_count = []
-
-    original = orchestrator_mod._run_single_loader
 
     def fake_loader(con, config, raw_dir, idx, total):
         call_count.append(config.loader_name)
