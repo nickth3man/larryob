@@ -12,7 +12,7 @@ from src.etl.validation import check_game_stat_consistency, run_consistency_chec
 
 
 def test_check_game_stat_consistency(sqlite_con_with_data: sqlite3.Connection):
-    from src.etl.utils import upsert_rows
+    from src.db.operations.upsert import upsert_rows
 
     # Insert team game log with 100 pts
     upsert_rows(
@@ -112,7 +112,7 @@ def test_check_game_stat_consistency(sqlite_con_with_data: sqlite3.Connection):
 def test_check_game_stat_consistency_returns_no_warnings_when_stats_match(
     sqlite_con_with_data: sqlite3.Connection,
 ) -> None:
-    from src.etl.utils import upsert_rows
+    from src.db.operations.upsert import upsert_rows
 
     upsert_rows(
         sqlite_con_with_data,
@@ -163,7 +163,7 @@ def test_check_game_stat_consistency_reb_mismatch(
     sqlite_con_with_data: sqlite3.Connection,
 ) -> None:
     """Test REB mismatch detection between player and team stats."""
-    from src.etl.utils import upsert_rows
+    from src.db.operations.upsert import upsert_rows
 
     # Team game log with 40 rebounds
     upsert_rows(
@@ -259,7 +259,7 @@ def test_check_game_stat_consistency_ast_mismatch(
     sqlite_con_with_data: sqlite3.Connection,
 ) -> None:
     """Test AST mismatch detection between player and team stats."""
-    from src.etl.utils import upsert_rows
+    from src.db.operations.upsert import upsert_rows
 
     # Team game log with 25 assists
     upsert_rows(
@@ -355,7 +355,7 @@ def test_check_game_stat_consistency_multiple_mismatches(
     sqlite_con_with_data: sqlite3.Connection,
 ) -> None:
     """Test detection of multiple stat mismatches (PTS, REB, AST)."""
-    from src.etl.utils import upsert_rows
+    from src.db.operations.upsert import upsert_rows
 
     # Team game log
     upsert_rows(
@@ -481,7 +481,7 @@ def test_run_consistency_checks_with_pts_mismatches(
     """Test run_consistency_checks logs warnings for PTS mismatches."""
     import logging
 
-    from src.etl.utils import upsert_rows
+    from src.db.operations.upsert import upsert_rows
 
     # Add second game to season
     upsert_rows(
@@ -600,7 +600,7 @@ def test_run_consistency_checks_with_reb_mismatches(
     """Test run_consistency_checks logs warnings for REB mismatches."""
     import logging
 
-    from src.etl.utils import upsert_rows
+    from src.db.operations.upsert import upsert_rows
 
     # Add second game to season
     upsert_rows(
@@ -719,7 +719,7 @@ def test_run_consistency_checks_with_ast_mismatches(
     """Test run_consistency_checks logs warnings for AST mismatches."""
     import logging
 
-    from src.etl.utils import upsert_rows
+    from src.db.operations.upsert import upsert_rows
 
     # Add second game to season
     upsert_rows(
@@ -838,7 +838,7 @@ def test_run_consistency_checks_with_multiple_discrepancies(
     """Test run_consistency_checks accumulates warnings across multiple games."""
     import logging
 
-    from src.etl.utils import upsert_rows
+    from src.db.operations.upsert import upsert_rows
 
     # Add a game with all three types of mismatches (PTS, REB, AST)
     upsert_rows(
@@ -962,7 +962,7 @@ def test_run_consistency_checks_passes_with_valid_data(
     """Test run_consistency_checks logs info message when all stats match."""
     import logging
 
-    from src.etl.utils import upsert_rows
+    from src.db.operations.upsert import upsert_rows
 
     # Add a second game with matching stats
     upsert_rows(

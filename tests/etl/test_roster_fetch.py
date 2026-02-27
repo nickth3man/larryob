@@ -592,7 +592,7 @@ def test_load_team_roster_cache_miss_calls_api_and_caches(
     assert inserted == 1
 
     # Verify cache was written
-    from src.etl.utils import load_cache
+    from src.db.cache.file_cache import load_cache
 
     cached = load_cache("roster_1610612747_2023-24")
     assert cached is not None

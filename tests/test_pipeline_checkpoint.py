@@ -59,7 +59,7 @@ def test_safe_table_count_invalid_identifier(sqlite_con):
 
 
 def test_safe_table_count_validates_with_etl_utils(sqlite_con):
-    """Test _safe_table_count uses _validate_identifier from etl.utils."""
+    """Test _safe_table_count uses _validate_identifier from db.operations."""
     # Test that it calls the validation function
     # Even if the table name passes the regex, it should fail the deeper validation
     # if there's an issue (e.g., SQL keyword)
@@ -80,7 +80,7 @@ def test_safe_table_count_raises_value_error_from_validation(sqlite_con):
         raise ValueError(f"Invalid SQL identifier: {name!r}")
 
     # Patch at the source module where it's imported from
-    with patch("src.etl.utils._validate_identifier", side_effect=mock_validate_raises_value):
+    with patch("src.db.operations._validate_identifier", side_effect=mock_validate_raises_value):
         # Even though the name passes the regex, the validation function raises ValueError
         count = _safe_table_count(sqlite_con, "valid_table")
         assert count is None

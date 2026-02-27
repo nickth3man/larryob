@@ -15,6 +15,13 @@ from src.etl.logging import setup_logging
 
 CACHE_VERSION = CacheConfig.CACHE_VERSION
 
+
+def test_utils_compat_module_removed() -> None:
+    import importlib
+
+    with pytest.raises(ModuleNotFoundError):
+        importlib.import_module("src.etl.utils")
+
 # ------------------------------------------------------------------ #
 # Helpers                                                             #
 # ------------------------------------------------------------------ #
