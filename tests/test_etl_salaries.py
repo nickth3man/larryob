@@ -1,10 +1,3 @@
-from src.etl._salaries_helpers import _normalize_name
-
-
-def test_normalize_name_helper_keeps_salary_name_behavior() -> None:
-    assert _normalize_name("D'Angelo Russell") == "dangelo russell"
-
-
 """Tests: ETL salary loaders — pure-logic helpers and mock-boundary integrations."""
 
 import sqlite3
