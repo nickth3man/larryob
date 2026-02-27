@@ -3,6 +3,7 @@
 import pandas as pd
 
 from src.etl.backfill._pbp_bulk import load_bulk_pbp, load_bulk_pbp_season
+from src.etl.backfill._pbp_bulk_helpers import _list_csv_files
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -14,6 +15,10 @@ from src.etl.backfill._pbp_bulk import load_bulk_pbp, load_bulk_pbp_season
 _GAME_A = "9022300001"
 _GAME_B = "9022300002"
 _GAME_OTHER = "9019000001"  # belongs to a different (unseeded) season
+
+
+def test_pbp_bulk_helpers_exports_list_csv_files() -> None:
+    assert callable(_list_csv_files)
 
 
 def _make_pbp_csv(tmp_path, game_id=_GAME_A):
