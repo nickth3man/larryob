@@ -1,6 +1,7 @@
 """Tests: ETL dimension loaders (no network calls)."""
 
 import sqlite3
+from datetime import datetime
 from pathlib import Path
 from unittest.mock import patch
 
@@ -25,6 +26,12 @@ from src.etl.dimensions import (
     load_teams,
     run_all,
 )
+
+
+def test_load_players_full_default_season_matches_current_year_suffix() -> None:
+    current = datetime.now().year
+    expected = f"{current}-{str(current + 1)[-2:]}"
+    assert load_players_full.__defaults__[0] == expected
 
 
 def test_load_seasons(sqlite_con: sqlite3.Connection) -> None:

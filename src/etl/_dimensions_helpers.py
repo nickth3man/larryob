@@ -6,6 +6,7 @@ to dimension table rows.
 """
 
 from .config import get_team_metadata
+from .constants import FEET_TO_INCHES, INCHES_TO_CM, LBS_TO_KG
 
 # ------------------------------------------------------------------ #
 # Conversion Helpers                                                  #
@@ -29,8 +30,8 @@ def _height_to_cm(height_str: str | None) -> float | None:
         return None
     try:
         feet, inches = int(parts[0]), int(parts[1])
-        total_inches = feet * 12 + inches
-        return round(total_inches * 2.54, 1)
+        total_inches = feet * FEET_TO_INCHES + inches
+        return round(total_inches * INCHES_TO_CM, 1)
     except (ValueError, IndexError):
         return None
 
@@ -49,7 +50,7 @@ def _weight_to_kg(weight_str: str | int | None) -> float | None:
         return None
     try:
         lbs = float(weight_str) if isinstance(weight_str, str) else weight_str
-        return round(lbs * 0.453592, 1)
+        return round(lbs * LBS_TO_KG, 1)
     except (ValueError, TypeError):
         return None
 

@@ -13,7 +13,7 @@ All inserts use INSERT OR IGNORE so the module is safe to re-run.
 
 import logging
 import sqlite3
-from datetime import UTC
+from datetime import UTC, datetime
 
 from nba_api.stats.endpoints import commonallplayers, commonplayerinfo
 from nba_api.stats.static import players as nba_players_static
@@ -29,6 +29,7 @@ from ._dimensions_helpers import (
     _map_nba_team,
 )
 from .api_client import APICaller
+from .constants import NBA_FOUNDING_YEAR
 
 logger = logging.getLogger(__name__)
 
@@ -36,7 +37,7 @@ logger = logging.getLogger(__name__)
 # Seasons                                                             #
 # ------------------------------------------------------------------ #
 
-NBA_FIRST_SEASON_START = 1946  # 1946-47 inaugural season
+NBA_FIRST_SEASON_START = NBA_FOUNDING_YEAR  # 1946-47 inaugural season
 
 
 def _season_id(start_year: int) -> str:
@@ -44,14 +45,22 @@ def _season_id(start_year: int) -> str:
     return f"{start_year}-{str(start_year + 1)[-2:]}"
 
 
-def load_seasons(con: sqlite3.Connection, up_to_start_year: int = 2024) -> int:
+def _default_start_year() -> int:
+    """Return the default season start year used by dimension loaders."""
+    return datetime.now(UTC).year
+
+
+def _default_season_id() -> str:
+    """Return the default season_id used by full player loading."""
+    return _season_id(_default_start_year())
+
+
+def load_seasons(con: sqlite3.Connection, up_to_start_year: int = _default_start_year()) -> int:
     """Seed dim_season from the inaugural 1946-47 season through *up_to_start_year*."""
     loader_id = f"dimensions.load_seasons.{up_to_start_year}"
     if already_loaded(con, "dim_season", None, loader_id):
         logger.info("Skipping dim_season (already loaded)")
         return 0
-
-    from datetime import datetime
 
     started_at = datetime.now(UTC).isoformat()
 
@@ -87,8 +96,6 @@ def load_teams(con: sqlite3.Connection) -> int:
     if already_loaded(con, "dim_team", None, loader_id):
         logger.info("Skipping dim_team (already loaded)")
         return 0
-
-    from datetime import datetime
 
     started_at = datetime.now(UTC).isoformat()
 
@@ -131,8 +138,6 @@ def load_players_static(con: sqlite3.Connection) -> int:
         logger.info("Skipping dim_player static (already loaded)")
         return 0
 
-    from datetime import datetime
-
     started_at = datetime.now(UTC).isoformat()
 
     raw = nba_players_static.get_players()
@@ -149,7 +154,7 @@ def load_players_static(con: sqlite3.Connection) -> int:
 
 def load_players_full(
     con: sqlite3.Connection,
-    season_id: str = "2024-25",
+    season_id: str = _default_season_id(),
     api_caller: APICaller | None = None,
 ) -> int:
     """
@@ -164,8 +169,6 @@ def load_players_full(
     if already_loaded(con, "dim_player", None, loader_id):
         logger.info("Skipping dim_player full (already loaded)")
         return 0
-
-    from datetime import datetime
 
     started_at = datetime.now(UTC).isoformat()
 
@@ -223,8 +226,6 @@ def load_players_bio_enrichment(
     if selected_from_db and already_loaded(con, "dim_player", None, loader_id):
         logger.info("Skipping dim_player bio enrichment (already loaded)")
         return 0
-
-    from datetime import datetime
 
     started_at = datetime.now(UTC).isoformat()
 
