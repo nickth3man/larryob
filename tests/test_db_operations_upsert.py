@@ -4,7 +4,12 @@ import sqlite3
 
 import pytest
 
+from src.db.operations import fetch_count
 from src.db.operations.upsert import _chunked, _validate_identifier, transaction, upsert_rows
+
+
+def test_fetch_count_returns_zero_when_table_empty(sqlite_con: sqlite3.Connection) -> None:
+    assert fetch_count(sqlite_con, "fact_salary", "2023-24") == 0
 
 
 # ------------------------------------------------------------------ #

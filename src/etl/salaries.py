@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Literal
 
 from ..db.cache import load_cache
-from ..db.operations import upsert_rows
+from ..db.operations import fetch_count, upsert_rows
 from ..db.tracking import already_loaded, record_run
 from . import _salaries_helpers
 from ._salaries_fetch import fetch_team_current_contracts, fetch_team_season_salaries
@@ -149,9 +149,7 @@ def load_player_salaries(
         load_salary_history(con, open_file=open_file, raw_dir=Path("raw"))
         # Return season-scoped count; load_salary_history processes the whole CSV
         # across all seasons, so we query only the requested season for accuracy.
-        inserted: int = con.execute(
-            "SELECT COUNT(*) FROM fact_salary WHERE season_id = ?", (season_id,)
-        ).fetchone()[0]
+        inserted = fetch_count(con, "fact_salary", season_id)
         record_run(con, "fact_salary", season_id, loader_id, inserted, "ok", started_at)
         return inserted
 
@@ -163,14 +161,10 @@ def load_player_salaries(
 
         # Snapshot row count BEFORE open-source load so stale/partial rows from a
         # prior bref run don't falsely indicate the season is covered.
-        pre_count: int = con.execute(
-            "SELECT COUNT(*) FROM fact_salary WHERE season_id = ?", (season_id,)
-        ).fetchone()[0]
+        pre_count = fetch_count(con, "fact_salary", season_id)
         load_salary_history(con, open_file=open_file, raw_dir=Path("raw"))
 
-        post_count: int = con.execute(
-            "SELECT COUNT(*) FROM fact_salary WHERE season_id = ?", (season_id,)
-        ).fetchone()[0]
+        post_count = fetch_count(con, "fact_salary", season_id)
         delta = post_count - pre_count
 
         if delta > 0:
