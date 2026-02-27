@@ -24,6 +24,7 @@ wheels/
 # Test coverage
 .coverage
 coverage.json
+reports/coverage/
 
 # Log files (runtime artifacts)
 logs/*.log
