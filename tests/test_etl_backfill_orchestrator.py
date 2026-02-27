@@ -6,6 +6,11 @@ from unittest.mock import patch
 
 from src.etl.backfill import _orchestrator as orchestrator_mod
 from src.etl.backfill._orchestrator import run_raw_backfill
+from src.etl.backfill._registry import LOADERS
+
+
+def test_backfill_registry_contains_team_history_loader() -> None:
+    assert any(cfg.name == "team_history" for cfg in LOADERS)
 
 
 def test_run_raw_backfill_handles_missing_input_files(
