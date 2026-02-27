@@ -16,7 +16,14 @@ def run_all(
     full_players: bool = False,
     enrich_bio: bool = False,
 ) -> None:
-    """Seed all dimension tables."""
+    """Seed all dimension tables.
+
+    Intended call order when raw data is available:
+        1. raw_seed.infer_season_start_range()  — infer historical season range
+        2. load_seasons(con)                    — populate seasons dimension
+        3. load_teams(con)                      — populate teams dimension
+        4. load_players_static(con)             — populate players dimension
+    """
     load_seasons(con)
     load_teams(con)
     load_players_static(con)
