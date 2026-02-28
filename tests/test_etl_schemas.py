@@ -65,10 +65,31 @@ def test_base_game_log_negative_stat_fails():
 # ------------------------------------------------------------------ #
 
 
-def _player_row(**kwargs):
-    defaults = dict(game_id="G1", player_id="P1", team_id="T1")
-    defaults.update(kwargs)
-    return PlayerGameLogRow(**defaults)
+def _player_row(**kwargs) -> PlayerGameLogRow:
+    """Helper to create PlayerGameLogRow with test defaults."""
+    return PlayerGameLogRow(
+        game_id=kwargs.get("game_id", "G1"),
+        player_id=kwargs.get("player_id", "P1"),
+        team_id=kwargs.get("team_id", "T1"),
+        minutes_played=kwargs.get("minutes_played"),
+        starter=kwargs.get("starter"),
+        fgm=kwargs.get("fgm"),
+        fga=kwargs.get("fga"),
+        fg3m=kwargs.get("fg3m"),
+        fg3a=kwargs.get("fg3a"),
+        ftm=kwargs.get("ftm"),
+        fta=kwargs.get("fta"),
+        oreb=kwargs.get("oreb"),
+        dreb=kwargs.get("dreb"),
+        reb=kwargs.get("reb"),
+        ast=kwargs.get("ast"),
+        stl=kwargs.get("stl"),
+        blk=kwargs.get("blk"),
+        tov=kwargs.get("tov"),
+        pf=kwargs.get("pf"),
+        pts=kwargs.get("pts"),
+        plus_minus=kwargs.get("plus_minus"),
+    )
 
 
 def test_player_game_log_minimal():
@@ -123,7 +144,9 @@ def test_team_game_log_fgm_exceeds_fga_fails():
 
 
 def test_fact_game_row_valid():
-    row = FactGameRow(game_id="G1", home_score=110, away_score=105, game_date="2023-10-24")
+    from datetime import date
+
+    row = FactGameRow(game_id="G1", home_score=110, away_score=105, game_date=date(2023, 10, 24))
     assert row.home_score == 110
 
 
@@ -143,9 +166,9 @@ def test_fact_game_row_none_scores_allowed():
 
 
 def test_fact_game_row_date_parsing():
-    row = FactGameRow(game_id="G1", game_date="2024-01-15")
     from datetime import date
 
+    row = FactGameRow(game_id="G1", game_date=date(2024, 1, 15))
     assert row.game_date == date(2024, 1, 15)
 
 
