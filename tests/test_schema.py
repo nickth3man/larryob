@@ -42,6 +42,11 @@ def test_all_tables_created(sqlite_con: sqlite3.Connection) -> None:
         "fact_player_advanced_season",
         "fact_player_shooting_season",
         "fact_player_pbp_season",
+        "dim_coach",
+        "fact_team_coach_game",
+        "dim_player_identifier",
+        "dim_team_identifier",
+        "etl_source_fingerprint",
     }
     assert expected == tables, f"Missing/extra tables: expected {expected}, got {tables}"
 

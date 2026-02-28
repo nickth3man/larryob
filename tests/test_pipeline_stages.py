@@ -40,7 +40,7 @@ def _config(**kwargs) -> IngestConfig:
         runlog_tail=12,
     )
     defaults.update(kwargs)
-    return IngestConfig(**defaults)
+    return IngestConfig(**defaults)  # ty: ignore[invalid-argument-type]
 
 
 # ------------------------------------------------------------------ #

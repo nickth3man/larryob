@@ -39,7 +39,7 @@ def _config(**kwargs) -> IngestConfig:
         runlog_tail=12,
     )
     defaults.update(kwargs)
-    return IngestConfig(**defaults)
+    return IngestConfig(**defaults)  # ty: ignore[invalid-argument-type]
 
 
 # ------------------------------------------------------------------ #
@@ -241,6 +241,31 @@ def test_finalize_metrics_no_export_when_no_endpoint():
     mock_export.assert_not_called()
 
 
+def test_finalize_metrics_reraises_when_summary_logging_fails():
+    with (
+        patch(
+            "src.pipeline.executor.orchestrator.log_metrics_summary",
+            side_effect=RuntimeError("summary failed"),
+        ),
+        patch("src.pipeline.executor.orchestrator.export_metrics") as mock_export,
+    ):
+        with pytest.raises(RuntimeError, match="summary failed"):
+            finalize_metrics(metrics_enabled=True, show_summary=True, export_endpoint="http://x")
+    mock_export.assert_not_called()
+
+
+def test_finalize_metrics_reraises_when_export_fails():
+    with (
+        patch("src.pipeline.executor.orchestrator.log_metrics_summary"),
+        patch(
+            "src.pipeline.executor.orchestrator.export_metrics",
+            side_effect=RuntimeError("export failed"),
+        ),
+    ):
+        with pytest.raises(RuntimeError, match="export failed"):
+            finalize_metrics(metrics_enabled=True, show_summary=False, export_endpoint="http://x")
+
+
 # ------------------------------------------------------------------ #
 # set_metrics_env                                                     #
 # ------------------------------------------------------------------ #
@@ -302,3 +327,36 @@ def test_run_ingest_pipeline_reraises_stage_failure():
     ):
         with pytest.raises(RuntimeError, match="fail"):
             run_ingest_pipeline(con, cfg)
+
+
+def test_run_ingest_pipeline_handles_raw_backfill_stage_via_special_dispatch():
+    con = MagicMock(spec=sqlite3.Connection)
+    cfg = _config(dims_only=True, raw_backfill=True)
+    awards_fn = MagicMock()
+    stage_plan = [
+        (Stage.RAW_BACKFILL, (), MagicMock(), (), {}),
+        (Stage.AWARDS, ("fact_player_award",), awards_fn, (), {}),
+    ]
+    with (
+        patch("src.pipeline.executor.orchestrator._build_stage_plan", return_value=stage_plan),
+        patch(
+            "src.pipeline.executor.orchestrator._execute_raw_backfill_stage"
+        ) as mock_raw_backfill,
+        patch("src.pipeline.executor.orchestrator._execute_stage") as mock_execute_stage,
+        patch(
+            "src.pipeline.executor.orchestrator._execute_optional_post_gamelogs_steps"
+        ) as mock_post,
+    ):
+        run_ingest_pipeline(con, cfg)
+
+    mock_raw_backfill.assert_called_once()
+    state = mock_raw_backfill.call_args.args[1]
+    mock_execute_stage.assert_called_once_with(
+        con,
+        Stage.AWARDS,
+        ("fact_player_award",),
+        state,
+        cfg,
+        awards_fn,
+    )
+    mock_post.assert_not_called()
