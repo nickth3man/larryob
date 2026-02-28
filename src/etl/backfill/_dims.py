@@ -102,6 +102,9 @@ def load_team_history(
     """
     Load team historical data from TeamHistories.csv.
 
+    For historical franchises not in the current 30-team NBA set,
+    placeholder entries are created in dim_team to satisfy FK constraints.
+
     Args:
         con: SQLite database connection
         raw_dir: Directory containing raw CSV files
@@ -115,12 +118,34 @@ def load_team_history(
 
     rows: list[dict] = []
     skipped = 0
+    placeholders_created = 0
 
     for row in df.to_dict("records"):
         team_id = str(int(row["teamId"]))
+        league = safe_str(row.get("league")) or ""
+
+        # Include all NBA/BAA/ABA lineage teams
+        # Create placeholder in dim_team if team doesn't exist
         if team_id not in valid_team_ids:
-            skipped += 1
-            continue
+            if league in {"NBA", "BAA", "ABA"}:
+                # Create placeholder team entry for historical franchise
+                city = safe_str(row.get("teamCity")) or "Unknown"
+                name = safe_str(row.get("teamName")) or "Team"
+                abbrev = safe_str(row.get("teamAbbrev")) or "UNK"
+                full_name = f"{city} {name}"
+
+                con.execute(
+                    """INSERT OR IGNORE INTO dim_team
+                       (team_id, abbreviation, full_name, city, nickname)
+                       VALUES (?, ?, ?, ?, ?)""",
+                    (team_id, abbrev, full_name, city, name),
+                )
+                valid_team_ids.add(team_id)
+                placeholders_created += 1
+            else:
+                # Skip non-league teams (e.g., preseason opponents)
+                skipped += 1
+                continue
 
         rows.append(
             {
@@ -130,12 +155,17 @@ def load_team_history(
                 "team_abbrev": safe_str(row.get("teamAbbrev")),
                 "season_founded": safe_int(row.get("seasonFounded")),
                 "season_active_till": safe_int(row.get("seasonActiveTill")),
-                "league": safe_str(row.get("league")),
+                "league": league,
             }
         )
 
     inserted = upsert_rows(con, "dim_team_history", rows)
-    logger.info("dim_team_history: %d rows inserted/ignored, %d skipped", inserted, skipped)
+    logger.info(
+        "dim_team_history: %d rows inserted/ignored, %d skipped, %d placeholders created",
+        inserted,
+        skipped,
+        placeholders_created,
+    )
 
 
 def enrich_dim_team(

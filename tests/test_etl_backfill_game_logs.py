@@ -196,3 +196,51 @@ def test_load_team_game_logs_inserts_rows_when_ids_are_valid(
 
     count = sqlite_con.execute("SELECT COUNT(*) FROM team_game_log").fetchone()[0]
     assert count == 1
+
+
+def test_load_player_game_logs_accepts_early_era_rebounds(
+    sqlite_con: sqlite3.Connection, tmp_path: Path
+) -> None:
+    """Verify early-era game logs where oreb/dreb were not tracked are accepted."""
+    _seed_game_context(sqlite_con)
+
+    pd.DataFrame([{"gameId": 222300001, "teamId": 1610612747, "home": 1}]).to_csv(
+        tmp_path / "TeamStatistics.csv", index=False
+    )
+
+    # Early-era data: oreb=0, dreb=0, but reb>0 (rebounds tracked but not split)
+    pd.DataFrame(
+        [
+            {
+                "gameId": 222300001,
+                "personId": 2544,
+                "home": 1,
+                "numMinutes": 35.5,
+                "fieldGoalsMade": 10,
+                "fieldGoalsAttempted": 20,
+                "threePointersMade": 0,  # Pre-1979-80: 3-pointers not tracked
+                "threePointersAttempted": 0,
+                "freeThrowsMade": 3,
+                "freeThrowsAttempted": 4,
+                "reboundsOffensive": 0,  # Pre-1973-74: split rebounds not tracked
+                "reboundsDefensive": 0,
+                "reboundsTotal": 7,  # Total rebounds available
+                "assists": 8,
+                "steals": 0,  # Pre-1973-74: steals not tracked
+                "blocks": 0,  # Pre-1973-74: blocks not tracked
+                "turnovers": 0,  # Pre-1977-78: turnovers not tracked
+                "foulsPersonal": 2,
+                "points": 25,
+                "plusMinusPoints": 0,
+            }
+        ]
+    ).to_csv(tmp_path / "PlayerStatistics.csv", index=False)
+
+    load_player_game_logs(sqlite_con, tmp_path)
+
+    # Row should be inserted with oreb/dreb as NULL
+    row = sqlite_con.execute("SELECT oreb, dreb, reb FROM player_game_log").fetchone()
+    assert row is not None
+    assert row[0] is None  # oreb should be NULL
+    assert row[1] is None  # dreb should be NULL
+    assert row[2] == 7  # reb should be preserved

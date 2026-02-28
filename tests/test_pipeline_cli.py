@@ -54,19 +54,24 @@ def test_default_log_level_is_info():
     assert ns.log_level == "INFO"
 
 
-def test_default_awards_false():
+def test_default_awards_true():
     ns = _parse([])
-    assert ns.awards is False
+    assert ns.awards is True
 
 
-def test_default_salaries_false():
+def test_default_salaries_true():
     ns = _parse([])
-    assert ns.salaries is False
+    assert ns.salaries is True
 
 
-def test_default_rosters_false():
+def test_default_rosters_true():
     ns = _parse([])
-    assert ns.rosters is False
+    assert ns.rosters is True
+
+
+def test_default_include_playoffs_true():
+    ns = _parse([])
+    assert ns.include_playoffs is True
 
 
 # ------------------------------------------------------------------ #
@@ -180,6 +185,16 @@ def test_analytics_limit_must_be_positive():
         _parse_and_validate(["--analytics-view", "v_x", "--analytics-limit", "0"])
 
 
+def test_analytics_view_invalid_name_fails_validation():
+    with pytest.raises(SystemExit):
+        _parse_and_validate(["--analytics-view", "invalid-view-name"])
+
+
+def test_analytics_output_invalid_extension_fails_validation():
+    with pytest.raises(SystemExit):
+        _parse_and_validate(["--analytics-output", "report.txt"])
+
+
 # ------------------------------------------------------------------ #
 # --log-level                                                         #
 # ------------------------------------------------------------------ #
@@ -213,6 +228,24 @@ def test_runlog_tail_positive_is_valid():
 def test_runlog_tail_zero_fails():
     with pytest.raises(SystemExit):
         _parse_and_validate(["--runlog-tail", "0"])
+
+
+# ------------------------------------------------------------------ #
+# --raw-backfill / --raw-dir                                          #
+# ------------------------------------------------------------------ #
+
+
+def test_raw_backfill_with_missing_raw_dir_fails_validation(tmp_path):
+    missing_dir = tmp_path / "missing_raw"
+    with pytest.raises(SystemExit):
+        _parse_and_validate(["--raw-backfill", "--raw-dir", str(missing_dir)])
+
+
+def test_raw_backfill_with_file_raw_dir_fails_validation(tmp_path):
+    raw_file = tmp_path / "raw_file.csv"
+    raw_file.write_text("x\n", encoding="utf-8")
+    with pytest.raises(SystemExit):
+        _parse_and_validate(["--raw-backfill", "--raw-dir", str(raw_file)])
 
 
 # ------------------------------------------------------------------ #

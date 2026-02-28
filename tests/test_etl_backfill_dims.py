@@ -62,6 +62,7 @@ def test_load_team_history_skips_unknown_team_ids(
     sqlite_con: sqlite3.Connection,
     tmp_path: Path,
 ) -> None:
+    """Historical teams should now be included with placeholder dim_team entries."""
     sqlite_con.execute(
         """INSERT INTO dim_team
            (team_id, abbreviation, full_name, city, nickname)
@@ -94,8 +95,41 @@ def test_load_team_history_skips_unknown_team_ids(
 
     load_team_history(sqlite_con, tmp_path)
 
+    # Both teams should now be present - historical teams are no longer skipped
     rows = sqlite_con.execute("SELECT team_id FROM dim_team_history ORDER BY team_id").fetchall()
-    assert rows == [("1610612747",)]
+    assert len(rows) == 2
+    team_ids = [r[0] for r in rows]
+    assert "1610612747" in team_ids
+    assert "9999999999" in team_ids
+
+
+def test_load_team_history_creates_placeholder_team_if_missing(
+    sqlite_con: sqlite3.Connection,
+    tmp_path: Path,
+) -> None:
+    """Verify a placeholder team is created in dim_team for historical franchises."""
+    pd.DataFrame(
+        [
+            {
+                "teamId": 1610610027,
+                "teamCity": "Anderson",
+                "teamName": "Packers",
+                "teamAbbrev": "AND",
+                "seasonFounded": 1949,
+                "seasonActiveTill": 1950,
+                "league": "BAA",
+            },
+        ]
+    ).to_csv(tmp_path / "TeamHistories.csv", index=False)
+
+    load_team_history(sqlite_con, tmp_path)
+
+    # The historical Anderson Packers should have a placeholder in dim_team
+    team = sqlite_con.execute(
+        "SELECT full_name, city, nickname FROM dim_team WHERE team_id = '1610610027'"
+    ).fetchone()
+    assert team is not None, "Placeholder team should be created for historical franchise"
+    assert "Anderson" in team[0]  # full_name should contain city
 
 
 def test_enrich_dim_team_updates_latest_abbreviation(

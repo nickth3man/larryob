@@ -16,6 +16,7 @@ def test_load_player_advanced_filters_invalid_percentage_rows(
     sqlite_con: sqlite3.Connection,
     tmp_path: Path,
 ) -> None:
+    """Verify rows with truly invalid percentages are still filtered."""
     sqlite_con.execute(
         "INSERT INTO dim_season (season_id, start_year, end_year) VALUES ('2023-24', 2023, 2024)"
     )
@@ -54,10 +55,11 @@ def test_load_player_advanced_filters_invalid_percentage_rows(
                 "vorp": 5.0,
             },
             {
+                # 200.0 normalizes to 2.0 which is still > 1.5 limit for ts_pct
                 "player_id": "badrow01",
                 "season": 2024,
                 "team": "LAL",
-                "ts_percent": 2.0,
+                "ts_percent": 200.0,
                 "orb_percent": 0.10,
                 "drb_percent": 0.10,
                 "usg_percent": 0.10,
@@ -196,3 +198,61 @@ def test_load_player_pbp_season_inserts_valid_rows(
            FROM fact_player_pbp_season"""
     ).fetchone()
     assert row == ("jamesle01", "2023-24", "LAL", 70, 2400, 22, 35)
+
+
+def test_load_player_advanced_accepts_100_scale_percentages(
+    sqlite_con: sqlite3.Connection,
+    tmp_path: Path,
+) -> None:
+    """Verify 100-scale percentages are normalized to 0-1 scale."""
+    sqlite_con.execute(
+        "INSERT INTO dim_season (season_id, start_year, end_year) VALUES ('2023-24', 2023, 2024)"
+    )
+    sqlite_con.commit()
+
+    # Data with 100-scale percentages (as sometimes provided by BRef)
+    pd.DataFrame(
+        [
+            {
+                "player_id": "jamesle01",
+                "season": 2024,
+                "team": "LAL",
+                "pos": "SF",
+                "age": 39,
+                "g": 70,
+                "gs": 70,
+                "mp": 2400,
+                "per": 24.0,
+                "ts_percent": 61.0,  # 100-scale -> should become 0.61
+                "x3p_ar": 31.0,
+                "f_tr": 28.0,
+                "orb_percent": 4.0,  # 100-scale -> should become 0.04
+                "drb_percent": 20.0,
+                "trb_percent": 12.0,
+                "ast_percent": 33.0,
+                "stl_percent": 2.0,
+                "blk_percent": 1.0,
+                "tov_percent": 12.0,
+                "usg_percent": 30.0,  # 100-scale -> should become 0.30
+                "ows": 7.0,
+                "dws": 3.0,
+                "ws": 10.0,
+                "ws_48": 0.20,
+                "obpm": 5.0,
+                "dbpm": 1.0,
+                "bpm": 6.0,
+                "vorp": 5.0,
+            },
+        ]
+    ).to_csv(tmp_path / "Advanced.csv", index=False)
+
+    load_player_advanced(sqlite_con, tmp_path)
+
+    # Row should be inserted with normalized percentages
+    row = sqlite_con.execute(
+        "SELECT ts_pct, orb_pct, usg_pct FROM fact_player_advanced_season"
+    ).fetchone()
+    assert row is not None
+    assert abs(row[0] - 0.61) < 0.01  # ts_pct should be normalized
+    assert abs(row[1] - 0.04) < 0.01  # orb_pct should be normalized
+    assert abs(row[2] - 0.30) < 0.01  # usg_pct should be normalized

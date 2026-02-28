@@ -33,22 +33,50 @@ def create_argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--awards",
         action="store_true",
-        help="Load fact_player_award from PlayerAwards endpoint",
+        default=True,
+        help="Load fact_player_award from PlayerAwards endpoint (default: True)",
+    )
+    parser.add_argument(
+        "--no-awards",
+        dest="awards",
+        action="store_false",
+        help="Disable awards loading",
     )
     parser.add_argument(
         "--salaries",
         action="store_true",
-        help="Load dim_salary_cap and scrape fact_salary from Basketball-Reference",
+        default=True,
+        help="Load dim_salary_cap and fact_salary (default: True)",
+    )
+    parser.add_argument(
+        "--no-salaries",
+        dest="salaries",
+        action="store_false",
+        help="Disable salary loading",
     )
     parser.add_argument(
         "--rosters",
         action="store_true",
-        help="Load fact_roster from CommonTeamRoster",
+        default=True,
+        help="Load fact_roster from CommonTeamRoster (default: True)",
+    )
+    parser.add_argument(
+        "--no-rosters",
+        dest="rosters",
+        action="store_false",
+        help="Disable roster loading",
     )
     parser.add_argument(
         "--include-playoffs",
         action="store_true",
-        help="Also ingest Playoffs game logs",
+        default=True,
+        help="Also ingest Playoffs game logs (default: True)",
+    )
+    parser.add_argument(
+        "--no-playoffs",
+        dest="include_playoffs",
+        action="store_false",
+        help="Exclude playoffs from game log ingest",
     )
     parser.add_argument(
         "--pbp-limit",
