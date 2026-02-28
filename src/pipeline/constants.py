@@ -26,7 +26,6 @@ from src.pipeline.completeness import full_history_seasons
 # =============================================================================
 # Default Configuration
 # =============================================================================
-from src.pipeline.completeness import full_history_seasons
 
 #: Default seasons to ingest when --seasons is not provided
 DEFAULT_SEASONS: tuple[str, ...] = full_history_seasons(2025)

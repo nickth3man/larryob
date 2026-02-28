@@ -125,7 +125,7 @@ def load_team_history(
                 "team_abbrev": safe_str(row.get("teamAbbrev")),
                 "season_founded": safe_int(row.get("seasonFounded")),
                 "season_active_till": safe_int(row.get("seasonActiveTill")),
-                "league": league,
+                "league": safe_str(row.get("league")),
             }
         )
 
