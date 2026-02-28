@@ -479,3 +479,18 @@ CREATE TABLE IF NOT EXISTS etl_run_log (
     row_count   INTEGER,
     status      TEXT NOT NULL        -- 'ok' | 'error'
 ) STRICT;
+
+-- ------------------------------------------------------------------ --
+-- Internal: ETL Source Fingerprints                                   --
+-- Tracks a hash of raw source data per (table, season, loader) so    --
+-- that loaders re-run automatically when source content changes,      --
+-- preventing frozen incomplete loads.                                  --
+-- ------------------------------------------------------------------ --
+CREATE TABLE IF NOT EXISTS etl_source_fingerprint (
+    table_name  TEXT NOT NULL,
+    season_id   TEXT NOT NULL,
+    loader      TEXT NOT NULL,
+    source_hash TEXT NOT NULL,
+    updated_at  TEXT NOT NULL,       -- ISO-8601 UTC
+    PRIMARY KEY (table_name, season_id, loader)
+) STRICT;
