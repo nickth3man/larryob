@@ -8,7 +8,6 @@ and End of Season teams from Basketball-Reference CSV exports.
 import logging
 import sqlite3
 from pathlib import Path
-from typing import Any
 
 from src.db.operations import upsert_rows
 from src.etl.backfill._base import (
@@ -105,19 +104,6 @@ class AwardsLoader:
         """Initialize lookup dictionaries."""
         self.bref_to_pid = _build_bref_to_player_id_lookup(con)
         self.valid_seasons = get_valid_set(con, "dim_season", "season_id")
-
-    def _is_valid_row(
-        self,
-        row: dict[str, Any],
-        season_id: str,
-        bref_pid: str,
-    ) -> bool:
-        """Check if a row should be processed."""
-        if season_id not in self.valid_seasons:
-            return False
-        if not self.bref_to_pid.get(bref_pid):
-            return False
-        return True
 
     def _load_award_shares(self, con: sqlite3.Connection) -> int:
         """Load player award voting data from Player Award Shares.csv."""
