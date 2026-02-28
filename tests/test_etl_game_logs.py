@@ -95,6 +95,24 @@ def test_build_player_rows_null_history() -> None:
         assert row["fg3a"] is None
 
 
+def test_build_player_rows_early_era_oreb_dreb_nulled() -> None:
+    """
+    When OREB==0 and DREB==0 but REB>0, build_player_rows must convert
+    oreb and dreb to None (early-era semantics: split data unavailable).
+    """
+    df = _make_mock_df().copy()
+    # Overwrite rebound columns for all rows to simulate early-era data
+    df["OREB"] = 0
+    df["DREB"] = 0
+    df["REB"] = 10
+
+    rows = _build_player_rows(df)
+    for row in rows:
+        assert row["oreb"] is None, f"Expected oreb=None for early era, got {row['oreb']}"
+        assert row["dreb"] is None, f"Expected dreb=None for early era, got {row['dreb']}"
+        assert row["reb"] == 10
+
+
 def test_build_game_rows() -> None:
     df = _make_mock_df()
     rows = _build_game_rows(df, "2023-24", "Regular Season")

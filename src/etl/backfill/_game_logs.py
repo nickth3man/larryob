@@ -87,6 +87,16 @@ def _transform_player_game_log_row(
     if team_id is None:
         return None
 
+    oreb = _int(row.get("reboundsOffensive"))
+    dreb = _int(row.get("reboundsDefensive"))
+    reb = _int(row.get("reboundsTotal"))
+
+    # Early-era (pre-1974): oreb/dreb were not tracked separately.
+    # When both are 0 but reb > 0, treat the split as unavailable.
+    if oreb == 0 and dreb == 0 and reb is not None and reb > 0:
+        oreb = None
+        dreb = None
+
     return {
         "game_id": game_id,
         "player_id": player_id,
@@ -98,9 +108,9 @@ def _transform_player_game_log_row(
         "fg3a": _int(row.get("threePointersAttempted")),
         "ftm": _int(row.get("freeThrowsMade")),
         "fta": _int(row.get("freeThrowsAttempted")),
-        "oreb": _int(row.get("reboundsOffensive")),
-        "dreb": _int(row.get("reboundsDefensive")),
-        "reb": _int(row.get("reboundsTotal")),
+        "oreb": oreb,
+        "dreb": dreb,
+        "reb": reb,
         "ast": _int(row.get("assists")),
         "stl": _int(row.get("steals")),
         "blk": _int(row.get("blocks")),
@@ -134,6 +144,16 @@ def _transform_team_game_log_row(
     if game_id not in valid_games or team_id not in valid_teams:
         return None
 
+    oreb = _int(row.get("reboundsOffensive"))
+    dreb = _int(row.get("reboundsDefensive"))
+    reb = _int(row.get("reboundsTotal"))
+
+    # Early-era (pre-1974): oreb/dreb were not tracked separately.
+    # When both are 0 but reb > 0, treat the split as unavailable.
+    if oreb == 0 and dreb == 0 and reb is not None and reb > 0:
+        oreb = None
+        dreb = None
+
     return {
         "game_id": game_id,
         "team_id": team_id,
@@ -143,9 +163,9 @@ def _transform_team_game_log_row(
         "fg3a": _int(row.get("threePointersAttempted")),
         "ftm": _int(row.get("freeThrowsMade")),
         "fta": _int(row.get("freeThrowsAttempted")),
-        "oreb": _int(row.get("reboundsOffensive")),
-        "dreb": _int(row.get("reboundsDefensive")),
-        "reb": _int(row.get("reboundsTotal")),
+        "oreb": oreb,
+        "dreb": dreb,
+        "reb": reb,
         "ast": _int(row.get("assists")),
         "stl": _int(row.get("steals")),
         "blk": _int(row.get("blocks")),

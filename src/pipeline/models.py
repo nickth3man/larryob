@@ -33,6 +33,7 @@ import argparse
 from dataclasses import dataclass, field
 from enum import StrEnum
 from pathlib import Path
+from typing import Literal, cast
 
 from src.etl.config import MetricsConfig
 from src.pipeline.validation import _normalize_seasons
@@ -101,14 +102,14 @@ class IngestConfig:
     seasons: tuple[str, ...]
     dims_only: bool = False
     enrich_bio: bool = False
-    awards: bool = False
-    salaries: bool = False
-    rosters: bool = False
-    include_playoffs: bool = False
+    awards: bool = True
+    salaries: bool = True
+    rosters: bool = True
+    include_playoffs: bool = True
     pbp_limit: int = 0
-    pbp_source: str = "auto"
+    pbp_source: Literal["api", "bulk", "auto"] = "auto"
     pbp_bulk_dir: Path | None = None
-    salary_source: str = "auto"
+    salary_source: Literal["bref", "open", "auto"] = "auto"
     salary_open_file: Path | None = None
     skip_reconciliation: bool = False
     reconciliation_warn_only: bool = False
@@ -151,9 +152,9 @@ class IngestConfig:
             rosters=args.rosters,
             include_playoffs=args.include_playoffs,
             pbp_limit=args.pbp_limit,
-            pbp_source=args.pbp_source,
+            pbp_source=cast(Literal["api", "bulk", "auto"], args.pbp_source),
             pbp_bulk_dir=Path(args.pbp_bulk_dir) if args.pbp_bulk_dir else None,
-            salary_source=args.salary_source,
+            salary_source=cast(Literal["bref", "open", "auto"], args.salary_source),
             salary_open_file=Path(args.salary_open_file) if args.salary_open_file else None,
             skip_reconciliation=args.skip_reconciliation,
             reconciliation_warn_only=args.reconciliation_warn_only,
