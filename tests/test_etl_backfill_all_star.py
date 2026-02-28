@@ -74,7 +74,7 @@ def test_load_all_star_selections_inserts_rows_and_maps_team_when_possible(
     ]
 
 
-def test_load_all_star_selections_skips_unknown_players_and_invalid_seasons(
+def test_load_all_star_selections_skips_invalid_seasons_creates_placeholder_for_unknown_player(
     sqlite_con: sqlite3.Connection,
     tmp_path: Path,
 ) -> None:
@@ -104,5 +104,11 @@ def test_load_all_star_selections_skips_unknown_players_and_invalid_seasons(
     inserted = load_all_star_selections(sqlite_con, tmp_path)
     count = sqlite_con.execute("SELECT COUNT(*) FROM fact_all_star").fetchone()[0]
 
-    assert inserted == 0
-    assert count == 0
+    # Invalid season is still skipped; unknown player gets a placeholder and is inserted.
+    assert inserted == 1
+    assert count == 1
+
+    placeholder_pid = sqlite_con.execute(
+        "SELECT player_id FROM dim_player WHERE player_id = 'placeholder_bref_unknown01'"
+    ).fetchone()
+    assert placeholder_pid is not None

@@ -8,7 +8,6 @@ and End of Season teams from Basketball-Reference CSV exports.
 import logging
 import sqlite3
 from pathlib import Path
-from typing import Any
 
 from src.db.operations import upsert_rows
 from src.etl.backfill._base import (
@@ -20,6 +19,7 @@ from src.etl.backfill._base import (
     safe_str,
 )
 from src.etl.helpers import int_season_to_id
+from src.etl.identity.resolver import resolve_or_create_player
 
 logger = logging.getLogger(__name__)
 
@@ -105,19 +105,6 @@ class AwardsLoader:
         self.bref_to_pid = _build_bref_to_player_id_lookup(con)
         self.valid_seasons = get_valid_set(con, "dim_season", "season_id")
 
-    def _is_valid_row(
-        self,
-        row: dict[str, Any],
-        season_id: str,
-        bref_pid: str,
-    ) -> bool:
-        """Check if a row should be processed."""
-        if season_id not in self.valid_seasons:
-            return False
-        if not self.bref_to_pid.get(bref_pid):
-            return False
-        return True
-
     def _load_award_shares(self, con: sqlite3.Connection) -> int:
         """Load player award voting data from Player Award Shares.csv."""
         path = csv_path(self.raw_dir, "Player Award Shares.csv")
@@ -132,7 +119,14 @@ class AwardsLoader:
             bref_pid = safe_str(row.get("player_id"), strip=True) or ""
             player_id = self.bref_to_pid.get(bref_pid)
 
-            if season_id not in self.valid_seasons or not player_id:
+            if season_id not in self.valid_seasons:
+                continue
+
+            if not player_id and bref_pid:
+                full_name = safe_str(row.get("player"), strip=True) or bref_pid
+                player_id = resolve_or_create_player(con, "bref", bref_pid, full_name)
+
+            if not player_id:
                 continue
 
             award_raw = safe_str(row.get("award"), strip=True) or ""
@@ -168,7 +162,14 @@ class AwardsLoader:
             bref_pid = safe_str(row.get("player_id"), strip=True) or ""
             player_id = self.bref_to_pid.get(bref_pid)
 
-            if season_id not in self.valid_seasons or not player_id:
+            if season_id not in self.valid_seasons:
+                continue
+
+            if not player_id and bref_pid:
+                full_name = safe_str(row.get("player"), strip=True) or bref_pid
+                player_id = resolve_or_create_player(con, "bref", bref_pid, full_name)
+
+            if not player_id:
                 continue
 
             rows.append(
@@ -201,7 +202,14 @@ class AwardsLoader:
             bref_pid = safe_str(row.get("player_id"), strip=True) or ""
             player_id = self.bref_to_pid.get(bref_pid)
 
-            if season_id not in self.valid_seasons or not player_id:
+            if season_id not in self.valid_seasons:
+                continue
+
+            if not player_id and bref_pid:
+                full_name = safe_str(row.get("player"), strip=True) or bref_pid
+                player_id = resolve_or_create_player(con, "bref", bref_pid, full_name)
+
+            if not player_id:
                 continue
 
             award_name = _format_eos_team_award_name(row["type"], row["number_tm"])
@@ -236,7 +244,14 @@ class AwardsLoader:
             bref_pid = safe_str(row.get("player_id"), strip=True) or ""
             player_id = self.bref_to_pid.get(bref_pid)
 
-            if season_id not in self.valid_seasons or not player_id:
+            if season_id not in self.valid_seasons:
+                continue
+
+            if not player_id and bref_pid:
+                full_name = safe_str(row.get("player"), strip=True) or bref_pid
+                player_id = resolve_or_create_player(con, "bref", bref_pid, full_name)
+
+            if not player_id:
                 continue
 
             award_name = _format_eos_team_award_name(row["type"], row["number_tm"])

@@ -21,6 +21,8 @@ import re
 from collections.abc import Callable
 from typing import Any
 
+from src.pipeline.completeness import full_history_seasons
+
 # =============================================================================
 # Default Configuration
 # =============================================================================

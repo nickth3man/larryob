@@ -156,7 +156,7 @@ def test_load_awards_skips_when_source_files_missing(
     assert count == 0
 
 
-def test_load_awards_skips_rows_for_invalid_season_and_unknown_player(
+def test_load_awards_skips_invalid_season_creates_placeholder_for_unknown_player(
     sqlite_con: sqlite3.Connection,
     tmp_path: Path,
 ) -> None:
@@ -218,11 +218,18 @@ def test_load_awards_skips_rows_for_invalid_season_and_unknown_player(
 
     load_awards(sqlite_con, tmp_path)
 
+    # Invalid-season rows are still skipped; the three unknown01 rows with valid
+    # season each create/reuse a placeholder and are inserted.
     count = sqlite_con.execute("SELECT COUNT(*) FROM fact_player_award").fetchone()[0]
-    assert count == 0
+    assert count == 3  # award share + all-star + EOS voting (fallback not used when voting present)
+
+    placeholder_pid = sqlite_con.execute(
+        "SELECT player_id FROM dim_player WHERE player_id = 'placeholder_bref_unknown01'"
+    ).fetchone()
+    assert placeholder_pid is not None
 
 
-def test_load_awards_eos_fallback_skips_invalid_rows(
+def test_load_awards_eos_fallback_skips_invalid_season_creates_placeholder_for_unknown(
     sqlite_con: sqlite3.Connection,
     tmp_path: Path,
 ) -> None:
@@ -237,5 +244,11 @@ def test_load_awards_eos_fallback_skips_invalid_rows(
 
     load_awards(sqlite_con, tmp_path)
 
+    # Invalid-season row is skipped; unknown01 with valid season gets a placeholder.
     count = sqlite_con.execute("SELECT COUNT(*) FROM fact_player_award").fetchone()[0]
-    assert count == 0
+    assert count == 1
+
+    placeholder_pid = sqlite_con.execute(
+        "SELECT player_id FROM dim_player WHERE player_id = 'placeholder_bref_unknown01'"
+    ).fetchone()
+    assert placeholder_pid is not None

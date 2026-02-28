@@ -31,6 +31,17 @@ def already_loaded(
 
     If the etl_run_log table does not exist or an OperationalError occurs, the function returns False.
 
+    Note: this is a coarse guard — it answers "has data ever been loaded?".
+    For a finer guard that re-runs when source content changes, pair this with
+    should_run_loader() / save_loader_fingerprint() from
+    src.db.tracking.fingerprint. Typical pattern:
+
+        if not already_loaded(con, table, season, loader):
+            load(...)
+        elif should_run_loader(con, table, season, loader, source_hash):
+            load(...)
+            save_loader_fingerprint(con, table, season, loader, source_hash)
+
     Parameters:
         con (sqlite3.Connection): Database connection.
         table (str): Target table name as recorded in etl_run_log.table_name.

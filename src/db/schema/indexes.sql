@@ -68,12 +68,14 @@ CREATE INDEX IF NOT EXISTS idx_runlog_table_season ON etl_run_log(table_name, se
 
 -- Coach indexes
 CREATE INDEX IF NOT EXISTS idx_coach_name ON dim_coach(full_name);
+
+-- Team coach game index
 CREATE INDEX IF NOT EXISTS idx_team_coach_coach ON fact_team_coach_game(coach_id);
 
--- Player identifier crosswalk indexes
+-- Player identifier indexes
 CREATE INDEX IF NOT EXISTS idx_player_identifier_player ON dim_player_identifier(player_id);
 
--- Team identifier crosswalk indexes
+-- Team identifier indexes
 CREATE INDEX IF NOT EXISTS idx_team_identifier_team ON dim_team_identifier(team_id);
 
 -- ============================================================================

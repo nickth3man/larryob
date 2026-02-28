@@ -24,6 +24,7 @@ from __future__ import annotations
 import logging
 import sqlite3
 import time
+from pathlib import Path
 
 from src.etl.dimensions import run_all as run_dimensions
 from src.etl.raw_backfill import RAW_DIR, run_raw_backfill
@@ -140,4 +141,10 @@ def run_pbp_stage(con: sqlite3.Connection, config: IngestConfig) -> None:
             idx,
             len(config.seasons),
         )
-        load_season_pbp(con, season, limit=config.pbp_limit)
+        load_season_pbp(
+            con,
+            season,
+            limit=config.pbp_limit,
+            source=config.pbp_source,
+            bulk_dir=config.pbp_bulk_dir or Path("raw/pbp"),
+        )

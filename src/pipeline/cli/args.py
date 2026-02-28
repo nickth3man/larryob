@@ -34,49 +34,49 @@ def create_argument_parser() -> argparse.ArgumentParser:
         "--awards",
         action="store_true",
         default=True,
-        help="Load fact_player_award from PlayerAwards endpoint (default: True)",
+        help="Load fact_player_award from PlayerAwards endpoint (default: on)",
     )
     parser.add_argument(
         "--no-awards",
         dest="awards",
         action="store_false",
-        help="Disable awards loading",
+        help="Skip loading fact_player_award",
     )
     parser.add_argument(
         "--salaries",
         action="store_true",
         default=True,
-        help="Load dim_salary_cap and fact_salary (default: True)",
+        help="Load dim_salary_cap and scrape fact_salary from Basketball-Reference (default: on)",
     )
     parser.add_argument(
         "--no-salaries",
         dest="salaries",
         action="store_false",
-        help="Disable salary loading",
+        help="Skip loading dim_salary_cap and fact_salary",
     )
     parser.add_argument(
         "--rosters",
         action="store_true",
         default=True,
-        help="Load fact_roster from CommonTeamRoster (default: True)",
+        help="Load fact_roster from CommonTeamRoster (default: on)",
     )
     parser.add_argument(
         "--no-rosters",
         dest="rosters",
         action="store_false",
-        help="Disable roster loading",
+        help="Skip loading fact_roster",
     )
     parser.add_argument(
         "--include-playoffs",
         action="store_true",
         default=True,
-        help="Also ingest Playoffs game logs (default: True)",
+        help="Also ingest Playoffs game logs (default: on)",
     )
     parser.add_argument(
         "--no-playoffs",
         dest="include_playoffs",
         action="store_false",
-        help="Exclude playoffs from game log ingest",
+        help="Skip Playoffs game logs",
     )
     parser.add_argument(
         "--pbp-limit",

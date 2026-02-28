@@ -21,26 +21,34 @@ from src.pipeline.stages import (
 
 
 def _config(**kwargs) -> IngestConfig:
-    defaults = dict(
-        seasons=("2023-24",),
-        dims_only=False,
-        enrich_bio=False,
-        awards=False,
-        salaries=False,
-        rosters=False,
-        include_playoffs=False,
-        pbp_limit=0,
-        raw_backfill=False,
-        raw_backfill_fail_fast=False,
-        skip_reconciliation=False,
-        reconciliation_warn_only=False,
-        metrics_enabled=False,
-        metrics_summary=False,
-        metrics_export_endpoint=None,
-        runlog_tail=12,
+    """Helper to create IngestConfig with test defaults."""
+    return IngestConfig(
+        seasons=kwargs.get("seasons", ("2023-24",)),
+        dims_only=kwargs.get("dims_only", False),
+        enrich_bio=kwargs.get("enrich_bio", False),
+        awards=kwargs.get("awards", False),
+        salaries=kwargs.get("salaries", False),
+        rosters=kwargs.get("rosters", False),
+        include_playoffs=kwargs.get("include_playoffs", False),
+        pbp_limit=kwargs.get("pbp_limit", 0),
+        pbp_source=kwargs.get("pbp_source", "auto"),
+        pbp_bulk_dir=kwargs.get("pbp_bulk_dir"),
+        salary_source=kwargs.get("salary_source", "auto"),
+        salary_open_file=kwargs.get("salary_open_file"),
+        skip_reconciliation=kwargs.get("skip_reconciliation", False),
+        reconciliation_warn_only=kwargs.get("reconciliation_warn_only", False),
+        raw_backfill=kwargs.get("raw_backfill", False),
+        raw_dir=kwargs.get("raw_dir"),
+        raw_backfill_fail_fast=kwargs.get("raw_backfill_fail_fast", False),
+        analytics_view=kwargs.get("analytics_view"),
+        analytics_limit=kwargs.get("analytics_limit", 20),
+        analytics_output=kwargs.get("analytics_output"),
+        analytics_only=kwargs.get("analytics_only", False),
+        metrics_enabled=kwargs.get("metrics_enabled", False),
+        metrics_summary=kwargs.get("metrics_summary", False),
+        metrics_export_endpoint=kwargs.get("metrics_export_endpoint"),
+        runlog_tail=kwargs.get("runlog_tail", 12),
     )
-    defaults.update(kwargs)
-    return IngestConfig(**defaults)  # ty: ignore[invalid-argument-type]
 
 
 # ------------------------------------------------------------------ #
@@ -131,21 +139,27 @@ def test_run_raw_backfill_stage_passes_fail_fast():
 
 
 def test_run_pbp_stage_calls_load_season_pbp_for_each_season():
+    from pathlib import Path
+
     con = MagicMock(spec=sqlite3.Connection)
-    cfg = _config(seasons=("2022-23", "2023-24"), pbp_limit=5)
+    cfg = _config(seasons=("2022-23", "2023-24"), pbp_limit=5, pbp_source="auto")
     with patch("src.pipeline.stages.load_season_pbp") as mock_pbp:
         run_pbp_stage(con, cfg)
     assert mock_pbp.call_count == 2
-    mock_pbp.assert_any_call(con, "2022-23", limit=5)
-    mock_pbp.assert_any_call(con, "2023-24", limit=5)
+    mock_pbp.assert_any_call(con, "2022-23", limit=5, source="auto", bulk_dir=Path("raw/pbp"))
+    mock_pbp.assert_any_call(con, "2023-24", limit=5, source="auto", bulk_dir=Path("raw/pbp"))
 
 
 def test_run_pbp_stage_passes_correct_limit():
+    from pathlib import Path
+
     con = MagicMock(spec=sqlite3.Connection)
-    cfg = _config(seasons=("2023-24",), pbp_limit=100)
+    cfg = _config(seasons=("2023-24",), pbp_limit=100, pbp_source="auto")
     with patch("src.pipeline.stages.load_season_pbp") as mock_pbp:
         run_pbp_stage(con, cfg)
-    mock_pbp.assert_called_once_with(con, "2023-24", limit=100)
+    mock_pbp.assert_called_once_with(
+        con, "2023-24", limit=100, source="auto", bulk_dir=Path("raw/pbp")
+    )
 
 
 # ------------------------------------------------------------------ #

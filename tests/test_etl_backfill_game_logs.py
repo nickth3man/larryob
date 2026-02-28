@@ -141,6 +141,107 @@ def test_load_player_game_logs_skips_rows_without_team_lookup(
     assert count == 0
 
 
+def test_early_era_oreb_dreb_zero_pattern_not_dropped(
+    sqlite_con: sqlite3.Connection, tmp_path: Path
+) -> None:
+    """
+    Early-era rows where reb_total > 0 but oreb/dreb were not tracked (both 0)
+    must NOT be dropped by validation. Instead oreb and dreb should be stored as None.
+    """
+    _seed_game_context(sqlite_con)
+
+    pd.DataFrame([{"gameId": 222300001, "teamId": 1610612747, "home": 1}]).to_csv(
+        tmp_path / "TeamStatistics.csv", index=False
+    )
+
+    pd.DataFrame(
+        [
+            {
+                "gameId": 222300001,
+                "personId": 2544,
+                "home": 1,
+                "numMinutes": 40.0,
+                "fieldGoalsMade": 8,
+                "fieldGoalsAttempted": 16,
+                "threePointersMade": 0,
+                "threePointersAttempted": 0,
+                "freeThrowsMade": 4,
+                "freeThrowsAttempted": 6,
+                "reboundsOffensive": 0,  # early era: not tracked separately
+                "reboundsDefensive": 0,  # early era: not tracked separately
+                "reboundsTotal": 12,  # only total was recorded
+                "assists": 5,
+                "steals": 0,
+                "blocks": 0,
+                "turnovers": 2,
+                "foulsPersonal": 3,
+                "points": 20,
+                "plusMinusPoints": 0,
+            }
+        ]
+    ).to_csv(tmp_path / "PlayerStatistics.csv", index=False)
+
+    load_player_game_logs(sqlite_con, tmp_path)
+
+    row = sqlite_con.execute(
+        "SELECT game_id, oreb, dreb, reb FROM player_game_log WHERE player_id='2544'"
+    ).fetchone()
+    assert row is not None, "Early-era row was dropped but should have been inserted"
+    inserted_game_id, inserted_oreb, inserted_dreb, inserted_reb = row
+    assert inserted_game_id == "0222300001"
+    assert inserted_oreb is None, f"Expected oreb=None for early era, got {inserted_oreb}"
+    assert inserted_dreb is None, f"Expected dreb=None for early era, got {inserted_dreb}"
+    assert inserted_reb == 12
+
+
+def test_early_era_team_oreb_dreb_zero_pattern_not_dropped(
+    sqlite_con: sqlite3.Connection, tmp_path: Path
+) -> None:
+    """
+    Team game log early-era rows where reb > 0 but oreb/dreb were not tracked
+    must NOT be dropped. oreb and dreb should be stored as None.
+    """
+    _seed_game_context(sqlite_con)
+
+    pd.DataFrame(
+        [
+            {
+                "gameId": 222300001,
+                "teamId": 1610612747,
+                "fieldGoalsMade": 35,
+                "fieldGoalsAttempted": 80,
+                "threePointersMade": 0,
+                "threePointersAttempted": 0,
+                "freeThrowsMade": 20,
+                "freeThrowsAttempted": 28,
+                "reboundsOffensive": 0,  # early era: not tracked separately
+                "reboundsDefensive": 0,  # early era: not tracked separately
+                "reboundsTotal": 55,  # only total was recorded
+                "assists": 18,
+                "steals": 0,
+                "blocks": 0,
+                "turnovers": 12,
+                "foulsPersonal": 22,
+                "teamScore": 90,
+                "plusMinusPoints": 5,
+                "home": 1,
+            }
+        ]
+    ).to_csv(tmp_path / "TeamStatistics.csv", index=False)
+
+    load_team_game_logs(sqlite_con, tmp_path)
+
+    row = sqlite_con.execute(
+        "SELECT game_id, oreb, dreb, reb FROM team_game_log WHERE team_id='1610612747'"
+    ).fetchone()
+    assert row is not None, "Early-era team row was dropped but should have been inserted"
+    inserted_game_id, inserted_oreb, inserted_dreb, inserted_reb = row
+    assert inserted_game_id == "0222300001"
+    assert inserted_oreb is None, f"Expected oreb=None for early era, got {inserted_oreb}"
+    assert inserted_dreb is None, f"Expected dreb=None for early era, got {inserted_dreb}"
+    assert inserted_reb == 55
+
+
 def test_load_team_game_logs_inserts_rows_when_ids_are_valid(
     sqlite_con: sqlite3.Connection,
     tmp_path: Path,

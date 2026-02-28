@@ -211,6 +211,24 @@ def build_game_rows(df: pd.DataFrame, season_id: str, season_type: str) -> list[
     return list(game_rows.values())
 
 
+def _normalize_early_era_rebounds(row: dict[str, Any]) -> dict[str, Any]:
+    """
+    Normalize oreb/dreb for early-era game logs (pre-1974 approximately).
+
+    Before the 1973-74 season, offensive and defensive rebounds were not tracked
+    separately. Such rows have oreb==0 and dreb==0 while reb>0. In this case,
+    the split is unavailable — store oreb=None and dreb=None to distinguish
+    "not recorded" from "truly zero".
+    """
+    oreb = row.get("oreb")
+    dreb = row.get("dreb")
+    reb = row.get("reb")
+    if oreb == 0 and dreb == 0 and reb is not None and reb > 0:
+        row["oreb"] = None
+        row["dreb"] = None
+    return row
+
+
 def build_player_rows(df: pd.DataFrame) -> list[dict[str, Any]]:
     """
     Produce normalized player-level rows conforming to the target schema from a player-game-log DataFrame.
@@ -233,7 +251,9 @@ def build_player_rows(df: pd.DataFrame) -> list[dict[str, Any]]:
     df_clean["player_id"] = df_clean["player_id"].astype(str)
     df_clean["team_id"] = df_clean["team_id"].astype(str)
     # Replace NaN → None for SQLite compatibility
-    return df_clean.where(pd.notna(df_clean), None).to_dict(orient="records")
+    rows = df_clean.where(pd.notna(df_clean), None).to_dict(orient="records")
+    # Normalize early-era rows where oreb/dreb split was not recorded
+    return [_normalize_early_era_rebounds(row) for row in rows]
 
 
 def build_team_rows(df: pd.DataFrame) -> list[dict[str, Any]]:

@@ -418,6 +418,55 @@ CREATE TABLE IF NOT EXISTS fact_player_pbp_season (
 ) STRICT;
 
 -- ------------------------------------------------------------------ --
+-- Dimension: coaches                                                   --
+-- Tracks all head coaches across NBA history.                          --
+-- ------------------------------------------------------------------ --
+CREATE TABLE IF NOT EXISTS dim_coach (
+    coach_id TEXT PRIMARY KEY,
+    full_name TEXT NOT NULL,
+    first_name TEXT,
+    last_name TEXT,
+    first_seen_season_id TEXT REFERENCES dim_season(season_id),
+    last_seen_season_id TEXT REFERENCES dim_season(season_id)
+) STRICT;
+
+-- ------------------------------------------------------------------ --
+-- Fact: team coach assignments per game                               --
+-- Links coaches to teams for specific games to support coaching       --
+-- history queries (e.g., "who coached this team in this game?")       --
+-- ------------------------------------------------------------------ --
+CREATE TABLE IF NOT EXISTS fact_team_coach_game (
+    game_id TEXT NOT NULL REFERENCES fact_game(game_id),
+    team_id TEXT NOT NULL REFERENCES dim_team(team_id),
+    coach_id TEXT NOT NULL REFERENCES dim_coach(coach_id),
+    PRIMARY KEY (game_id, team_id)
+) STRICT;
+
+-- ------------------------------------------------------------------ --
+-- Identity Crosswalk: player identifiers                              --
+-- Maps external system identifiers to canonical player_id.            --
+-- Enables "no-drop" identity resolution for historical data.          --
+-- ------------------------------------------------------------------ --
+CREATE TABLE IF NOT EXISTS dim_player_identifier (
+    source_system TEXT NOT NULL,
+    source_id TEXT NOT NULL,
+    player_id TEXT NOT NULL REFERENCES dim_player(player_id),
+    match_confidence REAL,
+    PRIMARY KEY (source_system, source_id)
+) STRICT;
+
+-- ------------------------------------------------------------------ --
+-- Identity Crosswalk: team identifiers                                --
+-- Maps external system identifiers to canonical team_id.              --
+-- ------------------------------------------------------------------ --
+CREATE TABLE IF NOT EXISTS dim_team_identifier (
+    source_system TEXT NOT NULL,
+    source_id TEXT NOT NULL,
+    team_id TEXT NOT NULL REFERENCES dim_team(team_id),
+    PRIMARY KEY (source_system, source_id)
+) STRICT;
+
+-- ------------------------------------------------------------------ --
 -- Internal: ETL Run Log                                               --
 -- ------------------------------------------------------------------ --
 CREATE TABLE IF NOT EXISTS etl_run_log (
@@ -432,63 +481,16 @@ CREATE TABLE IF NOT EXISTS etl_run_log (
 ) STRICT;
 
 -- ------------------------------------------------------------------ --
--- Dimension: coaches                                                    --
--- Tracks NBA coaches across team assignments and games.              --
--- ------------------------------------------------------------------ --
-CREATE TABLE IF NOT EXISTS dim_coach (
-    coach_id TEXT PRIMARY KEY,
-    full_name TEXT NOT NULL,
-    first_name TEXT,
-    last_name TEXT,
-    first_seen_season_id TEXT REFERENCES dim_season(season_id),
-    last_seen_season_id TEXT REFERENCES dim_season(season_id)
-) STRICT;
-
--- ------------------------------------------------------------------ --
--- Fact: team-coach-game assignments                                    --
--- Links a coach to a specific team for a specific game.              --
--- ------------------------------------------------------------------ --
-CREATE TABLE IF NOT EXISTS fact_team_coach_game (
-    game_id TEXT NOT NULL REFERENCES fact_game(game_id),
-    team_id TEXT NOT NULL REFERENCES dim_team(team_id),
-    coach_id TEXT NOT NULL REFERENCES dim_coach(coach_id),
-    PRIMARY KEY (game_id, team_id)
-) STRICT;
-
--- ------------------------------------------------------------------ --
--- Dimension: player identifier crosswalk                               --
--- Maps external source IDs (e.g., bref_id) to internal player_id.     --
--- Enables no-drop ingestion of historical records.                    --
--- ------------------------------------------------------------------ --
-CREATE TABLE IF NOT EXISTS dim_player_identifier (
-    source_system TEXT NOT NULL,
-    source_id TEXT NOT NULL,
-    player_id TEXT NOT NULL REFERENCES dim_player(player_id),
-    match_confidence REAL,
-    PRIMARY KEY (source_system, source_id)
-) STRICT;
-
--- ------------------------------------------------------------------ --
--- Dimension: team identifier crosswalk                                  --
--- Maps external source IDs (e.g., bref_abbrev) to internal team_id.   --
--- Enables no-drop ingestion of historical franchise records.          --
--- ------------------------------------------------------------------ --
-CREATE TABLE IF NOT EXISTS dim_team_identifier (
-    source_system TEXT NOT NULL,
-    source_id TEXT NOT NULL,
-    team_id TEXT NOT NULL REFERENCES dim_team(team_id),
-    PRIMARY KEY (source_system, source_id)
-) STRICT;
-
--- ------------------------------------------------------------------ --
--- Tracking: source fingerprint for ETL load decisions                  --
--- Tracks content hashes to detect when source data has changed.        --
+-- Internal: ETL Source Fingerprints                                   --
+-- Tracks a hash of raw source data per (table, season, loader) so    --
+-- that loaders re-run automatically when source content changes,      --
+-- preventing frozen incomplete loads.                                  --
 -- ------------------------------------------------------------------ --
 CREATE TABLE IF NOT EXISTS etl_source_fingerprint (
-    table_name TEXT NOT NULL,
-    season_id TEXT,
-    loader TEXT NOT NULL,
+    table_name  TEXT NOT NULL,
+    season_id   TEXT NOT NULL,
+    loader      TEXT NOT NULL,
     source_hash TEXT NOT NULL,
-    updated_at TEXT NOT NULL,
+    updated_at  TEXT NOT NULL,       -- ISO-8601 UTC
     PRIMARY KEY (table_name, season_id, loader)
 ) STRICT;

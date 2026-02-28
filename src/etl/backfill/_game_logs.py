@@ -114,13 +114,15 @@ def _transform_player_game_log_row(
     if team_id is None:
         return None
 
-    # Extract rebound values
-    oreb_raw = _int(row.get("reboundsOffensive"))
-    dreb_raw = _int(row.get("reboundsDefensive"))
-    reb_raw = _int(row.get("reboundsTotal"))
+    oreb = _int(row.get("reboundsOffensive"))
+    dreb = _int(row.get("reboundsDefensive"))
+    reb = _int(row.get("reboundsTotal"))
 
-    # Normalize early-era data where oreb/dreb weren't tracked
-    oreb, dreb = _normalize_early_era_rebounds(oreb_raw, dreb_raw, reb_raw)
+    # Early-era (pre-1974): oreb/dreb were not tracked separately.
+    # When both are 0 but reb > 0, treat the split as unavailable.
+    if oreb == 0 and dreb == 0 and reb is not None and reb > 0:
+        oreb = None
+        dreb = None
 
     return {
         "game_id": game_id,
@@ -135,7 +137,7 @@ def _transform_player_game_log_row(
         "fta": _int(row.get("freeThrowsAttempted")),
         "oreb": oreb,
         "dreb": dreb,
-        "reb": reb_raw,
+        "reb": reb,
         "ast": _int(row.get("assists")),
         "stl": _int(row.get("steals")),
         "blk": _int(row.get("blocks")),
@@ -169,13 +171,15 @@ def _transform_team_game_log_row(
     if game_id not in valid_games or team_id not in valid_teams:
         return None
 
-    # Extract rebound values
-    oreb_raw = _int(row.get("reboundsOffensive"))
-    dreb_raw = _int(row.get("reboundsDefensive"))
-    reb_raw = _int(row.get("reboundsTotal"))
+    oreb = _int(row.get("reboundsOffensive"))
+    dreb = _int(row.get("reboundsDefensive"))
+    reb = _int(row.get("reboundsTotal"))
 
-    # Normalize early-era data where oreb/dreb weren't tracked
-    oreb, dreb = _normalize_early_era_rebounds(oreb_raw, dreb_raw, reb_raw)
+    # Early-era (pre-1974): oreb/dreb were not tracked separately.
+    # When both are 0 but reb > 0, treat the split as unavailable.
+    if oreb == 0 and dreb == 0 and reb is not None and reb > 0:
+        oreb = None
+        dreb = None
 
     return {
         "game_id": game_id,
@@ -188,7 +192,7 @@ def _transform_team_game_log_row(
         "fta": _int(row.get("freeThrowsAttempted")),
         "oreb": oreb,
         "dreb": dreb,
-        "reb": reb_raw,
+        "reb": reb,
         "ast": _int(row.get("assists")),
         "stl": _int(row.get("steals")),
         "blk": _int(row.get("blocks")),

@@ -69,8 +69,11 @@ def test_default_rosters_true():
     assert ns.rosters is True
 
 
-def test_default_include_playoffs_true():
+def test_default_pipeline_enables_full_history_domains():
     ns = _parse([])
+    assert ns.awards is True
+    assert ns.salaries is True
+    assert ns.rosters is True
     assert ns.include_playoffs is True
 
 

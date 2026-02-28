@@ -47,7 +47,7 @@ def _build_stage_plan(config: IngestConfig) -> list[StagePlan]:
             (Stage.RAW_BACKFILL, RAW_BACKFILL_TABLES, run_raw_backfill_stage, (config,), {})
         )
     if config.awards:
-        plan.append((Stage.AWARDS, AWARDS_TABLES, load_all_awards, (), {"active_only": True}))
+        plan.append((Stage.AWARDS, AWARDS_TABLES, load_all_awards, (), {"active_only": False}))
     if config.salaries:
         plan.append(
             (

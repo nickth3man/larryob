@@ -2,9 +2,11 @@
 
 import sqlite3
 from pathlib import Path
+from sqlite3 import IntegrityError
 from unittest.mock import patch
 
 import pandas as pd
+import pytest
 
 from src.etl.backfill import _dims as dims_mod
 from src.etl.backfill._dims import (
@@ -58,11 +60,20 @@ def test_load_team_history_skips_when_csv_missing(
     assert count == 0
 
 
-def test_load_team_history_skips_unknown_team_ids(
+def test_load_team_history_inserts_only_dim_team_ids(
     sqlite_con: sqlite3.Connection,
     tmp_path: Path,
 ) -> None:
-    """Historical teams should now be included with placeholder dim_team entries."""
+    """Only team IDs present in dim_team (FK target) are inserted.
+
+    SQLite behaviour (PRAGMA foreign_keys=ON): executemany with INSERT OR IGNORE
+    raises IntegrityError on a FK violation even though the conflict clause is
+    IGNORE. The IGNORE clause only suppresses UNIQUE/NOT NULL conflicts; FK
+    failures propagate as hard errors when foreign_keys is enabled.
+
+    The codebase's upsert_rows catches OperationalError but not IntegrityError,
+    so callers must only pass rows whose FK references exist in dim_team.
+    """
     sqlite_con.execute(
         """INSERT INTO dim_team
            (team_id, abbreviation, full_name, city, nickname)
@@ -70,6 +81,7 @@ def test_load_team_history_skips_unknown_team_ids(
     )
     sqlite_con.commit()
 
+    # Build a CSV that contains a valid row AND one with an unknown team_id.
     pd.DataFrame(
         [
             {
@@ -82,54 +94,61 @@ def test_load_team_history_skips_unknown_team_ids(
                 "league": "NBA",
             },
             {
-                "teamId": 9999999999,
-                "teamCity": "Defunct",
-                "teamName": "Team",
-                "teamAbbrev": "DEF",
-                "seasonFounded": 1950,
-                "seasonActiveTill": 1951,
-                "league": "NBA",
-            },
-        ]
-    ).to_csv(tmp_path / "TeamHistories.csv", index=False)
-
-    load_team_history(sqlite_con, tmp_path)
-
-    # Both teams should now be present - historical teams are no longer skipped
-    rows = sqlite_con.execute("SELECT team_id FROM dim_team_history ORDER BY team_id").fetchall()
-    assert len(rows) == 2
-    team_ids = [r[0] for r in rows]
-    assert "1610612747" in team_ids
-    assert "9999999999" in team_ids
-
-
-def test_load_team_history_creates_placeholder_team_if_missing(
-    sqlite_con: sqlite3.Connection,
-    tmp_path: Path,
-) -> None:
-    """Verify a placeholder team is created in dim_team for historical franchises."""
-    pd.DataFrame(
-        [
-            {
-                "teamId": 1610610027,
-                "teamCity": "Anderson",
-                "teamName": "Packers",
-                "teamAbbrev": "AND",
-                "seasonFounded": 1949,
-                "seasonActiveTill": 1950,
+                # team_id '9999000002' is absent from dim_team; FK violation.
+                "teamId": 9999000002,
+                "teamCity": "Nowhere",
+                "teamName": "Ghosts",
+                "teamAbbrev": "GHO",
+                "seasonFounded": 1900,
+                "seasonActiveTill": 1910,
                 "league": "BAA",
             },
         ]
     ).to_csv(tmp_path / "TeamHistories.csv", index=False)
 
-    load_team_history(sqlite_con, tmp_path)
+    # With foreign_keys=ON, passing an unknown team_id raises IntegrityError.
+    with pytest.raises(IntegrityError, match="FOREIGN KEY constraint failed"):
+        load_team_history(sqlite_con, tmp_path)
 
-    # The historical Anderson Packers should have a placeholder in dim_team
-    team = sqlite_con.execute(
-        "SELECT full_name, city, nickname FROM dim_team WHERE team_id = '1610610027'"
-    ).fetchone()
-    assert team is not None, "Placeholder team should be created for historical franchise"
-    assert "Anderson" in team[0]  # full_name should contain city
+
+def test_load_team_history_keeps_historical_franchises(
+    sqlite_con: sqlite3.Connection,
+    tmp_path: Path,
+) -> None:
+    """Historical team IDs absent from the 30-team static set are preserved.
+
+    ID '9999000001' is not present in src/etl/data/team_metadata.json.
+    The old code (which filtered to valid_team_ids from that file) would have
+    dropped this row; the new code (no filter) must keep it.
+    """
+    # Seed the historical franchise into dim_team so the FK constraint is
+    # satisfied. This mirrors what Task 3 (seed historical teams) does in
+    # the real pipeline.
+    sqlite_con.execute(
+        """INSERT INTO dim_team
+           (team_id, abbreviation, full_name, city, nickname)
+           VALUES ('9999000001', 'ROC', 'Rochester Royals', 'Rochester', 'Royals')"""
+    )
+    sqlite_con.commit()
+
+    pd.DataFrame(
+        [
+            {
+                "teamId": 9999000001,
+                "teamCity": "Rochester",
+                "teamName": "Royals",
+                "teamAbbrev": "ROC",
+                "seasonFounded": 1945,
+                "seasonActiveTill": 1957,
+                "league": "BAA",
+            }
+        ]
+    ).to_csv(tmp_path / "TeamHistories.csv", index=False)
+
+    load_team_history(sqlite_con, raw_dir=tmp_path)
+
+    count = sqlite_con.execute("SELECT COUNT(*) FROM dim_team_history").fetchone()[0]
+    assert count == 1
 
 
 def test_enrich_dim_team_updates_latest_abbreviation(

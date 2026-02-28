@@ -1,27 +1,25 @@
+"""Source fingerprint tracking for ETL loaders.
+
+Tracks a hash of raw source data per (table_name, season_id, loader) in the
+etl_source_fingerprint table. When a loader is about to run, it computes a hash
+of the source data (e.g., an MD5/SHA256 of the raw file bytes or API response)
+and passes it to should_run_loader. If the hash matches the stored value the
+loader can be skipped; if it differs (or no record exists) the loader must run.
+
+This adds a second layer of idempotency on top of already_loaded():
+
+    1. already_loaded() — coarse guard: has this season ever been loaded?
+    2. should_run_loader() — fine guard: has the *source data* changed since
+       the last successful load?
+
+Usage pattern:
+    source_hash = compute_hash(raw_bytes)  # caller's responsibility
+    if not already_loaded(con, table, season, loader):
+        load(...)
+    elif should_run_loader(con, table, season, loader, source_hash):
+        load(...)
+        save_loader_fingerprint(con, table, season, loader, source_hash)
 """
-Source fingerprint tracking for ETL load decisions.
-
-This module provides functions to track content hashes of source data,
-enabling intelligent decisions about when to re-run loaders. Instead of
-just checking if a loader has run (coarse skip logic), we can detect when
-source data has actually changed.
-
-Design Decisions
-----------------
-- Uses etl_source_fingerprint table to store (table, season, loader) -> hash
-- should_run_loader returns True when hash is missing or changed
-- Enables re-processing when source data is updated
-
-Usage
------
-    from src.db.tracking.fingerprint import should_run_loader, record_source_fingerprint
-
-    if should_run_loader(con, "player_game_log", "2023-24", "loader", source_hash):
-        # Load data
-        record_source_fingerprint(con, "player_game_log", "2023-24", "loader", source_hash)
-"""
-
-from __future__ import annotations
 
 import logging
 import sqlite3
@@ -30,122 +28,81 @@ from datetime import UTC, datetime
 logger = logging.getLogger(__name__)
 
 
-def get_source_fingerprint(
-    con: sqlite3.Connection,
-    table_name: str,
-    season_id: str | None,
-    loader: str,
-) -> str | None:
-    """
-    Get the stored source hash for a table/season/loader combination.
-
-    Args:
-        con: SQLite database connection
-        table_name: Target table name
-        season_id: Season identifier (or None for non-seasonal data)
-        loader: Loader name
-
-    Returns:
-        The stored source hash, or None if no fingerprint exists
-    """
-    row = con.execute(
-        "SELECT source_hash FROM etl_source_fingerprint "
-        "WHERE table_name = ? AND season_id IS ? AND loader = ?",
-        (table_name, season_id, loader),
-    ).fetchone()
-
-    return row[0] if row else None
-
-
-def record_source_fingerprint(
-    con: sqlite3.Connection,
-    table_name: str,
-    season_id: str | None,
-    loader: str,
-    source_hash: str,
-) -> None:
-    """
-    Record a source fingerprint for a table/season/loader combination.
-
-    Uses INSERT OR REPLACE to update existing fingerprints.
-
-    Args:
-        con: SQLite database connection
-        table_name: Target table name
-        season_id: Season identifier (or None for non-seasonal data)
-        loader: Loader name
-        source_hash: Hash of the source data
-    """
-    now = datetime.now(tz=UTC).isoformat()
-    con.execute(
-        "INSERT OR REPLACE INTO etl_source_fingerprint "
-        "(table_name, season_id, loader, source_hash, updated_at) "
-        "VALUES (?, ?, ?, ?, ?)",
-        (table_name, season_id, loader, source_hash, now),
-    )
-    con.commit()
-    logger.debug(
-        "Recorded fingerprint for %s/%s/%s: %s",
-        table_name,
-        season_id or "null",
-        loader,
-        source_hash[:8] + "...",
-    )
-
-
 def should_run_loader(
     con: sqlite3.Connection,
     table_name: str,
-    season_id: str | None,
+    season_id: str,
     loader: str,
-    current_source_hash: str,
+    source_hash: str,
 ) -> bool:
-    """
-    Determine if a loader should run based on source fingerprint.
+    """Return True if the loader should run based on source fingerprint comparison.
 
     Returns True when:
-    - No fingerprint exists (first run)
-    - The stored hash differs from current_source_hash (source changed)
+    - No fingerprint record exists for (table_name, season_id, loader), or
+    - The stored hash differs from source_hash.
 
-    Returns False when:
-    - The stored hash matches current_source_hash (no change)
+    Returns False when the stored hash matches source_hash exactly, indicating
+    the source data is unchanged since the last successful load.
 
-    Args:
-        con: SQLite database connection
-        table_name: Target table name
-        season_id: Season identifier (or None for non-seasonal data)
-        loader: Loader name
-        current_source_hash: Hash of current source data
+    If the etl_source_fingerprint table does not exist, returns True so that the
+    loader runs and can create its fingerprint on first use.
+
+    Parameters:
+        con: SQLite database connection.
+        table_name: Target table name (e.g. 'player_game_log').
+        season_id: Season identifier (e.g. '2023-24').
+        loader: Loader name (e.g. 'game_logs.load_season').
+        source_hash: Hash string computed from the current source data.
 
     Returns:
-        True if the loader should run, False if it can be skipped
+        bool: True if the loader should run, False if it can be skipped.
     """
-    stored_hash = get_source_fingerprint(con, table_name, season_id, loader)
-
-    if stored_hash is None:
-        logger.debug(
-            "No fingerprint for %s/%s/%s - should run",
-            table_name,
-            season_id or "null",
-            loader,
-        )
+    try:
+        row = con.execute(
+            "SELECT source_hash FROM etl_source_fingerprint"
+            " WHERE table_name = ? AND season_id = ? AND loader = ?",
+            (table_name, season_id, loader),
+        ).fetchone()
+    except sqlite3.OperationalError as e:
+        if "no such table" in str(e).lower():
+            return True
+        logger.debug("OperationalError in should_run_loader: %s", e)
         return True
 
-    if stored_hash != current_source_hash:
-        logger.debug(
-            "Hash changed for %s/%s/%s: %s -> %s - should run",
-            table_name,
-            season_id or "null",
-            loader,
-            stored_hash[:8] + "...",
-            current_source_hash[:8] + "...",
-        )
+    if row is None:
         return True
+    return row[0] != source_hash
 
-    logger.debug(
-        "Hash unchanged for %s/%s/%s - can skip",
-        table_name,
-        season_id or "null",
-        loader,
+
+def save_loader_fingerprint(
+    con: sqlite3.Connection,
+    table_name: str,
+    season_id: str,
+    loader: str,
+    source_hash: str,
+) -> None:
+    """Upsert the source fingerprint for a (table_name, season_id, loader) key.
+
+    Inserts a new record or replaces an existing one with the provided
+    source_hash and the current UTC timestamp as updated_at.
+
+    Parameters:
+        con: SQLite database connection.
+        table_name: Target table name.
+        season_id: Season identifier.
+        loader: Loader name.
+        source_hash: Hash string computed from the current source data.
+    """
+    now = datetime.now(UTC).isoformat()
+    con.execute(
+        """
+        INSERT INTO etl_source_fingerprint
+            (table_name, season_id, loader, source_hash, updated_at)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT (table_name, season_id, loader)
+        DO UPDATE SET source_hash = excluded.source_hash,
+                      updated_at  = excluded.updated_at
+        """,
+        (table_name, season_id, loader, source_hash, now),
     )
-    return False
+    con.commit()

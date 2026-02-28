@@ -22,24 +22,34 @@ from src.pipeline.models import CheckpointState, IngestConfig, Stage
 
 
 def _config(**kwargs) -> IngestConfig:
-    defaults = dict(
-        seasons=("2023-24",),
-        dims_only=False,
-        awards=False,
-        salaries=False,
-        rosters=False,
-        raw_backfill=False,
-        pbp_limit=0,
-        skip_reconciliation=False,
-        reconciliation_warn_only=False,
-        raw_backfill_fail_fast=False,
-        metrics_enabled=False,
-        metrics_summary=False,
-        metrics_export_endpoint=None,
-        runlog_tail=12,
+    """Helper to create IngestConfig with test defaults."""
+    return IngestConfig(
+        seasons=kwargs.get("seasons", ("2023-24",)),
+        dims_only=kwargs.get("dims_only", False),
+        enrich_bio=kwargs.get("enrich_bio", False),
+        awards=kwargs.get("awards", False),
+        salaries=kwargs.get("salaries", False),
+        rosters=kwargs.get("rosters", False),
+        include_playoffs=kwargs.get("include_playoffs", False),
+        pbp_limit=kwargs.get("pbp_limit", 0),
+        pbp_source=kwargs.get("pbp_source", "auto"),
+        pbp_bulk_dir=kwargs.get("pbp_bulk_dir"),
+        salary_source=kwargs.get("salary_source", "auto"),
+        salary_open_file=kwargs.get("salary_open_file"),
+        skip_reconciliation=kwargs.get("skip_reconciliation", False),
+        reconciliation_warn_only=kwargs.get("reconciliation_warn_only", False),
+        raw_backfill=kwargs.get("raw_backfill", False),
+        raw_dir=kwargs.get("raw_dir"),
+        raw_backfill_fail_fast=kwargs.get("raw_backfill_fail_fast", False),
+        analytics_view=kwargs.get("analytics_view"),
+        analytics_limit=kwargs.get("analytics_limit", 20),
+        analytics_output=kwargs.get("analytics_output"),
+        analytics_only=kwargs.get("analytics_only", False),
+        metrics_enabled=kwargs.get("metrics_enabled", False),
+        metrics_summary=kwargs.get("metrics_summary", False),
+        metrics_export_endpoint=kwargs.get("metrics_export_endpoint"),
+        runlog_tail=kwargs.get("runlog_tail", 12),
     )
-    defaults.update(kwargs)
-    return IngestConfig(**defaults)  # ty: ignore[invalid-argument-type]
 
 
 # ------------------------------------------------------------------ #

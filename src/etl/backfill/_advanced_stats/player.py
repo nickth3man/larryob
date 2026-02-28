@@ -10,19 +10,12 @@ from src.etl.helpers import _flt, _int, int_season_to_id
 from .base import BaseAdvancedStatsBackfill, logger
 
 
-def _pct_01(value: Any) -> float | None:
-    """
-    Normalize percentage values to 0-1 scale.
+def _pct_01(value):
+    """Normalise a percentage value to 0-1 scale.
 
-    Basketball-Reference sometimes provides percentages in 0-100 scale
-    (e.g., usg_percent=28.3) instead of 0-1 scale (usg_pct=0.283).
-    This function normalizes any value > 1.0 to the 0-1 scale.
-
-    Args:
-        value: Raw percentage value (may be 0-100 or 0-1 scale)
-
-    Returns:
-        Normalized value in 0-1 scale, or None if input is None/invalid
+    Basketball-Reference CSVs may supply percentage stats as 100-scale values
+    (e.g. usage rate = 28.3) or already on a 0-1 scale (e.g. 0.283).  This
+    helper accepts both forms and always returns a 0-1 float (or None).
     """
     v = _flt(value)
     if v is None:
@@ -48,9 +41,9 @@ def _transform_advanced_row(
         "gs": _int(row.get("gs")),
         "mp": _int(row.get("mp")),
         "per": _flt(row.get("per")),
-        "ts_pct": _pct_01(row.get("ts_percent")),
-        "x3p_ar": _pct_01(row.get("x3p_ar")),
-        "f_tr": _pct_01(row.get("f_tr")),
+        "ts_pct": _flt(row.get("ts_percent")),
+        "x3p_ar": _flt(row.get("x3p_ar")),
+        "f_tr": _flt(row.get("f_tr")),
         "orb_pct": _pct_01(row.get("orb_percent")),
         "drb_pct": _pct_01(row.get("drb_percent")),
         "trb_pct": _pct_01(row.get("trb_percent")),
