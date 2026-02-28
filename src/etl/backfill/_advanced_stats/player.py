@@ -10,6 +10,19 @@ from src.etl.helpers import _flt, _int, int_season_to_id
 from .base import BaseAdvancedStatsBackfill, logger
 
 
+def _pct_01(value):
+    """Normalise a percentage value to 0-1 scale.
+
+    Basketball-Reference CSVs may supply percentage stats as 100-scale values
+    (e.g. usage rate = 28.3) or already on a 0-1 scale (e.g. 0.283).  This
+    helper accepts both forms and always returns a 0-1 float (or None).
+    """
+    v = _flt(value)
+    if v is None:
+        return None
+    return v / 100.0 if v > 1.0 else v
+
+
 def _transform_advanced_row(
     row: dict[str, Any],
     valid_seasons: set[str],
@@ -31,14 +44,14 @@ def _transform_advanced_row(
         "ts_pct": _flt(row.get("ts_percent")),
         "x3p_ar": _flt(row.get("x3p_ar")),
         "f_tr": _flt(row.get("f_tr")),
-        "orb_pct": _flt(row.get("orb_percent")),
-        "drb_pct": _flt(row.get("drb_percent")),
-        "trb_pct": _flt(row.get("trb_percent")),
-        "ast_pct": _flt(row.get("ast_percent")),
-        "stl_pct": _flt(row.get("stl_percent")),
-        "blk_pct": _flt(row.get("blk_percent")),
-        "tov_pct": _flt(row.get("tov_percent")),
-        "usg_pct": _flt(row.get("usg_percent")),
+        "orb_pct": _pct_01(row.get("orb_percent")),
+        "drb_pct": _pct_01(row.get("drb_percent")),
+        "trb_pct": _pct_01(row.get("trb_percent")),
+        "ast_pct": _pct_01(row.get("ast_percent")),
+        "stl_pct": _pct_01(row.get("stl_percent")),
+        "blk_pct": _pct_01(row.get("blk_percent")),
+        "tov_pct": _pct_01(row.get("tov_percent")),
+        "usg_pct": _pct_01(row.get("usg_percent")),
         "ows": _flt(row.get("ows")),
         "dws": _flt(row.get("dws")),
         "ws": _flt(row.get("ws")),
