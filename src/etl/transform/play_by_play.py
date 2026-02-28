@@ -30,12 +30,12 @@ from typing import Literal
 import pandas as pd
 from nba_api.stats.endpoints import playbyplayv2
 
-from ..db.cache import load_cache, save_cache
-from ..db.operations import transaction, upsert_rows
-from ..db.tracking import already_loaded, log_load_summary, record_run
-from .api_client import APICaller
-from .metrics import ETLTimer, record_etl_rows
-from .validation import validate_rows
+from ...db.cache import load_cache, save_cache
+from ...db.operations import transaction, upsert_rows
+from ...db.tracking import already_loaded, log_load_summary, record_run
+from ..extract.api_client import APICaller
+from ..metrics import ETLTimer, record_etl_rows
+from ..validation import validate_rows
 
 logger = logging.getLogger(__name__)
 
@@ -235,7 +235,7 @@ def load_season_pbp(
 
     # ── "bulk" only ────────────────────────────────────────────────── #
     if source == "bulk":
-        from src.etl.backfill._pbp_bulk import load_bulk_pbp_season
+        from src.etl.load.bulk import load_bulk_pbp_season
 
         total = load_bulk_pbp_season(con, season, bulk_dir.parent)
         status = "partial" if limit else "ok"
@@ -254,7 +254,7 @@ def load_season_pbp(
     # ── "auto": bulk load first, then find games still missing data ── #
     bulk_total = 0
     if source == "auto":
-        from src.etl.backfill._pbp_bulk import load_bulk_pbp_season
+        from src.etl.load.bulk import load_bulk_pbp_season
 
         bulk_total = load_bulk_pbp_season(con, season, bulk_dir.parent)
         if all_game_ids:

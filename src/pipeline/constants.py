@@ -1,8 +1,8 @@
 """
 Pipeline-level constants: default seasons, stage-to-table mappings, and type aliases.
 
-This module serves as the dependency root for the pipeline package — it imports from
-no other pipeline modules, ensuring a clean import hierarchy without circular dependencies.
+This module defines the core constants used across the pipeline package.
+
 
 Design Decisions
 ----------------
@@ -24,9 +24,10 @@ from typing import Any
 # =============================================================================
 # Default Configuration
 # =============================================================================
+from src.pipeline.completeness import full_history_seasons
 
 #: Default seasons to ingest when --seasons is not provided
-DEFAULT_SEASONS: tuple[str, ...] = ("2023-24", "2024-25")
+DEFAULT_SEASONS: tuple[str, ...] = full_history_seasons(2025)
 
 # =============================================================================
 # Validation Patterns (compiled at module load)

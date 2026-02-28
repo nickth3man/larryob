@@ -13,17 +13,19 @@ wheels/
 .env
 
 # API response cache (rebuilt on next run)
-/.cache
+/data/cache/
 
 # SQLite database and WAL journal files (local data, not source-controlled)
 *.db
 *.db-shm
 *.db-wal
+data/databases/
 /raw
 
 # Test coverage
 .coverage
 coverage.json
+reports/coverage/
 
 # Log files (runtime artifacts)
 logs/*.log

@@ -26,6 +26,33 @@ logger = logging.getLogger(__name__)
 # Chunk size for processing large CSV files
 _CHUNK_SIZE = 50_000
 
+# Chunk size for processing large CSV files
+_CHUNK_SIZE = 50_000
+
+
+def _normalize_early_era_rebounds(
+    oreb: int | None, dreb: int | None, reb: int | None
+) -> tuple[int | None, int | None]:
+    """
+    Normalize early-era rebound data where oreb/dreb were not tracked.
+
+    In pre-1973-74 seasons, offensive and defensive rebounds were not officially
+    tracked. When both are 0 but total rebounds > 0, this indicates the split
+    was not recorded (not that the player had 0 offensive/defensive rebounds).
+
+    Args:
+        oreb: Offensive rebounds from source
+        dreb: Defensive rebounds from source
+        reb: Total rebounds from source
+
+    Returns:
+        Tuple of (oreb, dreb) with None for untracked values
+    """
+    # If oreb and dreb are both 0 but reb > 0, the split wasn't tracked
+    if oreb == 0 and dreb == 0 and reb is not None and reb > 0:
+        return (None, None)
+    return (oreb, dreb)
+
 
 def _build_team_lookup(
     raw_dir: Path,
@@ -87,6 +114,14 @@ def _transform_player_game_log_row(
     if team_id is None:
         return None
 
+    # Extract rebound values
+    oreb_raw = _int(row.get("reboundsOffensive"))
+    dreb_raw = _int(row.get("reboundsDefensive"))
+    reb_raw = _int(row.get("reboundsTotal"))
+
+    # Normalize early-era data where oreb/dreb weren't tracked
+    oreb, dreb = _normalize_early_era_rebounds(oreb_raw, dreb_raw, reb_raw)
+
     return {
         "game_id": game_id,
         "player_id": player_id,
@@ -98,9 +133,9 @@ def _transform_player_game_log_row(
         "fg3a": _int(row.get("threePointersAttempted")),
         "ftm": _int(row.get("freeThrowsMade")),
         "fta": _int(row.get("freeThrowsAttempted")),
-        "oreb": _int(row.get("reboundsOffensive")),
-        "dreb": _int(row.get("reboundsDefensive")),
-        "reb": _int(row.get("reboundsTotal")),
+        "oreb": oreb,
+        "dreb": dreb,
+        "reb": reb_raw,
         "ast": _int(row.get("assists")),
         "stl": _int(row.get("steals")),
         "blk": _int(row.get("blocks")),
@@ -134,6 +169,14 @@ def _transform_team_game_log_row(
     if game_id not in valid_games or team_id not in valid_teams:
         return None
 
+    # Extract rebound values
+    oreb_raw = _int(row.get("reboundsOffensive"))
+    dreb_raw = _int(row.get("reboundsDefensive"))
+    reb_raw = _int(row.get("reboundsTotal"))
+
+    # Normalize early-era data where oreb/dreb weren't tracked
+    oreb, dreb = _normalize_early_era_rebounds(oreb_raw, dreb_raw, reb_raw)
+
     return {
         "game_id": game_id,
         "team_id": team_id,
@@ -143,9 +186,9 @@ def _transform_team_game_log_row(
         "fg3a": _int(row.get("threePointersAttempted")),
         "ftm": _int(row.get("freeThrowsMade")),
         "fta": _int(row.get("freeThrowsAttempted")),
-        "oreb": _int(row.get("reboundsOffensive")),
-        "dreb": _int(row.get("reboundsDefensive")),
-        "reb": _int(row.get("reboundsTotal")),
+        "oreb": oreb,
+        "dreb": dreb,
+        "reb": reb_raw,
         "ast": _int(row.get("assists")),
         "stl": _int(row.get("steals")),
         "blk": _int(row.get("blocks")),

@@ -270,7 +270,7 @@ def test_load_player_awards_handles_api_exception(
     monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     with patch("src.etl.awards.playerawards.PlayerAwards", side_effect=RuntimeError("API down")):
-        with patch("src.etl.api_client.time.sleep"):
+        with patch("src.etl.extract.api_client.time.sleep"):
             inserted = load_player_awards(sqlite_con_with_data, ["2544"])
     assert inserted == 0
 
@@ -302,6 +302,6 @@ def test_load_all_awards_active_only_queries_active_players(
 
     monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
     with patch("src.etl.awards.playerawards.PlayerAwards", side_effect=RuntimeError("no API")):
-        with patch("src.etl.api_client.time.sleep"):
+        with patch("src.etl.extract.api_client.time.sleep"):
             result = load_all_awards(sqlite_con_with_data, active_only=True)
     assert result == 0

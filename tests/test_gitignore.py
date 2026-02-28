@@ -97,8 +97,10 @@ def test_gitignore_ignores_cache_directory() -> None:
         pytest.skip(".gitignore not found")
 
     content = gitignore.read_text()
-    # Project uses .cache for API response cache
-    assert ".cache" in content or "/.cache" in content, ".gitignore should ignore cache directory"
+    # Project uses data/cache/ for API response cache
+    assert "data/cache" in content or "/data/cache" in content, (
+        ".gitignore should ignore cache directory"
+    )
 
 
 def test_gitignore_ignores_build_artifacts() -> None:

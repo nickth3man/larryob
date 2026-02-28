@@ -56,10 +56,11 @@ class TestCacheConfig:
         assert CacheConfig.CACHE_VERSION == 2
 
     def test_cache_dir_default(self) -> None:
-        """Default cache directory should be .cache/ at project root."""
+        """Default cache directory should be data/cache/ at project root."""
         os.environ.pop("LARRYOB_CACHE_DIR", None)
         cache_dir = CacheConfig.cache_dir()
-        assert cache_dir.name == ".cache"
+        assert cache_dir.name == "cache"
+        assert cache_dir.parent.name == "data"
 
     def test_cache_dir_from_env(self) -> None:
         """Cache directory can be overridden via environment variable."""

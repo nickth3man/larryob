@@ -66,6 +66,16 @@ CREATE INDEX IF NOT EXISTS idx_ppbp_player ON fact_player_pbp_season(bref_player
 -- ETL run log index
 CREATE INDEX IF NOT EXISTS idx_runlog_table_season ON etl_run_log(table_name, season_id);
 
+-- Coach indexes
+CREATE INDEX IF NOT EXISTS idx_coach_name ON dim_coach(full_name);
+CREATE INDEX IF NOT EXISTS idx_team_coach_coach ON fact_team_coach_game(coach_id);
+
+-- Player identifier crosswalk indexes
+CREATE INDEX IF NOT EXISTS idx_player_identifier_player ON dim_player_identifier(player_id);
+
+-- Team identifier crosswalk indexes
+CREATE INDEX IF NOT EXISTS idx_team_identifier_team ON dim_team_identifier(team_id);
+
 -- ============================================================================
 -- Rollback / Down migration
 -- Run these statements to remove all indexes created above.

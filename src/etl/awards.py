@@ -17,7 +17,7 @@ from nba_api.stats.endpoints import playerawards
 from ..db.cache import load_cache, save_cache
 from ..db.operations import upsert_rows
 from ..db.tracking import already_loaded, record_run
-from .api_client import APICaller
+from .extract.api_client import APICaller
 
 logger = logging.getLogger(__name__)
 

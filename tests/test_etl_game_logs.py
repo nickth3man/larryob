@@ -7,7 +7,7 @@ from unittest.mock import MagicMock, patch
 import pandas as pd
 
 from src.db.operations import upsert_rows
-from src.etl.game_logs import (
+from src.etl.transform.game_logs import (
     _build_game_rows,
     _build_player_rows,
     _build_team_rows,
@@ -217,7 +217,7 @@ def test_load_season_returns_empty_dict_for_empty_api_response(
     mock_ep = MagicMock()
     mock_ep.get_data_frames.return_value = [pd.DataFrame()]
 
-    with patch("src.etl.game_logs.playergamelogs.PlayerGameLogs", return_value=mock_ep):
+    with patch("src.etl.transform.game_logs.playergamelogs.PlayerGameLogs", return_value=mock_ep):
         result = load_season(sqlite_con_with_data, "2099-00")
     assert result == {}
 

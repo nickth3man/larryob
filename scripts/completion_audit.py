@@ -45,6 +45,38 @@ ALL_TABLES: list[str] = [
     "etl_run_log",
 ]
 
+ALL_TABLES: list[str] = [
+    # dimensions
+    "dim_season",
+    "dim_team",
+    "dim_player",
+    "dim_salary_cap",
+    "dim_league_season",
+    "dim_team_history",
+    # facts
+    "fact_roster",
+    "fact_game",
+    "fact_play_by_play",
+    "fact_player_award",
+    "fact_all_star",
+    "fact_all_nba",
+    "fact_all_nba_vote",
+    "fact_salary",
+    "fact_team_season",
+    "fact_draft",
+    "fact_player_season_stats",
+    "fact_player_advanced_season",
+    "fact_player_shooting_season",
+    "fact_player_pbp_season",
+    # logs
+    "team_game_log",
+    "player_game_log",
+    "etl_run_log",
+]
+
+# Completeness contract constants
+REQUIRED_GAME_TYPES: tuple[str, ...] = ("Preseason", "Regular Season", "Play-In", "Playoffs")
+CONTRACT_FIRST_SEASON = "1946-47"
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -174,6 +206,52 @@ def evaluate_completion(con: sqlite3.Connection) -> dict:
         ).fetchall()
         missing_players = [r[0] for r in rows if r[0] is not None]
     data["missing_players"] = missing_players
+
+    # 8. Missing required game types
+    missing_game_types: list[str] = []
+    if _table_exists(con, "fact_game") and _column_exists(con, "fact_game", "season_type"):
+        rows = con.execute("SELECT DISTINCT season_type FROM fact_game").fetchall()
+        present_types = {r[0] for r in rows if r[0]}
+        missing_game_types = [gt for gt in REQUIRED_GAME_TYPES if gt not in present_types]
+    else:
+        missing_game_types = list(REQUIRED_GAME_TYPES)
+    data["missing_required_game_types"] = missing_game_types
+
+    # 9. Season range compliance
+    season_range: dict = {
+        "expected_start": CONTRACT_FIRST_SEASON,
+        "complete": False,
+        "actual_start": None,
+        "actual_end": None,
+    }
+    if _table_exists(con, "dim_season"):
+        rows = con.execute("SELECT MIN(season_id), MAX(season_id) FROM dim_season").fetchone()
+        if rows and rows[0]:
+            season_range["actual_start"] = rows[0]
+            season_range["actual_end"] = rows[1]
+            season_range["complete"] = rows[0] == CONTRACT_FIRST_SEASON
+    data["season_range"] = season_range
+
+    # 10. Unresolved entities
+    unresolved: dict = {"players_without_identifier": 0, "teams_without_identifier": 0}
+    if _table_exists(con, "dim_player"):
+        if _table_exists(con, "dim_player_identifier"):
+            row = con.execute(
+                "SELECT COUNT(*) FROM dim_player p "
+                "WHERE NOT EXISTS (SELECT 1 FROM dim_player_identifier pi WHERE pi.player_id = p.player_id)"
+            ).fetchone()
+            unresolved["players_without_identifier"] = row[0] if row else 0
+        else:
+            # No identifier table means all players are unresolved
+            unresolved["players_without_identifier"] = _count(con, "dim_player") or 0
+    if _table_exists(con, "dim_team"):
+        if _table_exists(con, "dim_team_identifier"):
+            row = con.execute(
+                "SELECT COUNT(*) FROM dim_team t "
+                "WHERE NOT EXISTS (SELECT 1 FROM dim_team_identifier ti WHERE ti.team_id = t.team_id)"
+            ).fetchone()
+            unresolved["teams_without_identifier"] = row[0] if row else 0
+    data["unresolved_entities"] = unresolved
 
     data["generated_at"] = datetime.now(tz=UTC).isoformat()
     return data
@@ -419,6 +497,11 @@ def parse_args() -> argparse.Namespace:
         default=Path(__file__).parent.parent / "research",
         help="Directory for output files (default: research/)",
     )
+    parser.add_argument(
+        "--enforce",
+        action="store_true",
+        help="Exit with non-zero status if completeness contract is violated",
+    )
     return parser.parse_args()
 
 
@@ -442,6 +525,29 @@ def main() -> None:
     print_summary(data)
     print(f"  Report  -> {report_path}")
     print(f"  Players -> {players_path}")
+
+    # Enforcement mode: exit non-zero on violations
+    if args.enforce:
+        violations = []
+
+        # Check season range
+        if not data.get("season_range", {}).get("complete", False):
+            violations.append("Season range incomplete")
+
+        # Check missing game types
+        if data.get("missing_required_game_types"):
+            violations.append(f"Missing game types: {data['missing_required_game_types']}")
+
+        # Check unresolved entities
+        unresolved = data.get("unresolved_entities", {})
+        if unresolved.get("players_without_identifier", 0) > 0:
+            violations.append(f"Unresolved players: {unresolved['players_without_identifier']}")
+
+        if violations:
+            print("\n[ENFORCE] Completeness violations detected:")
+            for v in violations:
+                print(f"  - {v}")
+            raise SystemExit(1)
 
 
 if __name__ == "__main__":

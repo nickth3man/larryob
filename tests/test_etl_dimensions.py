@@ -6,16 +6,6 @@ from unittest.mock import patch
 
 import pytest
 
-from src.etl._dimensions_helpers import (
-    _height_to_cm,
-    _map_common_all_player,
-    _map_common_player_info,
-    _map_nba_player_static,
-    _map_nba_team,
-    _normalize_position,
-    _parse_birth_date,
-    _weight_to_kg,
-)
 from src.etl.dimensions import (
     _season_id,
     load_players_bio_enrichment,
@@ -24,6 +14,16 @@ from src.etl.dimensions import (
     load_seasons,
     load_teams,
     run_all,
+)
+from src.etl.dimensions.helpers import (
+    _height_to_cm,
+    _map_common_all_player,
+    _map_common_player_info,
+    _map_nba_player_static,
+    _map_nba_team,
+    _normalize_position,
+    _parse_birth_date,
+    _weight_to_kg,
 )
 
 
@@ -344,7 +344,7 @@ def test_load_players_bio_enrichment_api_exception_skips_player(
     with patch(
         "src.etl.dimensions.commonplayerinfo.CommonPlayerInfo", side_effect=RuntimeError("API down")
     ):
-        with patch("src.etl.api_client.time.sleep"):
+        with patch("src.etl.extract.api_client.time.sleep"):
             result = load_players_bio_enrichment(sqlite_con_with_data, player_ids=["2544"])
     assert result == 0
 

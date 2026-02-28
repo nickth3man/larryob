@@ -5,7 +5,7 @@ from unittest.mock import MagicMock, patch
 import pytest
 import requests
 
-from src.etl.rate_limit import (
+from src.etl.extract.rate_limit import (
     BBRRateLimitExceeded,
     _AdaptiveBRefThrottle,
     fetch_html,
@@ -65,7 +65,7 @@ def test_on_success_never_drops_below_min_delay():
 
 def test_on_success_advances_next_allowed_at():
     t = _AdaptiveBRefThrottle()
-    with patch("src.etl.rate_limit.time") as mock_time:
+    with patch("src.etl.extract.rate_limit.time") as mock_time:
         mock_time.monotonic.return_value = 100.0
         t.on_success()
         assert t.next_allowed_at > 100.0
@@ -146,7 +146,7 @@ def test_on_rate_limit_fallback_when_zero():
 
 def test_on_rate_limit_advances_next_allowed_at():
     t = _AdaptiveBRefThrottle()
-    with patch("src.etl.rate_limit.time") as mock_time:
+    with patch("src.etl.extract.rate_limit.time") as mock_time:
         mock_time.monotonic.return_value = 100.0
         t.on_rate_limit(10)
         assert t.next_allowed_at > 100.0
@@ -205,8 +205,8 @@ def _mock_response(status_code: int, text: str = "<html/>", headers: dict | None
 
 def test_fetch_html_returns_text_on_200():
     with (
-        patch("src.etl.rate_limit.requests.get") as mock_get,
-        patch("src.etl.rate_limit._BREF_THROTTLE") as mock_throttle,
+        patch("src.etl.extract.rate_limit.requests.get") as mock_get,
+        patch("src.etl.extract.rate_limit._BREF_THROTTLE") as mock_throttle,
     ):
         mock_throttle.before_request = MagicMock()
         mock_throttle.on_success = MagicMock()
@@ -217,8 +217,8 @@ def test_fetch_html_returns_text_on_200():
 
 def test_fetch_html_returns_none_on_404():
     with (
-        patch("src.etl.rate_limit.requests.get") as mock_get,
-        patch("src.etl.rate_limit._BREF_THROTTLE") as mock_throttle,
+        patch("src.etl.extract.rate_limit.requests.get") as mock_get,
+        patch("src.etl.extract.rate_limit._BREF_THROTTLE") as mock_throttle,
     ):
         mock_throttle.before_request = MagicMock()
         mock_throttle.on_success = MagicMock()
@@ -238,8 +238,8 @@ def test_fetch_html_retries_on_429_and_succeeds():
         _mock_response(200, "<html>ok</html>"),
     ]
     with (
-        patch("src.etl.rate_limit.requests.get", side_effect=responses),
-        patch("src.etl.rate_limit._BREF_THROTTLE") as mock_throttle,
+        patch("src.etl.extract.rate_limit.requests.get", side_effect=responses),
+        patch("src.etl.extract.rate_limit._BREF_THROTTLE") as mock_throttle,
     ):
         mock_throttle.before_request = MagicMock()
         mock_throttle.on_success = MagicMock()
@@ -250,9 +250,9 @@ def test_fetch_html_retries_on_429_and_succeeds():
 
 def test_fetch_html_raises_on_excessive_retry_after():
     with (
-        patch("src.etl.rate_limit.requests.get") as mock_get,
-        patch("src.etl.rate_limit._BREF_THROTTLE") as mock_throttle,
-        patch("src.etl.rate_limit._bref_max_retry_after_seconds", return_value=300),
+        patch("src.etl.extract.rate_limit.requests.get") as mock_get,
+        patch("src.etl.extract.rate_limit._BREF_THROTTLE") as mock_throttle,
+        patch("src.etl.extract.rate_limit._bref_max_retry_after_seconds", return_value=300),
     ):
         mock_throttle.before_request = MagicMock()
         mock_get.return_value = _mock_response(429, headers={"Retry-After": "600"})
@@ -268,8 +268,8 @@ def test_fetch_html_raises_on_excessive_retry_after():
 
 def test_fetch_html_returns_none_on_other_4xx():
     with (
-        patch("src.etl.rate_limit.requests.get") as mock_get,
-        patch("src.etl.rate_limit._BREF_THROTTLE") as mock_throttle,
+        patch("src.etl.extract.rate_limit.requests.get") as mock_get,
+        patch("src.etl.extract.rate_limit._BREF_THROTTLE") as mock_throttle,
     ):
         mock_throttle.before_request = MagicMock()
         mock_throttle.on_transient_error = MagicMock()
@@ -285,8 +285,11 @@ def test_fetch_html_returns_none_on_other_4xx():
 
 def test_fetch_html_returns_none_after_all_retries_fail():
     with (
-        patch("src.etl.rate_limit.requests.get", side_effect=requests.RequestException("timeout")),
-        patch("src.etl.rate_limit._BREF_THROTTLE") as mock_throttle,
+        patch(
+            "src.etl.extract.rate_limit.requests.get",
+            side_effect=requests.RequestException("timeout"),
+        ),
+        patch("src.etl.extract.rate_limit._BREF_THROTTLE") as mock_throttle,
     ):
         mock_throttle.before_request = MagicMock()
         mock_throttle.on_transient_error = MagicMock()

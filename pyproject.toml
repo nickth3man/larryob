@@ -21,7 +21,7 @@ dependencies = [
 packages = ["src"]
 
 [project.scripts]
-ingest = "src.pipeline.cli:main"
+ingest = "src.pipeline.cli.main:main"
 
 [project.optional-dependencies]
 analytics = [
@@ -56,3 +56,4 @@ ignore = ["E501"]  # line-too-long handled by formatter
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+

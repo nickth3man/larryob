@@ -75,8 +75,8 @@ class CacheConfig:
         override = os.getenv("LARRYOB_CACHE_DIR")
         if override:
             return Path(override)
-        # Default to .cache/ relative to project root
-        return Path(__file__).parent.parent.parent / ".cache"
+        # Default to data/cache/ relative to project root
+        return Path(__file__).parent.parent.parent / "data" / "cache"
 
 
 # -----------------------------------------------------------------------------

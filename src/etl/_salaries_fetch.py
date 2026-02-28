@@ -13,7 +13,7 @@ from typing import cast
 import pandas as pd
 
 from ..db.cache import load_cache, save_cache
-from .rate_limit import BREF_BASE, fetch_html
+from .extract.rate_limit import BREF_BASE, fetch_html
 
 logger = logging.getLogger(__name__)
 

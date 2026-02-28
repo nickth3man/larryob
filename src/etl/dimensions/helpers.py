@@ -5,7 +5,7 @@ These are pure utility functions for converting and mapping NBA API data
 to dimension table rows.
 """
 
-from .config import get_team_metadata
+from ..config import get_team_metadata
 
 # ------------------------------------------------------------------ #
 # Conversion Helpers                                                  #

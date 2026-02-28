@@ -13,8 +13,8 @@ import time
 from collections.abc import Callable
 from typing import TypeVar
 
-from .config import APIConfig
-from .metrics import record_api_call, record_api_latency, record_retry
+from ..config import APIConfig
+from ..metrics import record_api_call, record_api_latency, record_retry
 
 logger = logging.getLogger(__name__)
 
