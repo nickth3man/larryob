@@ -55,6 +55,21 @@ uv run ruff format .
 uv run ty src/
 ```
 
+## Running Full History Ingestion
+
+To ingest the complete NBA history (1946-47 to present), including awards, salaries,
+rosters, and playoffs — all enabled by default:
+
+```bash
+uv run ingest --full-history
+```
+
+To run without optional domain data (e.g. skip salaries and playoffs):
+
+```bash
+uv run ingest --no-salaries --no-playoffs
+```
+
 ## Troubleshooting
 
 ### API Rate Limiting

@@ -54,19 +54,27 @@ def test_default_log_level_is_info():
     assert ns.log_level == "INFO"
 
 
-def test_default_awards_false():
+def test_default_awards_true():
     ns = _parse([])
-    assert ns.awards is False
+    assert ns.awards is True
 
 
-def test_default_salaries_false():
+def test_default_salaries_true():
     ns = _parse([])
-    assert ns.salaries is False
+    assert ns.salaries is True
 
 
-def test_default_rosters_false():
+def test_default_rosters_true():
     ns = _parse([])
-    assert ns.rosters is False
+    assert ns.rosters is True
+
+
+def test_default_pipeline_enables_full_history_domains():
+    ns = _parse([])
+    assert ns.awards is True
+    assert ns.salaries is True
+    assert ns.rosters is True
+    assert ns.include_playoffs is True
 
 
 # ------------------------------------------------------------------ #
