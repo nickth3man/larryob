@@ -4,7 +4,7 @@ Centralized business-rule validation for ETL output rows.
 
 import logging
 import sqlite3
-from typing import Sequence
+from collections.abc import Sequence
 
 from pydantic import ValidationError
 
@@ -140,9 +140,9 @@ def query_score_mismatches(con: sqlite3.Connection, seasons: Sequence[str]) -> l
     """Find all games where team points don't match the sum of player points for the given seasons."""
     if not seasons:
         return []
-    
+
     placeholders = ",".join("?" for _ in seasons)
-    
+
     sql = f"""
     WITH p_agg AS (
         SELECT
@@ -162,11 +162,11 @@ def query_score_mismatches(con: sqlite3.Connection, seasons: Sequence[str]) -> l
     JOIN fact_game g ON g.game_id = t.game_id
     LEFT JOIN p_agg p ON p.game_id = t.game_id AND p.team_id = t.team_id
     WHERE g.season_id IN ({placeholders})
-      AND p.p_pts IS NOT NULL 
+      AND p.p_pts IS NOT NULL
       AND t.pts != p.p_pts
     ORDER BY t.game_id, t.team_id
     """
-    
+
     params = list(seasons) * 2
     return con.execute(sql, params).fetchall()
 
