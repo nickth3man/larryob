@@ -249,6 +249,16 @@ def test_fact_all_nba_vote_vote_counts_valid():
     assert row.first_team_votes == 50
 
 
+def test_fact_all_nba_vote_empty_team_type_fails():
+    with pytest.raises(ValidationError, match="team_type must not be empty"):
+        FactAllNbaVoteRow(player_id="P1", season_id="2023-24", team_type="   ")
+
+
+def test_fact_all_nba_vote_invalid_team_number_fails():
+    with pytest.raises(ValidationError, match="team_number must be 1, 2, or 3"):
+        FactAllNbaVoteRow(player_id="P1", season_id="2023-24", team_type="All-NBA", team_number=4)
+
+
 # ------------------------------------------------------------------ #
 # FactDraftRow                                                        #
 # ------------------------------------------------------------------ #
@@ -264,15 +274,20 @@ def test_fact_draft_missing_season_id_fails():
         FactDraftRow(draft_round=1, overall_pick=1)  # ty: ignore[missing-argument]
 
 
-def test_fact_draft_valid_round_1_and_2():
-    for r in (1, 2, None):
+def test_fact_draft_valid_rounds():
+    for r in (1, 2, 3, 10, 21, None):
         row = FactDraftRow(season_id="2023-24", draft_round=r)
         assert row.draft_round == r
 
 
-def test_fact_draft_invalid_round_fails():
-    with pytest.raises(ValidationError, match="draft_round must be 1 or 2"):
-        FactDraftRow(season_id="2023-24", draft_round=3)
+def test_fact_draft_invalid_round_zero_fails():
+    with pytest.raises(ValidationError, match="draft_round must be >= 1"):
+        FactDraftRow(season_id="2023-24", draft_round=0)
+
+
+def test_fact_draft_invalid_round_negative_fails():
+    with pytest.raises(ValidationError, match="draft_round must be >= 1"):
+        FactDraftRow(season_id="2023-24", draft_round=-1)
 
 
 def test_fact_draft_overall_pick_must_be_positive():

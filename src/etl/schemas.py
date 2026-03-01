@@ -199,6 +199,20 @@ class FactAllNbaVoteRow(BaseModel):
     second_team_votes: int | None = Field(default=None, ge=0)
     third_team_votes: int | None = Field(default=None, ge=0)
 
+    @field_validator("team_type")
+    @classmethod
+    def team_type_nonempty(cls, v: str) -> str:
+        if not v.strip():
+            raise ValueError("team_type must not be empty")
+        return v
+
+    @field_validator("team_number")
+    @classmethod
+    def team_number_valid(cls, v: int | None) -> int | None:
+        if v is not None and v not in (1, 2, 3):
+            raise ValueError("team_number must be 1, 2, or 3")
+        return v
+
     @model_validator(mode="after")
     def pts_won_le_max(self) -> "FactAllNbaVoteRow":
         if self.pts_won is not None and self.pts_max is not None:
@@ -221,8 +235,8 @@ class FactDraftRow(BaseModel):
     @field_validator("draft_round")
     @classmethod
     def draft_round_valid(cls, v: int | None) -> int | None:
-        if v is not None and v not in (1, 2):
-            raise ValueError("draft_round must be 1 or 2")
+        if v is not None and v < 1:
+            raise ValueError("draft_round must be >= 1")
         return v
 
 

@@ -100,8 +100,6 @@ def load_team_roster(
             logger.warning("CommonTeamRoster(%s,%s) failed: %s", team_id, season_id, exc)
             return 0
 
-    if not rows:
-        return 0
     rows = validate_rows("fact_roster", rows)
     if not rows:
         return 0
