@@ -31,6 +31,37 @@ def _season_start_date(season_id: str) -> str:
     return f"{start_year}-10-01"
 
 
+def fetch_common_team_roster_rows(
+    con: sqlite3.Connection, season_id: str, api_caller: APICaller | None = None
+) -> list[dict]:
+    """Fetch roster for all teams."""
+    if api_caller is None:
+        api_caller = APICaller()
+    cur = con.execute("SELECT team_id FROM dim_team")
+    team_ids = [r[0] for r in cur.fetchall()]
+
+    api_season = season_id.split("-")[0]
+    all_data = []
+
+    for tid in team_ids:
+
+        def _fetch():
+            ep = commonteamroster.CommonTeamRoster(
+                team_id=tid,
+                season=api_season,
+                league_id_nullable="00",
+            )
+            dfs = ep.get_data_frames()
+            if len(dfs) > 1:
+                return dfs[1].assign(TEAM_ID=tid, SEASON_ID=season_id).to_dict(orient="records")
+            return []
+
+        coaches = api_caller.call_with_backoff(_fetch, label=f"CommonTeamRoster({tid},{season_id})")
+        all_data.extend(coaches)
+
+    return all_data
+
+
 def load_team_roster(
     con: sqlite3.Connection,
     team_id: str,

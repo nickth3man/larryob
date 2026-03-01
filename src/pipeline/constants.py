@@ -78,7 +78,7 @@ AWARDS_TABLES: tuple[str, ...] = ("fact_player_award",)
 SALARIES_TABLES: tuple[str, ...] = ("dim_salary_cap", "fact_salary")
 
 #: Tables populated during ROSTERS stage
-ROSTERS_TABLES: tuple[str, ...] = ("fact_roster",)
+ROSTERS_TABLES: tuple[str, ...] = ("fact_roster", "dim_coach", "fact_team_coach_game")
 
 #: Tables updated during GAME_LOGS stage (box scores)
 GAME_LOGS_TABLES: tuple[str, ...] = ("fact_game", "player_game_log", "team_game_log")
