@@ -31,10 +31,9 @@ from src.etl.raw_backfill import RAW_DIR, run_raw_backfill
 from src.etl.transform.game_logs import load_multiple_seasons
 from src.etl.transform.play_by_play import load_season_pbp
 from src.etl.validation import run_consistency_checks
-from src.pipeline.parity import run_blocking_parity_gates
-
 from src.pipeline.exceptions import ReconciliationError
 from src.pipeline.models import IngestConfig
+from src.pipeline.parity import run_blocking_parity_gates
 
 logger = logging.getLogger(__name__)
 

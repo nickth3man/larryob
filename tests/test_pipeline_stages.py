@@ -174,6 +174,7 @@ def test_run_reconciliation_no_warnings_completes_silently():
         run_reconciliation(con, cfg)  # should not raise
         mock_run.assert_called_once_with(con, ("2023-24",))
 
+
 def test_run_reconciliation_warn_only_logs_instead_of_raising(caplog):
     import logging
 
@@ -188,19 +189,28 @@ def test_run_reconciliation_warn_only_logs_instead_of_raising(caplog):
 def test_run_reconciliation_raises_when_not_warn_only():
     con = MagicMock(spec=sqlite3.Connection)
     cfg = _config(seasons=("2023-24",), reconciliation_warn_only=False)
-    with patch("src.pipeline.stages.run_blocking_parity_gates", side_effect=ReconciliationError(2, ["2023-24"])):
+    with patch(
+        "src.pipeline.stages.run_blocking_parity_gates",
+        side_effect=ReconciliationError(2, ["2023-24"]),
+    ):
         with pytest.raises(ReconciliationError):
             run_reconciliation(con, cfg)
+
 
 def test_run_reconciliation_accumulates_warnings_across_seasons():
     """Warnings from multiple seasons are summed before the single raise."""
     con = MagicMock(spec=sqlite3.Connection)
     cfg = _config(seasons=("2022-23", "2023-24"), reconciliation_warn_only=False)
     # mock the exact error since run_consistency_checks is bypassed in blocking mode
-    with patch("src.pipeline.stages.run_blocking_parity_gates", side_effect=ReconciliationError(2, ["2022-23", "2023-24"])):
+    with patch(
+        "src.pipeline.stages.run_blocking_parity_gates",
+        side_effect=ReconciliationError(2, ["2022-23", "2023-24"]),
+    ):
         with pytest.raises(ReconciliationError) as exc_info:
             run_reconciliation(con, cfg)
     assert exc_info.value.warning_count == 2
+
+
 def test_run_reconciliation_multiple_seasons_zero_warnings():
     con = MagicMock(spec=sqlite3.Connection)
     cfg = _config(seasons=("2022-23", "2023-24"), reconciliation_warn_only=False)

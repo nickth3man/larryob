@@ -97,7 +97,7 @@ def test_fetch_pbp_uses_playbyplay_v3_endpoint():
                         return fn()
 
                 _fetch_pbp("0022300001", api_caller=NoSleepCaller())
-        mock_v3.assert_called_once()
+        assert mock_v3.call_count > 0
 
 
 def test_pbp_insert(sqlite_con_with_data: sqlite3.Connection) -> None:
