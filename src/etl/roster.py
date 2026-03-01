@@ -20,6 +20,7 @@ from ..db.operations import upsert_rows
 from ..db.tracking import already_loaded, record_run
 from .extract.api_client import APICaller
 from .metrics import record_etl_rows
+from .validation import validate_rows
 
 logger = logging.getLogger(__name__)
 
@@ -99,6 +100,9 @@ def load_team_roster(
             logger.warning("CommonTeamRoster(%s,%s) failed: %s", team_id, season_id, exc)
             return 0
 
+    if not rows:
+        return 0
+    rows = validate_rows("fact_roster", rows)
     if not rows:
         return 0
     inserted = upsert_rows(con, "fact_roster", rows, conflict="IGNORE")
