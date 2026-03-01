@@ -31,6 +31,7 @@
 
 - No Python file should exceed 400 lines. If a file approaches or exceeds this limit, refactor by splitting it into smaller, logically grouped modules. Note: `__init__.py` files are exempt from this rule.
 - `_ROW_MODELS` in `src/etl/validation.py` has 15 keys: 13 canonical `fact_*` keys + 2 legacy keys (`player_game_log`, `team_game_log`). The legacy keys are live call sites in `src/etl/backfill/_game_logs.py` — do not remove them.
+- Do not use PlayByPlayV2 or ScoreboardV2 for canonical ingest; always use PlayByPlayV3 and ScoreboardV3.
 
 ---
 
