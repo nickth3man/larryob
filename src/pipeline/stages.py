@@ -31,6 +31,8 @@ from src.etl.raw_backfill import RAW_DIR, run_raw_backfill
 from src.etl.transform.game_logs import load_multiple_seasons
 from src.etl.transform.play_by_play import load_season_pbp
 from src.etl.validation import run_consistency_checks
+from src.pipeline.parity import run_blocking_parity_gates
+
 from src.pipeline.exceptions import ReconciliationError
 from src.pipeline.models import IngestConfig
 
@@ -85,6 +87,7 @@ def run_reconciliation(con: sqlite3.Connection, config: IngestConfig) -> None:
     """Run reconciliation checks for all seasons.
 
     Compares player-sum vs team-total for PTS/REB/AST columns.
+    When not in warn-only mode, enforces strict blocking validation via run_blocking_parity_gates.
 
     Args:
         con: SQLite connection.
@@ -93,6 +96,9 @@ def run_reconciliation(con: sqlite3.Connection, config: IngestConfig) -> None:
     Raises:
         ReconciliationError: If discrepancies found and not in warn-only mode.
     """
+    if not config.reconciliation_warn_only:
+        run_blocking_parity_gates(con, config.seasons)
+        return
     total_warnings = 0
     seasons_with_issues: list[str] = []
 
