@@ -54,6 +54,10 @@ StageFn = Callable[..., Any]
 #: Tables affected by the DIMENSIONS stage (seed reference data)
 DIMENSIONS_TABLES: tuple[str, ...] = ("dim_season", "dim_team", "dim_player")
 
+#: Tables populated during INVENTORY stage
+INVENTORY_TABLES: tuple[str, ...] = ("fact_game",)
+
+
 #: Tables populated during RAW_BACKFILL (from Basketball-Reference CSVs)
 RAW_BACKFILL_TABLES: tuple[str, ...] = (
     "dim_team_history",
