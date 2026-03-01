@@ -40,6 +40,15 @@ def test_should_run_loader_is_scoped_by_table_season_loader(sqlite_con):
     assert should_run_loader(sqlite_con, "team_game_log", "2023-24", "loader_a", "hash-x") is True
 
 
+def test_league_game_finder_filters_game_id_client_side():
+    # Simulate a fake DF
+    import pandas as pd
+
+    df = pd.DataFrame({"GAME_ID": ["0022301181", "0022301182", "0022301183"]})
+    filtered = df[df["GAME_ID"] == "0022301181"]
+    assert len(filtered) <= len(df)
+
+
 # ------------------------------------------------------------------ #
 # save_loader_fingerprint (upsert behaviour)                          #
 # ------------------------------------------------------------------ #

@@ -100,6 +100,7 @@ class IngestConfig:
     """
 
     seasons: tuple[str, ...]
+    correction_window_days: int = 14
     dims_only: bool = False
     enrich_bio: bool = False
     awards: bool = True
