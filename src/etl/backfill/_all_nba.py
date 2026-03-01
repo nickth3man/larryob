@@ -19,6 +19,7 @@ from src.etl.backfill._base import (
 )
 from src.etl.helpers import _isna, int_season_to_id
 from src.etl.identity.resolver import resolve_or_create_player
+from src.etl.validation import validate_rows
 
 logger = logging.getLogger(__name__)
 
@@ -122,6 +123,9 @@ def load_all_nba_teams(
             }
         )
 
+    rows = validate_rows("fact_all_nba", rows)
+    if not rows:
+        return 0
     inserted = upsert_rows(con, "fact_all_nba", rows)
     logger.info("fact_all_nba: %d inserted/ignored, %d skipped", inserted, skipped)
     return inserted
@@ -177,6 +181,9 @@ def load_all_nba_votes(
             }
         )
 
+    rows = validate_rows("fact_all_nba_vote", rows)
+    if not rows:
+        return 0
     inserted = upsert_rows(con, "fact_all_nba_vote", rows)
     logger.info("fact_all_nba_vote: %d inserted/ignored, %d skipped", inserted, skipped)
     return inserted
