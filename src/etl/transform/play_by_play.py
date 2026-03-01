@@ -28,7 +28,7 @@ from pathlib import Path
 from typing import Literal
 
 import pandas as pd
-from nba_api.stats.endpoints import playbyplayv2
+from nba_api.stats.endpoints import playbyplayv3
 
 from ...db.cache import load_cache, save_cache
 from ...db.operations import transaction, upsert_rows
@@ -106,9 +106,16 @@ def _fetch_pbp(game_id: str, api_caller: APICaller | None = None) -> pd.DataFram
         api_caller = APICaller()
 
     def _call():
-        ep = playbyplayv2.PlayByPlayV2(game_id=game_id)
-        return ep.get_data_frames()[0]
+        ep = playbyplayv3.PlayByPlayV3(game_id=game_id)
+        df = ep.play_by_play.get_data_frame()
+        return df
 
+    # PBP endpoints allow faster calls (1.5s vs default 3s)
+    df = api_caller.call_with_backoff_custom_delay(
+        _call,
+        base_sleep=1.5,
+        label=f"PlayByPlayV3({game_id})",
+    )
     # PBP endpoints allow faster calls (1.5s vs default 3s)
     df = api_caller.call_with_backoff_custom_delay(
         _call,
@@ -122,6 +129,10 @@ def _fetch_pbp(game_id: str, api_caller: APICaller | None = None) -> pd.DataFram
 # ------------------------------------------------------------------ #
 # Transform                                                           #
 # ------------------------------------------------------------------ #
+
+
+def _build_event_id(game_id: str, action_number: int) -> str:
+    return f"{game_id}_{action_number:06d}"
 
 
 def _transform_pbp(df: pd.DataFrame) -> list[dict]:
