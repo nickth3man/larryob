@@ -18,6 +18,7 @@ from ..db.cache import load_cache, save_cache
 from ..db.operations import upsert_rows
 from ..db.tracking import already_loaded, record_run
 from .extract.api_client import APICaller
+from .validation import validate_rows
 
 logger = logging.getLogger(__name__)
 
@@ -184,6 +185,10 @@ def load_player_awards(
         skipped_missing_player,
         skipped_missing_season,
     )
+    if not filtered_rows:
+        return 0
+
+    filtered_rows = validate_rows("fact_player_award", filtered_rows)
     if not filtered_rows:
         return 0
 

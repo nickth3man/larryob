@@ -20,6 +20,7 @@ from src.etl.backfill._base import (
     safe_str,
 )
 from src.etl.helpers import int_season_to_id
+from src.etl.validation import validate_rows
 
 logger = logging.getLogger(__name__)
 
@@ -94,6 +95,10 @@ def load_draft(
             skipped += 1
         else:
             rows.append(transformed)
+
+    rows = validate_rows("fact_draft", rows)
+    if not rows:
+        return
 
     inserted = upsert_rows(con, "fact_draft", rows)
     logger.info(

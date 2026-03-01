@@ -17,6 +17,7 @@ from src.etl.backfill._base import (
 )
 from src.etl.helpers import _isna, int_season_to_id
 from src.etl.identity.resolver import resolve_or_create_player
+from src.etl.validation import validate_rows
 
 logger = logging.getLogger(__name__)
 
@@ -124,6 +125,9 @@ def load_all_star_selections(
             }
         )
 
+    rows = validate_rows("fact_all_star", rows)
+    if not rows:
+        return 0
     inserted = upsert_rows(con, "fact_all_star", rows)
     logger.info("fact_all_star: %d inserted/ignored, %d skipped", inserted, skipped)
     return inserted

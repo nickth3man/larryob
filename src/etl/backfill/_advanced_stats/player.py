@@ -41,7 +41,7 @@ def _transform_advanced_row(
         "gs": _int(row.get("gs")),
         "mp": _int(row.get("mp")),
         "per": _flt(row.get("per")),
-        "ts_pct": _flt(row.get("ts_percent")),
+        "ts_pct": _pct_01(row.get("ts_percent")),
         "x3p_ar": _flt(row.get("x3p_ar")),
         "f_tr": _flt(row.get("f_tr")),
         "orb_pct": _pct_01(row.get("orb_percent")),

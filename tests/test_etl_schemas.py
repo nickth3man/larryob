@@ -294,3 +294,25 @@ def test_fact_player_shooting_partial_zones_skips_validation():
     # Validation only runs when ALL zones are set
     row = FactPlayerShootingSeasonRow(pct_fga_0_3=0.99)
     assert row.pct_fga_0_3 == pytest.approx(0.99)
+
+
+def test_row_models_covers_all_validated_tables():
+    """All 13 fact tables that go through validate_rows() must be registered."""
+    from src.etl.validation import _ROW_MODELS
+
+    expected = {
+        "fact_player_game_log",
+        "fact_team_game_log",
+        "fact_game",
+        "fact_salary",
+        "fact_player_season_stats",
+        "fact_player_advanced_season",
+        "fact_player_shooting_season",
+        "fact_player_award",
+        "fact_all_star",
+        "fact_all_nba",
+        "fact_all_nba_vote",
+        "fact_draft",
+        "fact_roster",
+    }
+    assert expected.issubset(set(_ROW_MODELS.keys()))

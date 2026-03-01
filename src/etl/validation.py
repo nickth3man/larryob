@@ -8,10 +8,16 @@ import sqlite3
 from pydantic import ValidationError
 
 from .schemas import (
+    FactAllNbaRow,
+    FactAllNbaVoteRow,
+    FactAllStarRow,
+    FactDraftRow,
     FactGameRow,
     FactPlayerAdvancedSeasonRow,
+    FactPlayerAwardRow,
     FactPlayerSeasonStatsRow,
     FactPlayerShootingSeasonRow,
+    FactRosterRow,
     FactSalaryRow,
     PlayerGameLogRow,
     TeamGameLogRow,
@@ -22,11 +28,19 @@ logger = logging.getLogger(__name__)
 _ROW_MODELS = {
     "player_game_log": PlayerGameLogRow,
     "team_game_log": TeamGameLogRow,
+    "fact_player_game_log": PlayerGameLogRow,
+    "fact_team_game_log": TeamGameLogRow,
     "fact_game": FactGameRow,
     "fact_salary": FactSalaryRow,
     "fact_player_season_stats": FactPlayerSeasonStatsRow,
     "fact_player_advanced_season": FactPlayerAdvancedSeasonRow,
     "fact_player_shooting_season": FactPlayerShootingSeasonRow,
+    "fact_player_award": FactPlayerAwardRow,
+    "fact_all_star": FactAllStarRow,
+    "fact_all_nba": FactAllNbaRow,
+    "fact_all_nba_vote": FactAllNbaVoteRow,
+    "fact_draft": FactDraftRow,
+    "fact_roster": FactRosterRow,
 }
 
 
