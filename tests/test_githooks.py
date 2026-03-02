@@ -91,14 +91,14 @@ def test_pre_commit_hook_runs_type_checker() -> None:
     assert "ty check" in content, "pre-commit should run type checker"
 
 
-def test_pre_commit_hook_runs_pytest() -> None:
-    """Verify pre-commit runs pytest."""
+def test_pre_commit_hook_does_not_run_pytest() -> None:
+    """Verify pre-commit does NOT run pytest (tests are enforced by CI, not local hook)."""
     hook = Path(".githooks/pre-commit")
     if not hook.exists():
         pytest.skip("pre-commit hook not found")
 
     content = hook.read_text()
-    assert "pytest" in content, "pre-commit should run pytest"
+    assert "pytest" not in content, "pre-commit should not run pytest (CI enforces tests)"
 
 
 def test_pre_commit_hook_exits_on_missing_uv() -> None:
@@ -136,7 +136,7 @@ def test_pre_commit_hook_commands_use_uv_run() -> None:
     lines = [line.strip() for line in content.split("\n")]
 
     # Commands that should be prefixed with 'uv run'
-    commands = ["ruff check", "ruff format", "ty check", "pytest"]
+    commands = ["ruff check", "ruff format", "ty check"]
 
     for cmd in commands:
         # Find lines containing the command (exclude echo and comments)
@@ -191,22 +191,18 @@ def test_pre_commit_hook_quality_checks_order() -> None:
 
     content = hook.read_text()
 
-    # Find positions of each check
+    # Find positions of each check (use full command to avoid substring false-positives)
     ruff_check_pos = content.find("ruff check")
     ruff_format_pos = content.find("ruff format")
-    ty_check_pos = content.find("ty check")
-    pytest_pos = content.find("pytest")
+    ty_check_pos = content.find("uv run ty check")
 
     # All should be present
     assert ruff_check_pos > 0
     assert ruff_format_pos > 0
     assert ty_check_pos > 0
-    assert pytest_pos > 0
 
-    # Reasonable order: lint, format, type check, then tests
-    # (exact order may vary, but all should be present)
-    assert ruff_check_pos < pytest_pos, "linting should run before tests"
-    assert ty_check_pos < pytest_pos, "type checking should run before tests"
+    # Reasonable order: lint, format, then type check
+    assert ruff_check_pos < ty_check_pos, "linting should run before type checking"
 
 
 def test_pre_commit_hook_uses_quiet_pytest() -> None:
@@ -233,8 +229,8 @@ def test_pre_commit_hook_content_matches_ci() -> None:
     hook_content = hook.read_text()
     workflow_content = workflow.read_text()
 
-    # Both should run the same quality checks
-    checks = ["ruff check", "ruff format", "ty check", "pytest"]
+    # Both should run these quality checks
+    checks = ["ruff check", "ruff format", "ty check"]
 
     for check in checks:
         assert check in hook_content, f"pre-commit missing '{check}'"

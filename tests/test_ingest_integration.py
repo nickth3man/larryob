@@ -30,7 +30,6 @@ def test_ingest_dims_only(tmp_path, monkeypatch):
         "--no-awards",
         "--no-salaries",
     ]
-    test_args = ["ingest.py", "--dims-only", "--seasons", "2023-24"]
 
     # Mock network calls
     with patch("sys.argv", test_args):

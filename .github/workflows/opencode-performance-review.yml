@@ -2,7 +2,7 @@ name: opencode-performance-review
 
 on:
   pull_request:
-    types: [opened, labeled]
+    types: [opened, synchronize, reopened, labeled]
 
 concurrency:
   group: opencode-performance-${{ github.event.pull_request.number }}

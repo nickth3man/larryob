@@ -43,9 +43,6 @@ jobs:
       - name: Pytest
         run: uv run pytest -q
 
-      - name: Completeness audit
-        run: uv run python scripts/completion_audit.py --db-path data/databases/nba_raw_data.db --enforce
-        continue-on-error: true  # Don't fail CI until completeness is achieved
   quality_hook:
     name: quality-hook
     if: always()

@@ -16,12 +16,11 @@ def test_pre_commit_and_ci_workflow_consistency() -> None:
     hook_content = hook.read_text()
     workflow_content = workflow.read_text()
 
-    # Both should run these commands
+    # Both should run these commands (pytest is CI-only; pre-commit skips it intentionally)
     critical_checks = [
         "ruff check",
         "ruff format",
         "ty check",
-        "pytest",
     ]
 
     for check in critical_checks:

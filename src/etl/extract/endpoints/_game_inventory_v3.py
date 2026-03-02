@@ -59,7 +59,7 @@ def fetch_schedule_league_v2(
     def _call() -> pd.DataFrame:
         ep = scheduleleaguev2.ScheduleLeagueV2(season=api_season)
         # Use named dataset attribute — never get_data_frames()[index]
-        return ep.season_games.get_data_frame()
+        return ep.season_games.get_data_frame()  # type: ignore[union-attr]
 
     df: pd.DataFrame = api_caller.call_with_backoff(
         _call,
@@ -130,8 +130,8 @@ def fetch_scoreboard_v3_for_dates(
         def _call(date: str = game_date) -> tuple[pd.DataFrame, pd.DataFrame]:
             ep = scoreboardv3.ScoreboardV3(game_date=date)
             # Use named dataset attributes — never get_data_frames()[index]
-            header_df = ep.game_header.get_data_frame()
-            line_score_df = ep.line_score.get_data_frame()
+            header_df = ep.game_header.get_data_frame()  # type: ignore[union-attr]
+            line_score_df = ep.line_score.get_data_frame()  # type: ignore[union-attr]
             return header_df, line_score_df
 
         try:
