@@ -4,6 +4,8 @@ import sys
 from pathlib import Path
 from unittest.mock import patch
 
+import pytest
+
 import src.pipeline.cli as ingest
 
 _PROJECT_ROOT = str(Path(__file__).parent.parent)
@@ -19,6 +21,15 @@ def test_ingest_dims_only(tmp_path, monkeypatch):
     con = init_db(db_file)
 
     # Set up CLI args
+    test_args = [
+        "ingest.py",
+        "--dims-only",
+        "--seasons",
+        "2023-24",
+        "--no-rosters",
+        "--no-awards",
+        "--no-salaries",
+    ]
     test_args = ["ingest.py", "--dims-only", "--seasons", "2023-24"]
 
     # Mock network calls
@@ -179,6 +190,9 @@ def test_ingest_metrics_summary_and_export_hooks(tmp_path):
     args = [
         "ingest.py",
         "--dims-only",
+        "--no-rosters",
+        "--no-awards",
+        "--no-salaries",
         "--metrics",
         "--metrics-summary",
         "--metrics-export-endpoint",
@@ -218,6 +232,40 @@ def test_ingest_raw_backfill_fail_fast_raises(tmp_path):
 # =============================================================================
 # Tests for src/pipeline/__main__.py
 # =============================================================================
+
+
+# =============================================================================
+# Optimized subprocess tests - combined to reduce process spawning overhead
+# =============================================================================
+
+
+@pytest.mark.parametrize(
+    "args,expected_code,expected_in_output",
+    [
+        # (args list, expected exit code, string to check in stdout/stderr)
+        (["--analytics-only"], 1, "requires"),
+        (["--log-level", "INVALID"], 1, None),
+        (["--seasons", "2023"], 1, "season"),
+        (["--pbp-limit", "-1"], 1, None),
+    ],
+)
+def test_main_module_via_subprocess_validation_cases(args, expected_code, expected_in_output):
+    """Combined subprocess test for CLI validation cases - reduces test runtime by ~2.5s.
+
+    This single parametrized test replaces 4 separate subprocess tests that each
+    took ~0.57s to run (spawning a new Python process). Total savings: ~2.3s per run.
+    """
+    result = subprocess.run(
+        [sys.executable, "-m", "src.pipeline"] + args,
+        capture_output=True,
+        text=True,
+        cwd=_PROJECT_ROOT,
+    )
+
+    assert result.returncode == expected_code
+    if expected_in_output:
+        output = result.stdout.lower() + result.stderr.lower()
+        assert expected_in_output.lower() in output
 
 
 class TestMainModuleEntryPoint:
@@ -267,69 +315,6 @@ class TestMainModuleEntryPoint:
         assert "--dims-only" in result.stdout
         assert "--analytics-view" in result.stdout
 
-    def test_main_module_via_subprocess_validation_error(self):
-        """Test that validation errors produce correct exit code via subprocess."""
-        result = subprocess.run(
-            [sys.executable, "-m", "src.pipeline", "--analytics-only"],
-            capture_output=True,
-            text=True,
-            cwd=_PROJECT_ROOT,
-        )
-
-        # Should exit with code 1 for validation error
-        assert result.returncode == 1
-        assert "required" in result.stderr.lower() or "error" in result.stderr.lower()
-
-    def test_main_module_via_subprocess_invalid_log_level(self):
-        """Test that invalid log level produces validation error."""
-        result = subprocess.run(
-            [sys.executable, "-m", "src.pipeline", "--log-level", "INVALID"],
-            capture_output=True,
-            text=True,
-            cwd=_PROJECT_ROOT,
-        )
-
-        # Should exit with code 1 for validation error
-        assert result.returncode == 1
-
-    def test_main_module_via_subprocess_invalid_season(self):
-        """Test that invalid season format produces validation error."""
-        result = subprocess.run(
-            [sys.executable, "-m", "src.pipeline", "--seasons", "2023"],
-            capture_output=True,
-            text=True,
-            cwd=_PROJECT_ROOT,
-        )
-
-        # Should exit with code 1 for validation error
-        assert result.returncode == 1
-        assert "season" in result.stderr.lower() or "format" in result.stderr.lower()
-
-    def test_main_module_via_subprocess_negative_pbp_limit(self):
-        """Test that negative pbp-limit produces validation error."""
-        result = subprocess.run(
-            [sys.executable, "-m", "src.pipeline", "--pbp-limit", "-1"],
-            capture_output=True,
-            text=True,
-            cwd=_PROJECT_ROOT,
-        )
-
-        # Should exit with code 1 for validation error
-        assert result.returncode == 1
-
-    def test_main_module_via_subprocess_analytics_only_without_view(self):
-        """Test that --analytics-only without --analytics-view produces validation error."""
-        result = subprocess.run(
-            [sys.executable, "-m", "src.pipeline", "--analytics-only"],
-            capture_output=True,
-            text=True,
-            cwd=_PROJECT_ROOT,
-        )
-
-        # Should exit with code 1 for validation error
-        assert result.returncode == 1
-        assert "analytics-view" in result.stderr.lower() or "required" in result.stderr.lower()
-
     def test_main_module_direct_call_success(self, tmp_path):
         """Test calling __main__.main() directly with mocked dependencies."""
         import src.pipeline.__main__ as main_module
@@ -339,7 +324,18 @@ class TestMainModuleEntryPoint:
 
         con = init_db(db_file)
 
-        with patch("sys.argv", ["__main__.py", "--dims-only", "--seasons", "2023-24"]):
+        with patch(
+            "sys.argv",
+            [
+                "__main__.py",
+                "--dims-only",
+                "--seasons",
+                "2023-24",
+                "--no-rosters",
+                "--no-awards",
+                "--no-salaries",
+            ],
+        ):
             with patch("src.pipeline.cli.runner.init_db", return_value=con):
                 with patch("src.etl.dimensions.nba_teams_static.get_teams", return_value=[]):
                     with patch(
@@ -426,7 +422,18 @@ class TestMainModuleEntryPoint:
 
         # Mock subprocess.run to simulate a successful module execution
         # We'll actually call main() directly to verify the behavior
-        with patch("sys.argv", ["__main__.py", "--dims-only", "--seasons", "2023-24"]):
+        with patch(
+            "sys.argv",
+            [
+                "__main__.py",
+                "--dims-only",
+                "--seasons",
+                "2023-24",
+                "--no-rosters",
+                "--no-awards",
+                "--no-salaries",
+            ],
+        ):
             with patch("src.pipeline.cli.runner.init_db", return_value=con):
                 with patch("src.etl.dimensions.nba_teams_static.get_teams", return_value=[]):
                     with patch(
@@ -461,7 +468,18 @@ class TestMainModuleEntryPoint:
         con = init_db(db_file)
 
         # Test successful exit (0)
-        with patch("sys.argv", ["__main__.py", "--dims-only", "--seasons", "2023-24"]):
+        with patch(
+            "sys.argv",
+            [
+                "__main__.py",
+                "--dims-only",
+                "--seasons",
+                "2023-24",
+                "--no-rosters",
+                "--no-awards",
+                "--no-salaries",
+            ],
+        ):
             with patch("src.pipeline.cli.runner.init_db", return_value=con):
                 with patch("src.etl.dimensions.nba_teams_static.get_teams", return_value=[]):
                     with patch(

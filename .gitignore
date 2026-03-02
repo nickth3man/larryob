@@ -5,6 +5,9 @@ build/
 dist/
 wheels/
 *.egg-info
+.pytest_cache/
+.hypothesis/
+.ruff_cache/
 
 # Virtual environments
 .venv
@@ -26,9 +29,13 @@ data/databases/
 .coverage
 coverage.json
 reports/coverage/
+htmlcov/
 
 # Log files (runtime artifacts)
 logs/*.log
 *.log
+
+# Misc
+etl_test_durations.txt
 
 .worktrees/

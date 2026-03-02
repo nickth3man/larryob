@@ -11,8 +11,12 @@ from src.etl.extract.api_client import APICaller, get_api_caller
 class TestAPICaller:
     """Test unified API client with rate limiting."""
 
-    def test_init_default(self) -> None:
+    def test_init_default(self, monkeypatch) -> None:
         """Default initialization should use config defaults."""
+        # Unset env vars to test true defaults
+        monkeypatch.delenv("LARRYOB_API_DELAY_SECONDS", raising=False)
+        monkeypatch.delenv("LARRYOB_API_MAX_RETRIES", raising=False)
+        monkeypatch.delenv("LARRYOB_INTER_CALL_SLEEP", raising=False)
         caller = APICaller()
         assert caller._base_sleep == 3.0
         assert caller._max_retries == 5
@@ -107,8 +111,16 @@ class TestGetAPICaller:
         caller2 = get_api_caller()
         assert caller1 is caller2
 
-    def test_get_api_caller_default_config(self) -> None:
+    def test_get_api_caller_default_config(self, monkeypatch) -> None:
         """Default instance should use config defaults."""
+        # Unset env vars to test true defaults
+        monkeypatch.delenv("LARRYOB_API_DELAY_SECONDS", raising=False)
+        monkeypatch.delenv("LARRYOB_API_MAX_RETRIES", raising=False)
+        monkeypatch.delenv("LARRYOB_INTER_CALL_SLEEP", raising=False)
+        # Reset singleton to ensure fresh instance with new env
+        import src.etl.extract.api_client as api_client_mod
+
+        api_client_mod._default_api_caller = None
         caller = get_api_caller()
         assert caller._base_sleep == 3.0
         assert caller._max_retries == 5
