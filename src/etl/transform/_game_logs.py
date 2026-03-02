@@ -267,3 +267,79 @@ def build_team_rows(df: pd.DataFrame) -> list[dict[str, Any]]:
         .reset_index()
     )
     return agg.where(pd.notna(agg), None).to_dict(orient="records")
+
+
+# BoxScoreTraditionalV3 mappings
+V3_PLAYER_RENAME: dict[str, str] = {
+    "personId": "player_id",
+    "teamId": "team_id",
+    "minutes": "minutes_played",
+    "fieldGoalsMade": "fgm",
+    "fieldGoalsAttempted": "fga",
+    "threePointersMade": "fg3m",
+    "threePointersAttempted": "fg3a",
+    "freeThrowsMade": "ftm",
+    "freeThrowsAttempted": "fta",
+    "reboundsOffensive": "oreb",
+    "reboundsDefensive": "dreb",
+    "reboundsTotal": "reb",
+    "assists": "ast",
+    "steals": "stl",
+    "blocks": "blk",
+    "turnovers": "tov",
+    "foulsPersonal": "pf",
+    "points": "pts",
+    "plusMinusPoints": "plus_minus",
+}
+
+
+def _convert_v3_minutes(mm_ss: Any) -> float | None:
+    if pd.isna(mm_ss) or mm_ss == "":
+        return None
+    try:
+        if ":" in str(mm_ss):
+            parts = str(mm_ss).split(":")
+            return float(parts[0]) + float(parts[1]) / 60.0
+        return float(mm_ss)
+    except Exception:
+        return None
+
+
+def transform_boxscore_player_rows(data: list[dict], game_id: str) -> list[dict[str, Any]]:
+    if not data:
+        return []
+    df = pd.DataFrame(data)
+    df = df.rename(columns=V3_PLAYER_RENAME)
+    df["game_id"] = game_id
+    if "minutes_played" in df.columns:
+        df["minutes_played"] = df["minutes_played"].apply(_convert_v3_minutes)
+
+    available = [c for c in PGL_COLS if c in df.columns]
+    df_clean = df[available].copy()
+    for c in PGL_COLS:
+        if c not in df_clean.columns:
+            df_clean[c] = None
+
+    df_clean["starter"] = None
+    df_clean["game_id"] = df_clean["game_id"].astype(str)
+    df_clean["player_id"] = df_clean["player_id"].astype(str)
+    df_clean["team_id"] = df_clean["team_id"].astype(str)
+    rows = df_clean.where(pd.notna(df_clean), None).to_dict(orient="records")
+    return [_normalize_early_era_rebounds(row) for row in rows]
+
+
+def transform_boxscore_team_rows(data: list[dict], game_id: str) -> list[dict[str, Any]]:
+    if not data:
+        return []
+    df = pd.DataFrame(data)
+    df = df.rename(columns=V3_PLAYER_RENAME)
+    df["game_id"] = game_id
+
+    # Check if team aggregated stats have what we need
+    available = [c for c in ["game_id", "team_id"] + TEAM_SUM_COLS if c in df.columns]
+    df_clean = df[available].copy()
+
+    df_clean["game_id"] = df_clean["game_id"].astype(str)
+    df_clean["team_id"] = df_clean["team_id"].astype(str)
+    rows = df_clean.where(pd.notna(df_clean), None).to_dict(orient="records")
+    return rows

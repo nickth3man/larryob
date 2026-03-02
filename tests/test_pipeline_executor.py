@@ -370,3 +370,15 @@ def test_run_ingest_pipeline_handles_raw_backfill_stage_via_special_dispatch():
         awards_fn,
     )
     mock_post.assert_not_called()
+
+
+def test_ingest_pipeline_canonical_mode_smoke(sqlite_con_with_data):
+    from src.pipeline.executor import run_ingest_pipeline
+    from src.pipeline.models import IngestConfig
+
+    config = IngestConfig(seasons=("2023-24",), pbp_limit=1, skip_reconciliation=False)
+    # This shouldn't raise any errors in smoke test structure
+    with patch("src.pipeline.executor.orchestrator._execute_stage"):
+        with patch("src.pipeline.executor.orchestrator._execute_optional_post_gamelogs_steps"):
+            with patch("src.pipeline.executor.orchestrator._execute_raw_backfill_stage"):
+                run_ingest_pipeline(sqlite_con_with_data, config)

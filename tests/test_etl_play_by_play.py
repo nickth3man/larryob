@@ -84,6 +84,22 @@ def test_transform_pbp_row_count() -> None:
     assert len(rows) == 4
 
 
+def test_fetch_pbp_uses_playbyplay_v3_endpoint():
+    with patch("src.etl.transform.play_by_play.playbyplayv3.PlayByPlayV3") as mock_v3:
+        # We need to bypass cache
+        with patch("src.etl.transform.play_by_play.load_cache", return_value=None):
+            with patch("src.etl.transform.play_by_play.save_cache"):
+                # And prevent it from actually sleeping/failing in backoff
+                from src.etl.extract.api_client import APICaller
+
+                class NoSleepCaller(APICaller):
+                    def call_with_backoff_custom_delay(self, fn, **kwargs):
+                        return fn()
+
+                _fetch_pbp("0022300001", api_caller=NoSleepCaller())
+        assert mock_v3.call_count > 0
+
+
 def test_pbp_insert(sqlite_con_with_data: sqlite3.Connection) -> None:
     rows = _transform_pbp(_make_pbp_df())
     # Only player1_ids that exist in dim_player will succeed (2544 is seeded)
@@ -158,8 +174,8 @@ def test_load_game_returns_zero_for_empty_api_response(
     monkeypatch.setattr(cache_mod, "CACHE_DIR", tmp_path)
 
     mock_ep = MagicMock()
-    mock_ep.get_data_frames.return_value = [pd.DataFrame()]
-    with patch("src.etl.transform.play_by_play.playbyplayv2.PlayByPlayV2", return_value=mock_ep):
+    mock_ep.play_by_play.get_data_frame.return_value = pd.DataFrame()
+    with patch("src.etl.transform.play_by_play.playbyplayv3.PlayByPlayV3", return_value=mock_ep):
         n = load_game(sqlite_con_with_data, "0022300001")
     assert n == 0
 

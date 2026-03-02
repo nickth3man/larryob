@@ -4,6 +4,7 @@ Centralized business-rule validation for ETL output rows.
 
 import logging
 import sqlite3
+from collections.abc import Sequence
 
 from pydantic import ValidationError
 
@@ -133,6 +134,41 @@ def check_game_stat_consistency(con: sqlite3.Connection, game_id: str) -> list[s
             )
 
     return warnings
+
+
+def query_score_mismatches(con: sqlite3.Connection, seasons: Sequence[str]) -> list[tuple]:
+    """Find all games where team points don't match the sum of player points for the given seasons."""
+    if not seasons:
+        return []
+
+    placeholders = ",".join("?" for _ in seasons)
+
+    sql = f"""
+    WITH p_agg AS (
+        SELECT
+            p.game_id,
+            p.team_id,
+            SUM(p.pts) AS p_pts
+        FROM player_game_log p
+        JOIN fact_game g ON g.game_id = p.game_id
+        WHERE g.season_id IN ({placeholders})
+        GROUP BY p.game_id, p.team_id
+    )
+    SELECT
+        t.game_id,
+        t.team_id,
+        t.pts, p.p_pts
+    FROM team_game_log t
+    JOIN fact_game g ON g.game_id = t.game_id
+    LEFT JOIN p_agg p ON p.game_id = t.game_id AND p.team_id = t.team_id
+    WHERE g.season_id IN ({placeholders})
+      AND p.p_pts IS NOT NULL
+      AND t.pts != p.p_pts
+    ORDER BY t.game_id, t.team_id
+    """
+
+    params = list(seasons) * 2
+    return con.execute(sql, params).fetchall()
 
 
 def run_consistency_checks(con: sqlite3.Connection, season_id: str) -> int:
