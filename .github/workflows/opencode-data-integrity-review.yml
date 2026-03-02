@@ -2,7 +2,7 @@ name: opencode-data-integrity-review
 
 on:
   pull_request:
-    types: [opened]
+    types: [opened, labeled]
 
 concurrency:
   group: opencode-data-integrity-${{ github.event.pull_request.number }}
@@ -10,6 +10,7 @@ concurrency:
 
 jobs:
   review:
+    if: contains(github.event.pull_request.labels.*.name, 'opencode:data-integrity')
     runs-on: ubuntu-latest
     permissions:
       id-token: write

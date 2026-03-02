@@ -2,7 +2,7 @@ name: opencode-release-note-drafter
 
 on:
   pull_request:
-    types: [opened]
+    types: [opened, labeled]
 
 concurrency:
   group: opencode-release-notes-${{ github.event.pull_request.number }}
@@ -10,6 +10,7 @@ concurrency:
 
 jobs:
   draft:
+    if: contains(github.event.pull_request.labels.*.name, 'opencode:release-notes')
     runs-on: ubuntu-latest
     permissions:
       id-token: write

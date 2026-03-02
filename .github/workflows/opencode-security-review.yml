@@ -2,7 +2,7 @@ name: opencode-security-review
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, labeled]
 
 concurrency:
   group: opencode-security-${{ github.event.pull_request.number }}
@@ -10,6 +10,7 @@ concurrency:
 
 jobs:
   review:
+    if: contains(github.event.pull_request.labels.*.name, 'opencode:security')
     runs-on: ubuntu-latest
     permissions:
       id-token: write
