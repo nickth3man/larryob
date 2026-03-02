@@ -258,6 +258,9 @@ def build_player_rows(df: pd.DataFrame) -> list[dict[str, Any]]:
 
 def build_team_rows(df: pd.DataFrame) -> list[dict[str, Any]]:
     """Aggregate player stats per (game_id, team_id) to form team box scores."""
+    if df.empty:
+        return []
+
     df2 = df.rename(columns=PGL_RENAME)
     df2["game_id"] = df2["game_id"].astype(str)
     df2["team_id"] = df2["team_id"].astype(str)

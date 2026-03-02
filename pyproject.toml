@@ -34,12 +34,16 @@ package = true
 [dependency-groups]
 dev = [
     "pytest>=9.0.2",
+    "pytest-xdist>=3.6.0",
     "ruff>=0.15.2",
     "ty>=0.0.18",
     "pytest-cov>=7.0.0",
+    "pytest-env>=1.1.0",
+    "pyarrow>=23.0.1",
     "types-requests",
     "mutmut>=3.4.0",
     "pyyaml>=6.0.3",
+    "hypothesis>=6.151.9",
 ]
 
 [tool.ruff]
@@ -56,4 +60,9 @@ ignore = ["E501"]  # line-too-long handled by formatter
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-
+addopts = "-n auto --dist loadscope"
+env = [
+    "LARRYOB_API_DELAY_SECONDS=0.001",
+    "LARRYOB_INTER_CALL_SLEEP=0.001",
+    "LARRYOB_CACHE_DIR=.pytest_cache/test_cache",
+]
