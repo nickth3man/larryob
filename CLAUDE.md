@@ -15,7 +15,7 @@
 - [x] `uv` — always use `uv run` to run scripts
 - [x] `ruff` — run after every change: `ruff check . && ruff format .`
 - [x] `pytest` — run affected tests before marking a task complete: `uv run pytest tests/`
-  - **Note:** pytest-xdist is configured by default (`-n auto --dist loadscope`). Tests run in parallel (12 workers). Use `-n 0` for sequential execution when debugging or if tests behave unexpectedly.
+  - **Note:** pytest-xdist is configured by default (`-n auto --dist loadscope`). Tests run in parallel. Use `-n 0` for sequential execution when debugging or if tests behave unexpectedly.
 
 ---
 

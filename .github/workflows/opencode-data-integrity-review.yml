@@ -2,7 +2,7 @@ name: opencode-data-integrity-review
 
 on:
   pull_request:
-    types: [opened, labeled]
+    types: [opened, synchronize, reopened, labeled]
 
 concurrency:
   group: opencode-data-integrity-${{ github.event.pull_request.number }}

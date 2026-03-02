@@ -2,7 +2,7 @@ name: opencode-release-note-drafter
 
 on:
   pull_request:
-    types: [opened, labeled]
+    types: [opened, synchronize, reopened, labeled]
 
 concurrency:
   group: opencode-release-notes-${{ github.event.pull_request.number }}
